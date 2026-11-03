@@ -11,16 +11,16 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 9
+  rev: 10
   owners: [human:lily]
-  updated: 2026-11-03T21:35:00+08:00
+  updated: 2026-11-03T22:10:00+08:00
   ai:
     summary: |
       Covenant 由 CLI / MCP / serve / 浏览器标注器四类进程/端构成，权威数据是项目内 .cvn.yaml；
       CLI 与 MCP 是并列前端，都直接调用共享库层（不经 CLI 进程）；构建管线产出单文件 HTML（默认）
       与 dist/site 文件夹站点（第二模式）；写回走 patch 门禁 + write-ahead 审计。
-      查看器（内联）支持多小窗并存：悬停 120ms 预览、点击固定、📌 钉住、8 色 + 400ms 色忆防闪、
-      弧长锚点引导线、段级批注（target.segment）、侧栏文档分组、新增批注表单默认折叠。
+      查看器外壳内部拆为 inspector（多小窗三态 / 8 色+色忆 / 引导线 / 段级批注）与 sidebar（文档分组）；
+      悬停 120ms 预览、点击固定、📌 钉住、弧长锚点引导线、target.segment 段级批注、新增表单默认折叠。
       编辑态经 serve 写回，离线时导出 .patch.json / edits.json。
       本图 12 条批注已全部 resolved（2026-11-03）。
     budget_tokens: 1000
@@ -82,7 +82,21 @@ elements:
     kind: container
     name: 浏览器查看器
     tech: 内联 TS + SVG
-    summary: 离线查看/标注：多小窗三态（悬停 120ms 预览 / 点击固定 / 📌 钉住）、8 色 + 400ms 色忆防闪、弧长锚点引导线、段级批注（target.segment）、侧栏文档分组、新增表单折叠、缩放平移、批注编辑删除撤销；编辑态经 serve 写回，离线导出补丁
+    summary: 查看器外壳：加载产物数据、路由指针/键盘事件、装配侧栏与小窗系统；编辑态经 serve 写回、离线导出补丁
+    tags: [edge]
+
+  - id: e.inspector
+    kind: container
+    name: 小窗系统（inspector）
+    tech: 内联 TS + SVG overlay
+    summary: 多窗三态（hover 预览 120ms / clicked 保留 / 📌 pinned）、8 色确定性调色板 + 400ms 色忆防闪、同色高亮与弧长锚点引导线、段级批注窗（本段 + 折叠整边）、新增批注表单折叠
+    tags: [edge]
+
+  - id: e.sidebar
+    kind: container
+    name: 侧栏文档分组
+    tech: 内联 TS
+    summary: docGroup 优先级（meta.group → 源路径 → 命名空间）、GROUP_ORDER（自身架构/系统契约/示例演示/模板/其他）、组标题不可点、当前组高亮、切图
     tags: [edge]
 
   - id: e.serve
@@ -138,6 +152,18 @@ relations:
     from: e.human
     to: e.viewer
     summary: 双击 HTML 后标注
+
+  - id: r.viewer-inspector
+    kind: calls
+    from: e.viewer
+    to: e.inspector
+    summary: 装配并驱动小窗系统（悬停/点击/钉住、段窗、引导线）
+
+  - id: r.viewer-sidebar
+    kind: calls
+    from: e.viewer
+    to: e.sidebar
+    summary: 装配分组侧栏并切换文档
 
   - id: r.agent-mcp
     kind: calls

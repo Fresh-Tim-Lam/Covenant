@@ -1495,3 +1495,63 @@ describe("侧栏文档分组", () => {
     expect(d.querySelector('button[data-doc="payments/components"]')!.className).toContain("on");
   });
 });
+
+/* ------------------- P0 回归：幽灵窗（已关闭窗口复活）导致高亮/引导线残留 ------------------- */
+
+describe("窗口关闭后高亮与引导线必须彻底清理", () => {
+  it("主窗复用时，新窗口上的 pointer 事件不会复活已关闭窗口的高亮/引导线", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+    const edge = d.querySelector("svg .edge") as SVGElement;
+
+    // 先给元素开窗，再点空白关闭（主窗被隐藏、innerHTML 清空）
+    node.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(0);
+    expect(d.querySelectorAll(".hl")).toHaveLength(0);
+
+    // 再给边开窗：复用同一个主窗 DOM 元素 #inspector
+    edge.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(1);
+    expect(d.querySelectorAll(".hl")).toHaveLength(1);
+
+    // 用户在新窗口上按下/移入移出：旧实现里主窗上残留的旧监听会把已关闭的
+    // 元素窗对象重新塞回 wins，导致元素+边同时高亮、引导线变两条（幽灵窗）。
+    const win = visibleWins(d)[0]!;
+    win.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, button: 0 }));
+    win.dispatchEvent(pointer(window, "pointerenter"));
+    win.dispatchEvent(pointer(window, "pointerleave"));
+
+    const hls = Array.from(d.querySelectorAll(".hl"));
+    expect(hls).toHaveLength(1);
+    expect(hls[0]!.getAttribute("data-id")).toBe("r.ab");
+    expect(hls[0]!.getAttribute("class")).toContain("edge");
+    expect(node.classList.contains("hl")).toBe(false);
+    expect(guideLines(d)).toHaveLength(1);
+
+    // 关掉后仍必须归零
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(0);
+    expect(d.querySelectorAll(".hl")).toHaveLength(0);
+    expect(guideLines(d)).toHaveLength(0);
+  });
+
+  it("只高亮窗口直接锚定的对象：元素窗不牵连其关联边，边窗不牵连端点元素", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)[0]!.getAttribute("data-kind")).toBe("element");
+    expect(d.querySelector("svg .node")!.classList.contains("hl")).toBe(true);
+    expect(d.querySelector("svg .edge")!.classList.contains("hl")).toBe(false);
+
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector("svg .edge")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)[0]!.getAttribute("data-kind")).toBe("relation");
+    expect(d.querySelector("svg .edge")!.classList.contains("hl")).toBe(true);
+    expect(d.querySelector("svg .node")!.classList.contains("hl")).toBe(false);
+  });
+});

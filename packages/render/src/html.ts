@@ -681,10 +681,41 @@ const SCRIPT = `
       head.style.background = "linear-gradient(90deg, " + colorAlpha(w.color, 0.16) + ", #f8fafc 62%)";
     }
   }
+  function winOfEl(el){
+    for (var i=0;i<wins.length;i++) if (wins[i].el === el) return wins[i];
+    return null;
+  }
+  function movedIntoWindow(rt){ return rt && rt.closest && rt.closest(".cvn-win"); }
+  /**
+   * 窗口根元素级监听只装一次（主窗 #inspector 会被反复复用）。
+   * 绝对不能每次 renderWin 都 addEventListener：旧闭包会随主窗元素存活，
+   * 关闭后仍被触发 → activateWin 把已关闭的"幽灵窗"塞回 wins → 残留高亮/引导线。
+   */
+  function ensureWinElListeners(el){
+    if (el.getAttribute("data-bind") === "1") return;
+    el.setAttribute("data-bind", "1");
+    el.addEventListener("pointerdown", function(){
+      var cur = winOfEl(el);
+      if (cur) activateWin(cur);
+    });
+    el.addEventListener("pointerenter", function(){
+      var cur = winOfEl(el);
+      if (cur && cur.state === "hover") clearTimeout(cur.closeTimer);
+    });
+    el.addEventListener("pointerleave", function(ev){
+      var cur = winOfEl(el);
+      if (!cur || cur.state !== "hover") return;
+      // 指针只是移回锚定对象/另一个窗口 → 仍在 hover 区域内，不关闭（防边界振荡闪烁）
+      if (movedIntoWindow(ev.relatedTarget)) return;
+      var anchorShape = shapeOf(cur.kind, cur.targetId);
+      if (anchorShape && ev.relatedTarget && anchorShape.contains(ev.relatedTarget)) return;
+      scheduleHoverClose(cur);
+    });
+  }
   function activateWin(w){
     var idx = wins.indexOf(w);
-    if (idx < 0){ wins.push(w); }
-    else if (wins[wins.length-1] !== w){ wins.splice(idx, 1); wins.push(w); }
+    if (idx < 0) return; // 已关闭的窗口不再复活（防幽灵高亮/引导线）
+    if (wins[wins.length-1] !== w){ wins.splice(idx, 1); wins.push(w); }
     // 点击置顶：仅当不在 DOM 末尾时移动（避免输入框每点一次就重排导致失焦）
     var parent = w.el.parentNode;
     if (parent && parent.lastElementChild !== w.el) parent.appendChild(w.el);
@@ -745,8 +776,10 @@ const SCRIPT = `
     el.setAttribute("data-kind", kind);
     el.setAttribute("data-target", id);
     if (seg != null) el.setAttribute("data-segment", String(seg));
+    else el.removeAttribute("data-segment");
     el.setAttribute("data-color", color);
     el.style.borderColor = color;
+    ensureWinElListeners(el);
     positionWin(w, at);
     renderWin(w);
     activateWin(w);
@@ -1158,18 +1191,8 @@ const SCRIPT = `
         window.addEventListener("pointerup", up);
       });
     }
-    // 鼠标进入窗口本体不关闭 hover 预览（可在窗内继续操作）；离开后再延时收；按下即置顶
-    el.addEventListener("pointerdown", function(){ activateWin(w); });
-    el.addEventListener("pointerenter", function(){ if (w.state === "hover") clearTimeout(w.closeTimer); });
-    el.addEventListener("pointerleave", function(ev){
-      if (w.state !== "hover") return;
-      // 指针只是移回锚定对象/另一个窗口 → 仍在 hover 区域内，不关闭（防边界振荡闪烁）
-      var rt = ev.relatedTarget;
-      if (rt && rt.closest && rt.closest(".cvn-win")) return;
-      var anchorShape = shapeOf(w.kind, w.targetId);
-      if (anchorShape && rt && anchorShape.contains(rt)) return;
-      scheduleHoverClose(w);
-    });
+    // 窗口根元素的 pointerdown/enter/leave 由 ensureWinElListeners 一次性安装（见上），
+    // 这里只按当前窗口状态刷新内容；不要再往 el 上绑监听（会累积旧闭包 → 幽灵窗）。
     // 段窗：折叠"整条边批注" + 打开整条边窗口
     var wholeToggle = el.querySelector(".whole-edge-toggle");
     if (wholeToggle) wholeToggle.addEventListener("click", function(ev){
