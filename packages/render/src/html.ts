@@ -1148,10 +1148,9 @@ const SCRIPT = `
           var dx = e2.clientX - drag.sx, dy = e2.clientY - drag.sy;
           if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
           if (!drag.moved) return;
-          var maxL = (parent.clientWidth || window.innerWidth) - (el.offsetWidth || 360) - 4;
-          var maxT = (parent.clientHeight || window.innerHeight) - (el.offsetHeight || 320) - 4;
-          el.style.left = Math.max(4, Math.min(drag.l + dx, maxL)) + "px";
-          el.style.top = Math.max(4, Math.min(drag.t + dy, maxT)) + "px";
+          // 允许拖出容器边界（不钳制），用户可通过滚动/缩放找回窗口
+          el.style.left = (drag.l + dx) + "px";
+          el.style.top = (drag.t + dy) + "px";
           updateGuides();
         }
         function up(){ window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); }

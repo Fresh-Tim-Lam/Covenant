@@ -333,7 +333,26 @@ describe("悬浮窗：钉住与拖拽", () => {
     expect(parseFloat(box.style.left)).toBeCloseTo(beforeLeft + 50, 0);
     expect(parseFloat(box.style.top)).toBeCloseTo(beforeTop + 40, 0);
   });
-});
+
+  it("窗口可拖出容器边界（不钳制）", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const box = d.getElementById("inspector")!;
+    const beforeLeft = parseFloat(box.style.left || "0");
+    const beforeTop = parseFloat(box.style.top || "0");
+    const head = box.querySelector(".insp-head") as HTMLElement;
+    head.dispatchEvent(new window.PointerEvent("pointerdown", { bubbles: true, button: 0, clientX: 200, clientY: 200, pointerId: 1 }));
+    window.dispatchEvent(new window.PointerEvent("pointermove", { bubbles: true, clientX: -500, clientY: -400, pointerId: 1 }));
+    window.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true, clientX: -500, clientY: -400, pointerId: 1 }));
+    const afterLeft = parseFloat(box.style.left);
+    const afterTop = parseFloat(box.style.top);
+    expect(afterLeft).toBe(beforeLeft + (-700));
+    expect(afterTop).toBe(beforeTop + (-600));
+    expect(afterLeft).toBeLessThan(0); // 负坐标 = 拖出左边界
+    expect(afterTop).toBeLessThan(0); // 负坐标 = 拖出上边界
+  });});
 describe("侧栏切换（其他架构图可点）", () => {
   it("点击第二个视图按钮 → 对应 section 显示、旧 section 隐藏", () => {
     const a = doc();
