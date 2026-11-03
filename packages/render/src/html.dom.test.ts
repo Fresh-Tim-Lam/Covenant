@@ -1066,3 +1066,263 @@ describe("窗口拖拽与同色引导线", () => {
     expect(Math.hypot(anchor.x - first.x, anchor.y - first.y)).toBeGreaterThan(1);
   });
 });
+
+/* ------------------- 多段边（segment）viewer 能力 ------------------- */
+
+/** 两节点 + 一条多段边：带整边旧批注 + 段 0/段 1 批注。 */
+function docSeg(): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id: "t/seg",
+    profile: "c4-container@1",
+    meta: { title: "多段边", purpose: "p", non_goals: [], rev: 2 },
+    elements: [
+      { id: "e.a", kind: "container", name: "服务 A", summary: "做 A", tech: "TS" },
+      { id: "e.b", kind: "datastore", name: "存储 B", summary: "存 B", tech: "PG", props: { storage_kind: "rdbms" } },
+    ],
+    relations: [{ id: "r.ab", kind: "writes", from: "e.a", to: "e.b", summary: "写" }],
+    annotations: [
+      {
+        id: "a.WHOLEEDGE0000000000000",
+        target: { kind: "relation", id: "r.ab" },
+        type: "risk",
+        severity: "medium",
+        title: "整边旧批注",
+        status: "open",
+        author: "human:lily",
+        created: "2026-11-03T00:00:00+08:00",
+      },
+      {
+        id: "a.SEGMENT0000000000000",
+        target: { kind: "relation", id: "r.ab", segment: 0 },
+        type: "todo",
+        severity: "high",
+        title: "第0段批注",
+        status: "open",
+        author: "human:lily",
+        created: "2026-11-03T00:00:00+08:00",
+      },
+      {
+        id: "a.SEGMENT1111111111111",
+        target: { kind: "relation", id: "r.ab", segment: 1 },
+        type: "question",
+        severity: "low",
+        title: "第1段批注",
+        status: "open",
+        author: "human:lily",
+        created: "2026-11-03T00:00:00+08:00",
+      },
+    ],
+  };
+}
+
+interface DocSegments {
+  points: [number, number][];
+  segmentCount: number;
+}
+
+function embeddedDoc(d: Document): {
+  segments: Record<string, DocSegments>;
+  centers: { elements: Record<string, [number, number]>; relations: Record<string, [number, number]> };
+} {
+  const raw = d.getElementById("covenant-data")!.textContent!;
+  return JSON.parse(raw).docs[0];
+}
+
+function segHits(d: Document, relationId: string): SVGElement[] {
+  return Array.from(d.querySelectorAll<SVGElement>(`.edge[data-id="${relationId}"] .seg-hit`));
+}
+
+function guideLineFor(d: Document, win: HTMLElement): SVGLineElement | undefined {
+  return guideLines(d).find((l) => l.getAttribute("data-win") === win.getAttribute("data-win"));
+}
+
+function segMidOf(points: [number, number][], k: number): [number, number] {
+  const a = points[k]!;
+  const b = points[k + 1]!;
+  return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+}
+
+describe("多段边：段热区 / 段窗 / 段批注 / badge / 导出", () => {
+  it("点 segment0 与 segment1 → 两窗并存，引导线锚点各自段中点，段角标也在段中点", () => {
+    const dom = new JSDOM(htmlOf(docSeg()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const hits = segHits(d, "r.ab");
+    // 紧凑布局下 r.ab 是多段折线（>=2 段）
+    expect(hits.length).toBeGreaterThanOrEqual(2);
+    expect(hits[0]!.getAttribute("data-seg")).toBe("0");
+
+    hits[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    hits[1]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+    const wins = visibleWins(d);
+    expect(wins).toHaveLength(2);
+    expect(wins.map((w) => w.getAttribute("data-segment")).sort()).toEqual(["0", "1"]);
+    // 段窗标题显示 段 k/n
+    const t = stageTransform(d);
+    const data = embeddedDoc(d);
+    for (const win of wins) {
+      expect(win.querySelector(".hint")!.textContent).toContain("段 ");
+      expect(win.querySelector(".hint")!.textContent).toMatch(/段 [12]\/\d+/);
+      const k = Number(win.getAttribute("data-segment"));
+      const mid = segMidOf(data.segments["r.ab"]!.points, k);
+      const line = guideLineFor(d, win)!;
+      expect(line).toBeTruthy();
+      expect(Number(line.getAttribute("x2"))).toBeCloseTo(round1(t.tx + mid[0] * t.scale), 1);
+      expect(Number(line.getAttribute("y2"))).toBeCloseTo(round1(t.ty + mid[1] * t.scale), 1);
+    }
+    // 段角标画在各自段中点（整边另有 1 个 badge）
+    const segBadges = Array.from(d.querySelectorAll("#cvn-badges circle[data-seg]"));
+    expect(segBadges).toHaveLength(2);
+    for (const c of segBadges) {
+      const k = Number(c.getAttribute("data-seg"));
+      const mid = segMidOf(data.segments["r.ab"]!.points, k);
+      expect(Number(c.getAttribute("cx"))).toBeCloseTo(mid[0], 1);
+      expect(Number(c.getAttribute("cy"))).toBeCloseTo(mid[1], 1);
+    }
+  });
+
+  it("段窗只列该段批注；「整条边批注」折叠但可见/可展开", () => {
+    const dom = new JSDOM(htmlOf(docSeg()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    segHits(d, "r.ab")[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+
+    const mainList = win.querySelector("ul.anns")!;
+    expect(mainList.textContent).toContain("第0段批注");
+    expect(mainList.textContent).not.toContain("第1段批注");
+    expect(win.textContent).toContain("整条边批注（1）");
+
+    const body = win.querySelector(".whole-edge-body") as HTMLElement;
+    expect(body.hidden).toBe(true); // 默认折叠
+    expect(body.textContent).toContain("整边旧批注");
+    (win.querySelector(".whole-edge-toggle") as HTMLElement).dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true }),
+    );
+    expect(body.hidden).toBe(false);
+    expect((win.querySelector(".whole-edge-toggle") as HTMLElement).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("导出 patch：段窗提交的 target 带 segment", async () => {
+    const dom = new JSDOM(htmlOf(docSeg()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    segHits(d, "r.ab")[1]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+
+    (win.querySelector("#f-title") as HTMLInputElement).value = "段 1 新批注";
+    (win.querySelector("#f-submit") as HTMLElement).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+    const state = stubDownload(window);
+    d.getElementById("btn-export")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const patch = JSON.parse(await state.blob!.text());
+    const add = patch.ops.find((o: { op: string }) => o.op === "add");
+    expect(add.value.title).toBe("段 1 新批注");
+    expect(add.value.target).toEqual({ kind: "relation", id: "r.ab", segment: 1 });
+  });
+
+  it("新建表单可切「整条边」：导出 target 不带 segment", async () => {
+    const dom = new JSDOM(htmlOf(docSeg()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    segHits(d, "r.ab")[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+
+    const scope = win.querySelector('[data-field="f-scope"]') as HTMLSelectElement;
+    expect(scope).not.toBeNull();
+    scope.value = "edge";
+    scope.dispatchEvent(new window.Event("change", { bubbles: true }));
+    (win.querySelector("#f-title") as HTMLInputElement).value = "整条边新批注";
+    (win.querySelector("#f-submit") as HTMLElement).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+    const state = stubDownload(window);
+    d.getElementById("btn-export")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const patch = JSON.parse(await state.blob!.text());
+    const add = patch.ops.find((o: { op: string }) => o.op === "add");
+    expect(add.value.target).toEqual({ kind: "relation", id: "r.ab" });
+    expect(add.value.target.segment).toBeUndefined();
+  });
+
+  it("整条边旧批注仍可打开/改状态；段窗可打开整条边窗口", () => {
+    const dom = new JSDOM(htmlOf(docSeg()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    // 从段窗点「打开整条边窗口」→ 第二个窗，segment 为空
+    segHits(d, "r.ab")[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const segWin = visibleWins(d)[0]!;
+    (segWin.querySelector(".open-edge-win") as HTMLElement).dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true }),
+    );
+    const edgeWin = visibleWins(d).find((w) => w.getAttribute("data-segment") === null)!;
+    expect(edgeWin).toBeTruthy();
+    expect(visibleWins(d)).toHaveLength(2);
+    expect(edgeWin.textContent).toContain("整边旧批注");
+
+    // 整边旧批注的状态流转仍可用
+    const act = edgeWin.querySelector('.acts button[data-act="resolved"]') as HTMLElement;
+    expect(act).not.toBeNull();
+    act.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const store = JSON.parse(window.localStorage.getItem("covenant:viewer:v1") ?? "{}");
+    expect(store["t/seg"].status["a.WHOLEEDGE0000000000000"]).toBe("resolved");
+  });
+});
+
+/* ------------------- P0 回归：悬停不离开时不闪不同颜色 ------------------- */
+
+describe("悬停窗颜色稳定（不闪色）", () => {
+  it("指针在元素/窗口边界振荡（relatedTarget=窗口）不关闭、颜色不变", async () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    const win = visibleWins(d)[0]!;
+    const color = win.getAttribute("data-color")!;
+    expect(color).toBeTruthy();
+
+    // 模拟指针从元素移到窗口本体（边界振荡）：relatedTarget 是窗口
+    node.dispatchEvent(
+      new window.MouseEvent("pointerleave", { bubbles: false, relatedTarget: win }),
+    );
+    await sleep(200);
+    expect(visibleWins(d)).toHaveLength(1); // 不关闭
+    expect(visibleWins(d)[0]!.getAttribute("data-color")).toBe(color); // 颜色不变
+
+    // 再进元素（窗口仍在）：仍同色、不重复开窗
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    expect(visibleWins(d)).toHaveLength(1);
+    expect(visibleWins(d)[0]!.getAttribute("data-color")).toBe(color);
+
+    // 用户描述的振荡序列：leave + enter 反复（窗口未关闭前 enter 会清掉关闭计时）
+    for (let i = 0; i < 3; i++) {
+      node.dispatchEvent(pointer(window, "pointerleave"));
+      node.dispatchEvent(pointer(window, "pointerenter"));
+    }
+    await sleep(200);
+    expect(visibleWins(d)).toHaveLength(1);
+    expect(visibleWins(d)[0]!.getAttribute("data-color")).toBe(color);
+  });
+
+  it("hover 窗关闭后 400ms 内同一目标重开：复用上次颜色（色忆兜底）", async () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    const color = visibleWins(d)[0]!.getAttribute("data-color")!;
+    node.dispatchEvent(pointer(window, "pointerleave"));
+    await sleep(220);
+    expect(visibleWins(d)).toHaveLength(0);
+
+    // 立刻重新悬停：应复用刚才的颜色，而不是分配下一个颜色
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    const again = visibleWins(d)[0]!;
+    expect(again).toBeTruthy();
+    expect(again.getAttribute("data-color")).toBe(color);
+  });
+});

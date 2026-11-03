@@ -291,6 +291,54 @@ describe("gatePatch（Agent 信任边界）", () => {
   });
 });
 
+describe("段级批注 segment 校验（relation 专属）", () => {
+  const human = parseActor("human:you")!;
+  const relTarget = (segment: unknown): Record<string, unknown> => ({
+    kind: "relation",
+    id: "r.ab",
+    segment,
+  });
+  const withTarget = (target: Record<string, unknown>): Patch => {
+    const p = patch();
+    firstValue(p).target = target;
+    return p;
+  };
+
+  it("relation + 合法 segment（0/3）通过", () => {
+    expect(codes(gatePatch(fixtureDoc(), withTarget(relTarget(0)), { actor: human }))).toEqual([]);
+    expect(codes(gatePatch(fixtureDoc(), withTarget(relTarget(3)), { actor: human }))).toEqual([]);
+  });
+
+  it("整边（无 segment）回归通过", () => {
+    expect(
+      codes(gatePatch(fixtureDoc(), withTarget({ kind: "relation", id: "r.ab" }), { actor: human })),
+    ).toEqual([]);
+  });
+
+  it("segment 负数被拒 gate/segment", () => {
+    expect(codes(gatePatch(fixtureDoc(), withTarget(relTarget(-1)), { actor: human }))).toContain(
+      "gate/segment",
+    );
+  });
+
+  it("segment 浮点被拒 gate/segment", () => {
+    expect(codes(gatePatch(fixtureDoc(), withTarget(relTarget(1.5)), { actor: human }))).toContain(
+      "gate/segment",
+    );
+  });
+
+  it("segment 字符串被拒 gate/segment", () => {
+    expect(codes(gatePatch(fixtureDoc(), withTarget(relTarget("0")), { actor: human }))).toContain(
+      "gate/segment",
+    );
+  });
+
+  it("element + segment 被拒 gate/segment-kind", () => {
+    const p = withTarget({ kind: "element", id: "e.a", segment: 0 });
+    expect(codes(gatePatch(fixtureDoc(), p, { actor: human }))).toContain("gate/segment-kind");
+  });
+});
+
 const EXISTING = "a.01JAX9K3Q7P2";
 const AT = "2026-11-03T13:00:00+08:00";
 

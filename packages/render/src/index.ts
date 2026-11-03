@@ -3,7 +3,7 @@
  * 输出确定性：同输入逐字节一致（黄金测试的前提）。
  */
 import type { CovenantDoc, ViewDef } from "@covenant/core";
-import { layoutSequence, relationLabelText } from "@covenant/layout";
+import { layoutSequence, relationLabelText, segmentMidpoint } from "@covenant/layout";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
 export * from "./html";
@@ -389,19 +389,44 @@ function isDashed(kind: string): boolean {
   return THEME.dashedKinds.has(kind);
 }
 
+interface AnnotationCounts {
+  /** 整条关系的未决批注数（target 无 segment） */
+  whole: number;
+  /** 按段号聚合的未决批注数（仅 kind=relation 且 segment 为合法非负整数） */
+  segments: Map<number, number>;
+}
+
+/**
+ * 未决批注计数：整边（无 segment）与段级分开。
+ * 非 relation 目标即使误写 segment 也按整边计数（gate 会拒绝 element+segment）。
+ */
+function annotationCounts(
+  doc: CovenantDoc,
+  kind: "element" | "relation",
+  id: string,
+): AnnotationCounts {
+  const res: AnnotationCounts = { whole: 0, segments: new Map<number, number>() };
+  for (const a of doc.annotations ?? []) {
+    const t = a.target as { kind?: string; id?: string; segment?: unknown };
+    if (t?.kind !== kind || t?.id !== id) continue;
+    if (a.status !== "open" && a.status !== "ack") continue;
+    const seg = t.segment;
+    if (kind === "relation" && typeof seg === "number" && Number.isInteger(seg) && seg >= 0) {
+      res.segments.set(seg, (res.segments.get(seg) ?? 0) + 1);
+    } else {
+      res.whole += 1;
+    }
+  }
+  return res;
+}
+
+/** 整边未决批注数（保持旧行为：无 segment 时与旧版完全一致） */
 function openAnnotations(
   doc: CovenantDoc,
   kind: "element" | "relation",
   id: string,
 ): number {
-  return (doc.annotations ?? []).filter((a) => {
-    const t = a.target as { kind?: string; id?: string };
-    return (
-      t?.kind === kind &&
-      t?.id === id &&
-      (a.status === "open" || a.status === "ack")
-    );
-  }).length;
+  return annotationCounts(doc, kind, id).whole;
 }
 
 function badge(x: number, y: number, n: number): string {
@@ -489,8 +514,16 @@ export function renderSequenceSvg(
       );
     }
     out.push(`</g>`);
-    const n = openAnnotations(doc, "relation", m.relId);
-    if (n > 0 && options.showBadges !== false) out.push(badge(m.fromX + 14, m.y - 20, n));
+    const counts = annotationCounts(doc, "relation", m.relId);
+    if (counts.whole > 0 && options.showBadges !== false) {
+      out.push(badge(m.fromX + 14, m.y - 20, counts.whole));
+    }
+    if (counts.segments.size > 0 && options.showBadges !== false) {
+      const midX = m.self ? m.fromX + 17 : (m.fromX + m.toX) / 2;
+      for (const count of counts.segments.values()) {
+        out.push(badge(midX, m.y - 20, count));
+      }
+    }
   }
 
   out.push(`</svg>`);
@@ -567,6 +600,8 @@ export function renderSvg(
   const edgeParts: string[] = [];
   const labelRequests: LabelRequest[] = [];
   const badgeIndexes: { index: number; n: number }[] = [];
+  /** 段级批注 badge：points 用渲染时的实际路径（junction 模式是两点直线） */
+  const segmentBadges: { points: Point[]; segments: Map<number, number> }[] = [];
   const hollowCrossings: Point[] = [];
   // 所有边的线段（供标签避让"别的线"用）
   const allSegments: { owner: number; seg: [Point, Point] }[] = [];
@@ -622,9 +657,12 @@ export function renderSvg(
       attach: true,
       avoid: allSegments.filter((s) => s.owner !== i).map((s) => s.seg),
     });
-    const n = openAnnotations(doc, "relation", edge.id);
-    if (n > 0 && options.showBadges !== false) {
-      badgeIndexes.push({ index: labelRequests.length - 1, n });
+    const counts = annotationCounts(doc, "relation", edge.id);
+    if (counts.whole > 0 && options.showBadges !== false) {
+      badgeIndexes.push({ index: labelRequests.length - 1, n: counts.whole });
+    }
+    if (counts.segments.size > 0 && options.showBadges !== false) {
+      segmentBadges.push({ points, segments: counts.segments });
     }
   }
 
@@ -657,6 +695,14 @@ export function renderSvg(
   for (const b of badgeIndexes) {
     const l = placedLabels[b.index];
     if (l) out.push(badge(l.x + Math.max(18, l.width / 2 + 8), l.y - 10, b.n));
+  }
+  // 段级 badge：落在对应段中点正上方（无 segment 批注时循环为空 → 输出与旧版逐字节一致）
+  for (const sb of segmentBadges) {
+    const entries = [...sb.segments.entries()].sort((a, b) => a[0] - b[0]);
+    for (const [seg, count] of entries) {
+      const mid = segmentMidpoint(sb.points, seg);
+      out.push(badge(mid.x, mid.y - 10, count));
+    }
   }
   // nodes
   const nameById = new Map((doc.elements ?? []).map((e) => [e.id, e.name]));

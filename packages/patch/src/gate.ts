@@ -227,7 +227,12 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
     }
 
     // 目标必须存在
-    const target = (v.target ?? {}) as { kind?: string; id?: string; view?: string };
+    const target = (v.target ?? {}) as {
+      kind?: string;
+      id?: string;
+      view?: string;
+      segment?: unknown;
+    };
     if (target.kind === "region") {
       if (!target.view || !targetExists(doc, "view", target.view)) {
         out.push(finding("gate/target", `region 批注指向不存在的视图 "${String(target.view)}"`));
@@ -242,6 +247,32 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
           "改为已存在的元素/关系/视图 id",
         ),
       );
+    }
+
+    // 段级批注：segment 仅 relation 目标可用，且必须是 0-based 非负整数。
+    // 上界（< segmentCount）gate 无法得知（无布局），由渲染/viewer 按实际路径段数处理。
+    if (target.segment !== undefined) {
+      if (target.kind !== "relation") {
+        out.push(
+          finding(
+            "gate/segment-kind",
+            `segment 只能用于 relation 批注目标，实际 kind=${String(target.kind)}`,
+            "删除 segment（整边批注），或把目标改为 relation",
+          ),
+        );
+      } else if (
+        typeof target.segment !== "number" ||
+        !Number.isInteger(target.segment) ||
+        target.segment < 0
+      ) {
+        out.push(
+          finding(
+            "gate/segment",
+            `segment 必须是 0-based 非负整数，实际 ${JSON.stringify(target.segment)}`,
+            "segment 从 0 开始（points[0] → points[1] 为第 0 段）",
+          ),
+        );
+      }
     }
   }
 

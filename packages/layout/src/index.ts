@@ -26,6 +26,8 @@ export interface EdgeGeom {
   from: string;
   to: string;
   points: Point[];
+  /** 路径段数 = points.length - 1（段级批注的合法下标范围是 [0, segmentCount)） */
+  segmentCount: number;
   /** 同跨度平行边的通道号（-1/0/1），用于标签错位 */
   lane: number;
   /**
@@ -722,11 +724,13 @@ export function layout(
             { x: end.x, y: dstLane ?? end.y },
             end,
           ];
+      const points = dedupe(pts);
       edges.push({
         id: s.rel.id,
         from: s.rel.from,
         to: s.rel.to,
-        points: dedupe(pts),
+        points,
+        segmentCount: points.length - 1,
         lane: longIndex.get(s.rel.id) ?? 0,
         labelSegment: horizontal ? [2, 3] : [1, 2],
       });
@@ -746,11 +750,13 @@ export function layout(
       const center = (start.y + nfV * ROUTE_STUB + end.y + ntV * ROUTE_STUB) / 2;
       lane = (slot - center) / 14;
     }
+    const points = clearPath(routePorts(start, end, s.fromSide, s.toSide, lane), nodes, s.fromId, s.toId);
     edges.push({
       id: s.rel.id,
       from: s.rel.from,
       to: s.rel.to,
-      points: clearPath(routePorts(start, end, s.fromSide, s.toSide, lane), nodes, s.fromId, s.toId),
+      points,
+      segmentCount: points.length - 1,
       lane,
     });
   }
@@ -817,6 +823,19 @@ function dedupe(points: Point[]): Point[] {
     if (!last || Math.abs(last.x - p.x) > 0.01 || Math.abs(last.y - p.y) > 0.01) out.push(p);
   }
   return out;
+}
+
+/**
+ * 路径第 k 段（points[k] → points[k+1]，0-based）的中点。
+ * 供 render（段级 badge）与 viewer（段级点击/引导线）共用；越界下标夹到合法范围，确定性。
+ */
+export function segmentMidpoint(points: Point[], k: number): Point {
+  if (points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1) return { x: points[0]!.x, y: points[0]!.y };
+  const i = Math.max(0, Math.min(points.length - 2, Math.floor(k)));
+  const a = points[i]!;
+  const b = points[i + 1]!;
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
 
 /**

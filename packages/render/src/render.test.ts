@@ -1,6 +1,8 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { parseDocument } from "@covenant/core";
 import type { CovenantDoc } from "@covenant/core";
-import { layout, selectView } from "@covenant/layout";
+import { layout, segmentMidpoint, selectView } from "@covenant/layout";
 import { labelCandidates, placeLabels, renderSvg } from "./index";
 
 function doc(): CovenantDoc {
@@ -287,7 +289,7 @@ describe("交点圆点（空心=几何交叉 / 实心=真实连接）", () => {
       "e.d": { x: 900, y: 700, w: 20, h: 20 },
     };
     const mk = (id: string, from: string, to: string, points: { x: number; y: number }[]) => ({
-      id, from, to, points, lane: 0,
+      id, from, to, points, segmentCount: points.length - 1, lane: 0,
     });
     const fabricated = {
       nodes,
@@ -337,8 +339,8 @@ describe("边标签不压别的边线", () => {
     const fabricated = {
       nodes,
       edges: [
-        { id: "r.h", from: "e.a", to: "e.b", points: [{ x: 100, y: 200 }, { x: 800, y: 200 }], lane: 0 },
-        { id: "r.v", from: "e.b", to: "e.a", points: [{ x: 450, y: 60 }, { x: 450, y: 340 }], lane: 0 },
+        { id: "r.h", from: "e.a", to: "e.b", points: [{ x: 100, y: 200 }, { x: 800, y: 200 }], segmentCount: 1, lane: 0 },
+        { id: "r.v", from: "e.b", to: "e.a", points: [{ x: 450, y: 60 }, { x: 450, y: 340 }], segmentCount: 1, lane: 0 },
       ],
       width: 1000,
       height: 500,
@@ -379,5 +381,103 @@ describe("标签避让回退（候选耗尽也不重叠）", () => {
         expect(overlap).toBe(false);
       }
     }
+  });
+});
+
+/* ------------------- 段级批注 badge（annotation.target.segment） ------------------- */
+
+const BADGE_RE = /<g class="badge"><circle cx="([-\d.]+)" cy="([-\d.]+)" r="10"[^>]*\/><text[^>]*>(\d+)<\/text><\/g>/g;
+function badges(svg: string): { x: number; y: number; n: number }[] {
+  return [...svg.matchAll(BADGE_RE)].map((m) => ({ x: Number(m[1]), y: Number(m[2]), n: Number(m[3]) }));
+}
+
+function segDoc(): CovenantDoc {
+  const d = doc();
+  d.annotations = [];
+  return d;
+}
+
+const ann = (segment?: number): NonNullable<CovenantDoc["annotations"]>[number] => ({
+  id: segment === undefined ? "a.01JAXSEGWHOLE1" : "a.01JAXSEGSEG01",
+  target:
+    segment === undefined
+      ? { kind: "relation", id: "r.ab" }
+      : { kind: "relation", id: "r.ab", segment },
+  type: "risk",
+  severity: "low",
+  title: "段级",
+  status: "open",
+  author: "human:lily",
+  created: "2026-11-03T00:00:00+08:00",
+});
+
+describe("段级批注 badge", () => {
+  it("段级 badge 落在对应段中点上方（mid.y - 10，±0.5）", () => {
+    const d = segDoc();
+    d.annotations = [ann(1)];
+    const l = layout(d);
+    const edge = l.edges.find((e) => e.id === "r.ab")!;
+    const mid = segmentMidpoint(edge.points, 1);
+    const svg = renderSvg(d, l);
+    const b = badges(svg);
+    expect(b).toHaveLength(1);
+    expect(b[0]!.x).toBeCloseTo(mid.x, 1);
+    expect(b[0]!.y).toBeCloseTo(mid.y - 10, 1);
+    expect(b[0]!.n).toBe(1);
+  });
+
+  it("同段合并计数；整边 badge 只数无 segment 的批注", () => {
+    const d = segDoc();
+    d.annotations = [ann(), ann(1), { ...ann(1), id: "a.01JAXSEGSEG02" }];
+    const l = layout(d);
+    const edge = l.edges.find((e) => e.id === "r.ab")!;
+    const mid = segmentMidpoint(edge.points, 1);
+    const svg = renderSvg(d, l);
+    const b = badges(svg);
+    const segBadge = b.find((x) => Math.abs(x.x - mid.x) < 0.5 && Math.abs(x.y - (mid.y - 10)) < 0.5);
+    expect(segBadge?.n).toBe(2);
+    expect(b.some((x) => x.n === 1 && x !== segBadge)).toBe(true); // 整边 badge 仍在标签旁
+    expect(b).toHaveLength(2);
+  });
+
+  it("无 segment 批注时输出与旧版逐字节一致（黄金示例零回归）", () => {
+    const file = "examples/payments-arch.cvn.yaml";
+    const parsed = parseDocument(readFileSync(file, "utf8"), file);
+    const d = parsed.doc!;
+    const view = (d.views ?? [])[0]!;
+    const sel = selectView(d, view);
+    const l = layout(d, {
+      direction: view.layout?.direction,
+      rankGap: view.layout?.spacing?.rank,
+      nodeGap: view.layout?.spacing?.node,
+      pins: view.layout?.pins,
+      includeIds: sel.elementIds,
+      includeRelationIds: sel.relationIds,
+    });
+    const svg = renderSvg(d, l, { title: view.title ?? d.meta?.title, view });
+    expect(svg).toBe(readFileSync("packages/render/src/__golden__/payments.svg", "utf8"));
+  });
+
+  it("junction 模式（两点直线）段 0 的 badge 落在直线中点上方", () => {
+    const d = segDoc();
+    d.annotations = [ann(0)];
+    const pins = { "e.a": [40, 40] as [number, number], "e.b": [320, 40] as [number, number] };
+    const view = {
+      id: "v.j",
+      title: "j",
+      present: { node_style: "junction" as const },
+      layout: { pins },
+    };
+    d.views = [view];
+    const l = layout(d, { pins, includeIds: ["e.a", "e.b"], includeRelationIds: ["r.ab"] });
+    const svg = renderSvg(d, l, { view });
+    // junction 渲染把边改写成两点直线：中点 = 两节点中心的中点
+    const from = l.nodes["e.a"]!;
+    const to = l.nodes["e.b"]!;
+    const mid = { x: (from.x + from.w / 2 + to.x + to.w / 2) / 2, y: (from.y + from.h / 2 + to.y + to.h / 2) / 2 };
+    const b = badges(svg);
+    expect(b).toHaveLength(1);
+    expect(b[0]!.x).toBeCloseTo(mid.x, 1);
+    expect(b[0]!.y).toBeCloseTo(mid.y - 10, 1);
   });
 });

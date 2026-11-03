@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CovenantDoc } from "@covenant/core";
-import { layout, layoutSequence, route, selectView } from "./index";
+import { layout, layoutSequence, route, segmentMidpoint, selectView } from "./index";
 
 function doc(): CovenantDoc {
   return {
@@ -493,5 +493,41 @@ describe("平行边紧凑间距（去胶囊后不再按标签宽推宽）", () =
   it("紧凑模式下仍无穿框（长边侧边走廊保持）", () => {
     const r = layout(parallelDoc("很长的中文标签文本用于测试", 3));
     assertNoEdgeCrossesNodes(r);
+  });
+});
+
+describe("段级批注几何（EdgeGeom.segmentCount / segmentMidpoint）", () => {
+  it("segmentCount === points.length - 1；正交图边至少 2 段", () => {
+    const r = layout(doc());
+    expect(r.edges.length).toBeGreaterThan(0);
+    for (const e of r.edges) {
+      expect(e.segmentCount).toBe(e.points.length - 1);
+      expect(e.segmentCount).toBeGreaterThanOrEqual(1);
+    }
+    // 普通正交折线：stub + 中间段 + stub，至少 2 段（多段边因此可挂段级批注）
+    expect(r.edges.some((e) => e.segmentCount >= 2)).toBe(true);
+  });
+
+  it("段级批注的合法下标范围是 [0, segmentCount)", () => {
+    const r = layout(doc());
+    for (const e of r.edges) {
+      for (let k = 0; k < e.segmentCount; k++) {
+        const mid = segmentMidpoint(e.points, k);
+        const a = e.points[k]!;
+        const b = e.points[k + 1]!;
+        expect(mid.x).toBeCloseTo((a.x + b.x) / 2, 6);
+        expect(mid.y).toBeCloseTo((a.y + b.y) / 2, 6);
+      }
+    }
+  });
+
+  it("segmentMidpoint：两点边第 0 段=中点；越界下标确定性夹取", () => {
+    const two = [{ x: 0, y: 0 }, { x: 10, y: 0 }];
+    expect(segmentMidpoint(two, 0)).toEqual({ x: 5, y: 0 }); // 2 点边 = 1 段
+    const orth = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 20 }];
+    expect(segmentMidpoint(orth, 1)).toEqual({ x: 10, y: 10 });
+    expect(segmentMidpoint(orth, 99)).toEqual({ x: 10, y: 10 }); // 夹到末段
+    expect(segmentMidpoint(orth, -3)).toEqual({ x: 5, y: 0 }); // 夹到首段
+    expect(segmentMidpoint([], 0)).toEqual({ x: 0, y: 0 });
   });
 });

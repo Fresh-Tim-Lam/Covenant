@@ -7,7 +7,7 @@ entries:
       - packages/core/src/index.ts
     s:
       - 批注 ai_hint 是人给 AI 的指令，AI 不得写
-    source_sha256: 8b567017458c1165e3f58d0d26ee04657544703e506b8f23195694c075e89046
+    source_sha256: f597269a4645ceafdb6f0759aaf0ab999dfa5045f698347dab6e2e76bb82890c
   - file: packages/core/src/parse.ts
     f: YAML 解析（CORE_SCHEMA）与锚点禁令
     r:
@@ -56,7 +56,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 显式 undefined 参数会覆盖默认值导致 NaN，必须逐字段兜底
-    source_sha256: 96fd906635d14fab3acdb62b175e63f3844c0f730e288b0693719d6519146cdb
+    source_sha256: 0ee7804d90f359396d1d82308f9d71c41657f8efda3b190a0fc88e9642bcd08d
   - file: packages/render/src/index.ts
     f: SVG 渲染：节点/边/标签/frame/批注角标
     r:
@@ -66,7 +66,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 渲染必须确定性：同输入逐字节一致
-    source_sha256: 2bf7abf11d7a48ffaffca34c969f964c42252aa5ae3d323b4b8984cc44ce4ed2
+    source_sha256: e7f3736f4e6c3a6be90770115fde5fa2b79553c0c02d7f03177515b584c02016
   - file: packages/render/src/html.ts
     f: 可标注自包含 HTML：内联 SVG/JSON + 多小窗查看器（悬停/固定/钉住、引导线）
     r:
@@ -77,7 +77,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 496bd8be28b17ab1abdaf167c07e6c001b717ac109e14234682da7d9e0813cc8
+    source_sha256: e8c4082b3b1e93ad97cc46a7b2e4c20e085962c887fc4a372fdcfa90b06fed6c
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
@@ -291,7 +291,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
-    source_sha256: 13b2a8c97cc8f2546153f8078616d53d2c3cd360e17787cd37345220c3d6f8b0
+    source_sha256: 88e3c070785f31a3a451d62235d61233823ae5d93dcd82f26c28d22752c7aece
   - file: packages/patch/src/apply.ts
     f: 应用补丁：保留注释的文本插入/替换 + rev+1
     r:

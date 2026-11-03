@@ -5,7 +5,7 @@
  *   点选元素/关系 → 新增批注（localStorage）→ 角标实时更新 → 导出 .patch.json。
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
-import type { CovenantDoc } from "@covenant/core";
+import type { CovenantDoc, ViewDef } from "@covenant/core";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
 export interface DocView {
@@ -80,17 +80,56 @@ function polylineMidpoint(points: Point[]): Point {
 }
 
 /**
+ * 关系的路径几何（供浏览器端按"段"做热区/锚点/badge）。
+ * junction 视图下渲染器把边画成"节点中心到节点中心的直线"，这里必须用同一份 2 点覆盖，
+ * 否则运行时段的命中区域与静态 SVG 不一致。
+ */
+interface RelationSegments {
+  points: [number, number][];
+  segmentCount: number;
+}
+
+function relationSegments(
+  layout: LayoutResult,
+  doc: CovenantDoc,
+  viewDef: ViewDef | undefined,
+): Record<string, RelationSegments> {
+  const junction = viewDef?.present?.node_style === "junction";
+  const out: Record<string, RelationSegments> = {};
+  for (const e of layout.edges) {
+    let points: [number, number][] = e.points.map((p) => [p.x, p.y] as [number, number]);
+    if (junction) {
+      const rel = (doc.relations ?? []).find((r) => r.id === e.id);
+      const from = rel ? layout.nodes[rel.from] : undefined;
+      const to = rel ? layout.nodes[rel.to] : undefined;
+      if (from && to) {
+        points = [
+          [from.x + from.w / 2, from.y + from.h / 2],
+          [to.x + to.w / 2, to.y + to.h / 2],
+        ];
+      }
+    }
+    out[e.id] = { points, segmentCount: Math.max(1, points.length - 1) };
+  }
+  return out;
+}
+
+/**
  * 引导线锚点：元素取矩形中心，关系取折线按弧长的中点（与 badge 锚点不同，badge 偏右上角）。
  * 多小窗的引导线需要"连到元素/边本体"的中间位置，所以单独投影一份。
+ * 段窗（w.segment != null）的锚点由浏览器端用 segments 的段中点计算。
  */
-function centers(layout: LayoutResult) {
+function centers(layout: LayoutResult, segments: Record<string, RelationSegments>) {
   const elements: Record<string, [number, number]> = {};
   for (const [id, r] of Object.entries(layout.nodes)) {
     elements[id] = [r.x + r.w / 2, r.y + r.h / 2] as [number, number];
   }
   const relations: Record<string, [number, number]> = {};
   for (const e of layout.edges) {
-    const mid = polylineMidpoint(e.points);
+    const g = segments[e.id];
+    const mid = polylineMidpoint(
+      g ? g.points.map((p) => ({ x: p[0], y: p[1] })) : e.points,
+    );
     relations[e.id] = [mid.x, mid.y] as [number, number];
   }
   return { elements, relations };
@@ -98,6 +137,11 @@ function centers(layout: LayoutResult) {
 
 function projectDoc(view: DocView) {
   const d = view.doc;
+  // 与 CLI 构建一致地解析当前视图（junction 的 node_style 影响边的实际绘制几何）
+  const viewDef: ViewDef | undefined = view.viewId
+    ? (d.views ?? []).find((v) => v.id === view.viewId)
+    : (d.views && d.views.length === 1 ? d.views[0] : undefined);
+  const segments = relationSegments(view.layout, d, viewDef);
   return {
     key: view.viewId ? `${d.id}#${view.viewId}` : d.id,
     docId: d.id,
@@ -110,7 +154,8 @@ function projectDoc(view: DocView) {
     profile: d.profile,
     size: { width: view.layout.width, height: view.layout.height },
     anchors: anchors(view.layout),
-    centers: centers(view.layout),
+    centers: centers(view.layout, segments),
+    segments: segments,
     positions: Object.fromEntries(
       Object.entries(view.layout.nodes).map(([id, r]) => [id, [r.x, r.y]]),
     ) as Record<string, [number, number]>,
@@ -260,6 +305,14 @@ svg text{user-select:none}
 .ann-form-chev{font-size:11px;color:var(--muted);width:10px;display:inline-block}
 .ann-form-body{margin-top:8px}
 .ann-form-body[hidden]{display:none}
+/* 运行时多段热区：永远透明、不吃 hover/彩色高亮的路径样式，只负责命中 */
+.edge path.seg-hit{stroke:transparent!important;stroke-width:10px!important;stroke-opacity:1!important}
+.whole-edge-box{margin-top:10px;border:1px dashed var(--line);border-radius:8px;padding:8px;background:#fafafa}
+.whole-edge-box>button{font:inherit;font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:#334155}
+.whole-edge-box>button:hover{border-color:var(--accent);color:var(--accent)}
+.whole-edge-body{margin-top:8px}
+.whole-edge-body[hidden]{display:none}
+.whole-edge-actions{margin-top:6px}
 `;
 
 const SCRIPT = `
@@ -287,6 +340,9 @@ const SCRIPT = `
   var COLORS = ["#2563eb","#dc2626","#059669","#d97706","#7c3aed","#db2777","#0891b2","#65a30d"];
   var colorSeq = 0;
   var HOVER_CLOSE_MS = 120;
+  // hover 色忆：同一 (kind,id,segment) 的 hover 窗在 400ms 内重开时复用同一颜色，
+  // 避免"窗口盖住元素 → leave → close → enter → 重新分配颜色"的振荡闪色。
+  var hoverColorMemo = {};
 
   function normalize(v){
     if (Array.isArray(v)) return { add: v, status: {}, deleted: [], edited: {} };
@@ -360,8 +416,77 @@ const SCRIPT = `
     for (var i=0;i<list.length;i++) if (list[i].getAttribute("data-id") === id) return list[i];
     return null;
   }
-  function findWin(kind, id){
-    for (var i=wins.length-1;i>=0;i--) if (wins[i].kind === kind && wins[i].targetId === id) return wins[i];
+  // —— 多段边几何（来自 build 期 projectDoc.segments）——
+  function segGeom(doc, id){ return doc && doc.segments ? doc.segments[id] : null; }
+  function segCount(doc, id){ var g = segGeom(doc, id); return g ? g.segmentCount : 1; }
+  function segMid(doc, id, k){
+    var g = segGeom(doc, id);
+    if (!g || k == null || k < 0 || k + 1 >= g.points.length) return null;
+    var a = g.points[k], b = g.points[k + 1];
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+  // 运行时注入透明段热区（不改静态 SVG，黄金图不变）
+  function ensureSegHits(doc){
+    var svg = currentSvg();
+    if (!svg || !doc || !doc.segments) return;
+    var edges = svg.querySelectorAll(".edge[data-id]");
+    for (var i=0;i<edges.length;i++){
+      var el = edges[i];
+      var id = el.getAttribute("data-id");
+      var olds = el.querySelectorAll(".seg-hit");
+      for (var o=0;o<olds.length;o++) olds[o].parentNode.removeChild(olds[o]);
+      var g = doc.segments[id];
+      if (!g) continue;
+      for (var k=0;k+1<g.points.length;k++){
+        var a = g.points[k], b = g.points[k + 1];
+        var p = document.createElementNS(SVGNS, "path");
+        p.setAttribute("class", "seg-hit");
+        p.setAttribute("data-seg", String(k));
+        p.setAttribute("d", "M" + a[0] + " " + a[1] + "L" + b[0] + " " + b[1]);
+        p.setAttribute("fill", "none");
+        p.setAttribute("stroke", "transparent");
+        p.setAttribute("stroke-width", "10");
+        p.setAttribute("pointer-events", "stroke");
+        bindSegHit(p, id, k);
+        el.appendChild(p);
+      }
+    }
+  }
+  function bindSegHit(path, id, k){
+    path.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      if (moved) { moved = false; return; }
+      closeOtherHoverWins("relation", id, k);
+      openWindow("relation", id, "clicked", { x: ev.clientX, y: ev.clientY }, k);
+    });
+    path.addEventListener("pointerenter", function(ev){
+      closeOtherHoverWins("relation", id, k);
+      var w = findWin("relation", id, k);
+      if (w){ clearTimeout(w.closeTimer); return; }
+      openWindow("relation", id, "hover", { x: ev.clientX, y: ev.clientY }, k);
+    });
+    path.addEventListener("pointerleave", function(ev){
+      // 指针移入窗口本体/另一个窗口时不算离开（防 hover 窗边界振荡闪烁）
+      var rt = ev.relatedTarget;
+      if (rt && rt.closest && rt.closest(".cvn-win")) return;
+      var w = findWin("relation", id, k);
+      if (w) scheduleHoverClose(w);
+    });
+  }
+  // 悬停预览是瞬态的：进入新对象时立即收掉别的 hover 窗（点击/钉住窗不受影响）
+  function closeOtherHoverWins(kind, id, segment){
+    for (var i=wins.length-1;i>=0;i--){
+      var w = wins[i];
+      if (w.state !== "hover" || w.pinned) continue;
+      if (w.kind === kind && w.targetId === id && w.segment === segment) continue;
+      closeWin(w);
+    }
+  }
+  function findWin(kind, id, segment){
+    var seg = segment == null ? null : segment;
+    for (var i=wins.length-1;i>=0;i--){
+      if (wins[i].kind === kind && wins[i].targetId === id && wins[i].segment === seg) return wins[i];
+    }
     return null;
   }
   function activeWin(){ return wins.length ? wins[wins.length-1] : null; }
@@ -382,6 +507,21 @@ const SCRIPT = `
       if (!used[COLORS[idx]]) { colorSeq = idx + 1; return COLORS[idx]; }
     }
     var c = COLORS[colorSeq % COLORS.length]; colorSeq = (colorSeq + 1) % COLORS.length; return c;
+  }
+  function colorInUse(color){
+    for (var i=0;i<wins.length;i++) if (wins[i].color === color) return true;
+    return false;
+  }
+  function hoverKeyOf(kind, id, segment){
+    return kind + "|" + id + "|" + (segment == null ? "" : segment);
+  }
+  function rememberHoverColor(w){
+    var now = Date.now();
+    hoverColorMemo[hoverKeyOf(w.kind, w.targetId, w.segment)] = { color: w.color, ts: now };
+    // 顺手清理过期记忆，避免无限增长
+    for (var mk in hoverColorMemo){
+      if (Object.prototype.hasOwnProperty.call(hoverColorMemo, mk) && now - hoverColorMemo[mk].ts > 10000) delete hoverColorMemo[mk];
+    }
   }
   function stripIds(el){
     var list = el.querySelectorAll("[id]");
@@ -418,6 +558,10 @@ const SCRIPT = `
   function anchorOf(w){
     var doc = currentDoc();
     if (!doc) return null;
+    if (w.kind === "relation" && w.segment != null){
+      var sm = segMid(doc, w.targetId, w.segment);
+      if (sm) return sm;
+    }
     var src = doc.centers && doc.centers[w.kind === "element" ? "elements" : "relations"];
     var p = src && src[w.targetId];
     if (!p){
@@ -426,7 +570,7 @@ const SCRIPT = `
     }
     return p || null;
   }
-  // 从窗口最近边中点连到锚点（元素中心 / 边中点）；坐标已换算到 main 容器坐标系
+  // 从窗口最近边中点连到锚点（元素中心 / 整边弧长中点 / 段中点）；坐标已换算到 main 容器坐标系
   function guidePoints(w){
     var a = anchorOf(w);
     if (!a) return null;
@@ -499,12 +643,13 @@ const SCRIPT = `
     var parent = w.el.parentNode;
     if (parent && parent.lastElementChild !== w.el) parent.appendChild(w.el);
     w.el.style.zIndex = String(20 + (++zSeq % 1000));
-    selected = { kind: w.kind, id: w.targetId };
+    selected = { kind: w.kind, id: w.targetId, segment: w.segment };
     syncHighlights();
     updateGuides();
   }
   function closeWin(w){
     clearTimeout(w.closeTimer);
+    if (w.state === "hover" && !w.pinned) rememberHoverColor(w);
     var idx = wins.indexOf(w);
     if (idx >= 0) wins.splice(idx, 1);
     if (w.line && w.line.parentNode) w.line.parentNode.removeChild(w.line);
@@ -513,13 +658,14 @@ const SCRIPT = `
       w.el.hidden = true; w.el.innerHTML = "";
       w.el.removeAttribute("data-win"); w.el.removeAttribute("data-color");
       w.el.removeAttribute("data-kind"); w.el.removeAttribute("data-target");
+      w.el.removeAttribute("data-segment");
       w.el.style.borderColor = "";
     } else if (w.el.parentNode){
       w.el.parentNode.removeChild(w.el);
     }
-    if (selected && selected.kind === w.kind && selected.id === w.targetId){
+    if (selected && selected.kind === w.kind && selected.id === w.targetId && selected.segment === w.segment){
       var top = activeWin();
-      selected = top ? { kind: top.kind, id: top.targetId } : null;
+      selected = top ? { kind: top.kind, id: top.targetId, segment: top.segment } : null;
     }
     if (!wins.length){
       var sel = document.querySelectorAll(".sel");
@@ -532,8 +678,9 @@ const SCRIPT = `
     for (var i=wins.length-1;i>=0;i--) if (!wins[i].pinned) closeWin(wins[i]);
   }
   function closeAll(){ for (var i=wins.length-1;i>=0;i--) closeWin(wins[i]); }
-  function openWindow(kind, id, state, at){
-    var w = findWin(kind, id);
+  function openWindow(kind, id, state, at, segment){
+    var seg = segment == null ? null : segment;
+    var w = findWin(kind, id, seg);
     if (w){
       clearTimeout(w.closeTimer);
       if (state === "clicked" && w.state === "hover"){ w.state = "clicked"; renderWin(w); }
@@ -541,14 +688,17 @@ const SCRIPT = `
       return w;
     }
     var el = acquireWinEl();
-    var color = colorFor();
-    w = { id: "w" + (++winSeq), kind: kind, targetId: id, color: color, state: state, pinned: false, formOpen: false, el: el, line: null, closeTimer: 0 };
+    // hover 预览若刚被同目标关闭过，复用上次颜色（不重新分配 → 不会闪色）
+    var memo = state === "hover" ? hoverColorMemo[hoverKeyOf(kind, id, seg)] : null;
+    var color = memo && Date.now() - memo.ts < 400 && !colorInUse(memo.color) ? memo.color : colorFor();
+    w = { id: "w" + (++winSeq), kind: kind, targetId: id, segment: seg, color: color, state: state, pinned: false, formOpen: false, formScope: seg == null ? "edge" : "segment", el: el, line: null, closeTimer: 0 };
     wins.push(w);
     el.hidden = false;
     el.className = "cvn-win";
     el.setAttribute("data-win", w.id);
     el.setAttribute("data-kind", kind);
     el.setAttribute("data-target", id);
+    if (seg != null) el.setAttribute("data-segment", String(seg));
     el.setAttribute("data-color", color);
     el.style.borderColor = color;
     positionWin(w, at);
@@ -574,6 +724,7 @@ const SCRIPT = `
     for (var j=0;j<btns.length;j++) btns[j].className = btns[j].getAttribute("data-doc") === id ? "on" : "";
     var doc = currentDoc();
     renderInspector(null, null);
+    ensureSegHits(doc);
     drawBadges(doc);
     updateHeader();
     updateEditPending();
@@ -589,10 +740,18 @@ const SCRIPT = `
       if (st !== "open" && st !== "ack") continue;
       var t = a.target || {};
       if (!t.kind || !t.id) continue;
-      var k = t.kind + "|" + t.id;
+      // 关系按 (id, segment) 分开计数：整边 "" / 第 k 段 "k"
+      var seg = t.kind === "relation" && t.segment != null ? String(t.segment) : "";
+      var k = t.kind + "|" + t.id + "|" + seg;
       map[k] = (map[k] || 0) + 1;
     }
     return map;
+  }
+
+  function badgePos(doc, kind, id, seg){
+    if (kind === "element") return doc.anchors.elements[id];
+    if (seg === "" || seg == null) return doc.anchors.relations[id];
+    return segMid(doc, id, Number(seg));
   }
 
   function drawBadges(doc){
@@ -605,12 +764,15 @@ const SCRIPT = `
     var c = counts(doc);
     for (var key in c){
       if (!Object.prototype.hasOwnProperty.call(c, key)) continue;
-      var parts = key.split("|"), kind = parts[0], id = parts[1];
-      var pos = kind === "element" ? doc.anchors.elements[id] : kind === "relation" ? doc.anchors.relations[id] : null;
+      var parts = key.split("|"), kind = parts[0], id = parts[1], seg = parts[2];
+      var pos = badgePos(doc, kind, id, seg);
       if (!pos) continue;
       var circle = document.createElementNS(SVGNS, "circle");
       circle.setAttribute("cx", pos[0]); circle.setAttribute("cy", pos[1]); circle.setAttribute("r", "10");
       circle.setAttribute("fill", "#dc2626"); circle.setAttribute("stroke", "#fff"); circle.setAttribute("stroke-width", "1.5");
+      circle.setAttribute("data-kind", kind);
+      circle.setAttribute("data-id", id);
+      if (kind === "relation" && seg !== "") circle.setAttribute("data-seg", seg);
       var text = document.createElementNS(SVGNS, "text");
       text.setAttribute("x", pos[0]); text.setAttribute("y", pos[1] + 3.6);
       text.setAttribute("text-anchor", "middle"); text.setAttribute("font-size", "10.5");
@@ -631,8 +793,20 @@ const SCRIPT = `
     if (annSaveBtn) annSaveBtn.hidden = !(window.__CVN_EDIT__ && window.__CVN_EDIT__.patchEndpoint && n > 0);
   }
 
-  function annsFor(doc, kind, id){
-    return allAnns(doc).filter(function(a){ return a.target && a.target.kind === kind && a.target.id === id; });
+  // 按窗口范围取批注：segment == null → 整条边/元素；k → 仅该段
+  function annsForScope(doc, kind, id, segment){
+    var seg = segment == null ? null : segment;
+    return allAnns(doc).filter(function(a){
+      var t = a.target || {};
+      if (t.kind !== kind || t.id !== id) return false;
+      var aSeg = t.segment == null ? null : t.segment;
+      return aSeg === seg;
+    });
+  }
+  function visibleAnnsForScope(doc, kind, id, segment){
+    return annsForScope(doc, kind, id, segment)
+      .filter(function(a){ return !isAnnDeleted(doc, a.id); })
+      .map(function(a){ return effAnn(doc, a); });
   }
 
   function transitions(st){
@@ -666,14 +840,14 @@ const SCRIPT = `
     for (var i = 0; i < l.add.length; i++) if (l.add[i].id === id) idx = i;
     if (idx >= 0) {
       var removed = l.add.splice(idx, 1)[0];
-      save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null);
-      pushUndo(function(){ localFor(doc.docId).add.splice(idx, 0, removed); save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null); });
+      save(); refreshDocUi(); renderSelected();
+      pushUndo(function(){ localFor(doc.docId).add.splice(idx, 0, removed); save(); refreshDocUi(); renderSelected(); });
       showUndoToast("已删除本地批注", "撤销");
       return;
     }
     if (l.deleted.indexOf(id) < 0) l.deleted.push(id);
-    save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null);
-    pushUndo(function(){ var ll = localFor(doc.docId); ll.deleted = ll.deleted.filter(function(x){ return x !== id; }); save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null); });
+    save(); refreshDocUi(); renderSelected();
+    pushUndo(function(){ var ll = localFor(doc.docId); ll.deleted = ll.deleted.filter(function(x){ return x !== id; }); save(); refreshDocUi(); renderSelected(); });
     showUndoToast("已移入回收桶（导出时生成 remove）", "撤销");
   }
   function saveAnnEdit(id, w){
@@ -704,8 +878,8 @@ const SCRIPT = `
     if (!doc) return;
     var l = localFor(doc.docId);
     l.deleted = l.deleted.filter(function(x){ return x !== id; });
-    save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null);
-    pushUndo(function(){ localFor(doc.docId).deleted.push(id); save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null); });
+    save(); refreshDocUi(); renderSelected();
+    pushUndo(function(){ localFor(doc.docId).deleted.push(id); save(); refreshDocUi(); renderSelected(); });
     showUndoToast("已恢复批注", "撤销");
   }
   function undoLast(){
@@ -723,22 +897,45 @@ const SCRIPT = `
     if (ub) ub.addEventListener("click", function(ev){ ev.stopPropagation(); tip.className = ""; undoLast(); });
   }
 
-  function setStatus(annId, status, kind, id){
+  function setStatus(annId, status, w){
     var doc = currentDoc();
     if (!doc) return;
     localFor(doc.docId).status[annId] = status;
     save();
     drawBadges(doc);
     updateHeader();
-    renderInspector(kind, id);
+    if (w) renderWin(w);
   }
 
-  function renderInspector(kind, id){
+  function renderInspector(kind, id, segment){
     // 兼容旧调用：null 表示清空全部窗口；否则定位/创建对应窗口并重绘
     if (!id){ closeAll(); return; }
-    var w = findWin(kind, id);
-    if (!w){ openWindow(kind, id, "clicked", null); return; }
+    var w = findWin(kind, id, segment);
+    if (!w){ openWindow(kind, id, "clicked", null, segment); return; }
     renderWin(w);
+  }
+  function renderSelected(){
+    if (!selected){ closeAll(); return; }
+    renderInspector(selected.kind, selected.id, selected.segment);
+  }
+
+  function renderAnnItems(doc, list){
+    var html = '';
+    for (var i=0;i<list.length;i++){
+      var a = list[i];
+      var st = effStatus(doc, a);
+      var isEditingThis = editingAnn === a.id;
+      var localChanged = localFor(doc.docId).status[a.id] ? ' · 本地改为 ' + st : '';
+      html += '<li' + (isEditingThis ? ' class="editing"' : '') + '><div><span class="chip ' + esc(a.severity) + '">' + esc(a.severity) + '</span><span class="chip type">' + esc(a.type) + '</span><span class="hint">' + esc(st) + ' · ' + esc(a.author) + esc(localChanged) + '</span></div>';
+      html += '<div class="ann-title">' + esc(a.title) + '</div>';
+      if (a.body) html += '<div class="ann-body">' + esc(a.body) + '</div>';
+      if (a.aiHint) html += '<div class="ann-hint"><b>AI 指令：</b>' + esc(a.aiHint) + '</div>';
+      html += '<button class="del-ann" data-id="' + esc(a.id) + '" title="删除批注（可撤销/回收桶）">×</button>';
+      html += '<button class="edit-ann" data-id="' + esc(a.id) + '">编辑</button>';
+      html += statusButtons(a.id, st);
+      html += '</li>';
+    }
+    return html;
   }
 
   // 单个小窗的内容渲染 + 事件绑定（多窗共用；主窗复用 #inspector 保留旧 id 以便兼容）
@@ -770,26 +967,21 @@ const SCRIPT = `
       }
       html += '<button id="edit-apply" data-field="edit-apply">暂存修改</button><p class="hint">导出编辑 JSON 后运行 covenant edit 预览/应用。</p></div>';
     }
-    var list = annsFor(doc, kind, id).filter(function(a){ return !isAnnDeleted(doc, a.id); }).map(function(a){ return effAnn(doc, a); });
-    html += '<h3 style="margin-top:12px">批注（' + list.length + '）</h3>';
-    if (!list.length) html += '<p class="hint">还没有批注。</p>';
-    else {
-      html += '<ul class="anns">';
-      for (var i=0;i<list.length;i++){
-        var a = list[i];
-        var st = effStatus(doc, a);
-        var isEditingThis = editingAnn === a.id;
-        var localChanged = localFor(doc.docId).status[a.id] ? ' · 本地改为 ' + st : '';
-        html += '<li' + (isEditingThis ? ' class="editing"' : '') + '><div><span class="chip ' + esc(a.severity) + '">' + esc(a.severity) + '</span><span class="chip type">' + esc(a.type) + '</span><span class="hint">' + esc(st) + ' · ' + esc(a.author) + esc(localChanged) + '</span></div>';
-        html += '<div class="ann-title">' + esc(a.title) + '</div>';
-        if (a.body) html += '<div class="ann-body">' + esc(a.body) + '</div>';
-        if (a.aiHint) html += '<div class="ann-hint"><b>AI 指令：</b>' + esc(a.aiHint) + '</div>';
-        html += '<button class="del-ann" data-id="' + esc(a.id) + '" title="删除批注（可撤销/回收桶）">×</button>';
-        html += '<button class="edit-ann" data-id="' + esc(a.id) + '">编辑</button>';
-        html += statusButtons(a.id, st);
-        html += '</li>';
-      }
-      html += '</ul>';
+    var list = visibleAnnsForScope(doc, kind, id, w.segment);
+    var wholeEdge = kind === "relation" && w.segment != null ? visibleAnnsForScope(doc, kind, id, null) : [];
+    var scopeLabel = w.segment != null ? ' · 本段' : '';
+    html += '<h3 style="margin-top:12px">批注（' + list.length + scopeLabel + '）</h3>';
+    if (!list.length) html += '<p class="hint">' + (w.segment != null ? '本段还没有批注。' : '还没有批注。') + '</p>';
+    else html += '<ul class="anns">' + renderAnnItems(doc, list) + '</ul>';
+    // 段窗：可折叠的"整条边批注"，保证旧批注（无 segment）可见/可操作
+    if (kind === "relation" && w.segment != null){
+      html += '<div class="whole-edge-box">' +
+        '<button type="button" class="whole-edge-toggle" aria-expanded="false">整条边批注（' + wholeEdge.length + '）</button>' +
+        '<div class="whole-edge-body" hidden>' +
+        (wholeEdge.length ? '<ul class="anns">' + renderAnnItems(doc, wholeEdge) + '</ul>' : '<p class="hint">整条边还没有批注。</p>') +
+        '</div>' +
+        '<div class="whole-edge-actions"><button type="button" class="open-edge-win">打开整条边窗口</button></div>' +
+        '</div>';
     }
     var trash = localFor(doc.docId).deleted;
     if (trash.length) {
@@ -802,6 +994,7 @@ const SCRIPT = `
     }
     var editTarget = null;
     for (var q = 0; q < list.length; q++) if (list[q].id === editingAnn) editTarget = list[q];
+    for (var q2 = 0; q2 < wholeEdge.length && !editTarget; q2++) if (wholeEdge[q2].id === editingAnn) editTarget = wholeEdge[q2];
     if (editTarget) {
       var ea = editTarget;
       html += '<div class="form edit-form"><div class="edit-head"><h3>编辑批注</h3><div class="edit-actions"><button class="ann-save" data-id="' + esc(ea.id) + '">保存</button><button class="ann-cancel" data-id="' + esc(ea.id) + '" title="取消编辑，返回新增批注">← 返回</button></div></div>' +
@@ -813,10 +1006,19 @@ const SCRIPT = `
         '</div>';
     } else {
       editingAnn = null;
+      // 段窗：新建默认落在本段，可切"整条边"（target 不带 segment）
+      var scopeRow = '';
+      if (kind === "relation" && w.segment != null){
+        scopeRow = '<div class="row"><div><label>标注范围</label><select id="f-scope" data-field="f-scope">' +
+          '<option value="segment"' + (w.formScope === "edge" ? "" : " selected") + '>本段（第 ' + (w.segment + 1) + ' 段）</option>' +
+          '<option value="edge"' + (w.formScope === "edge" ? " selected" : "") + '>整条边</option>' +
+          '</select></div></div>';
+      }
       // 「新增批注」默认折叠：只留标题行，点击展开/再点收起（不重建 DOM，展开时保留已输入内容）
       html += '<div class="form ann-form">' +
         '<button type="button" class="ann-form-toggle" aria-expanded="' + (w.formOpen ? "true" : "false") + '"><span class="ann-form-chev">' + (w.formOpen ? "▾" : "▸") + '</span>＋ 新增批注</button>' +
         '<div class="ann-form-body"' + (w.formOpen ? "" : " hidden") + '>' +
+        scopeRow +
         '<div class="row"><div><label>类型</label><select id="f-type" data-field="f-type"><option>risk</option><option>question</option><option>todo</option><option>defect</option><option>smell</option><option>decision</option></select></div>' +
         '<div><label>严重度</label><select id="f-sev" data-field="f-sev"><option>high</option><option selected>medium</option><option>low</option><option>blocker</option></select></div></div>' +
         '<label>标题（一句话结论）</label><input id="f-title" data-field="f-title" placeholder="例如：这里缺少降级路径">' +
@@ -825,7 +1027,9 @@ const SCRIPT = `
         '<button id="f-submit" data-field="f-submit">钉到图上</button>' +
         '</div></div>';
     }
-    var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) + '</span><span class="insp-actions"><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
+    var headHint = (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) +
+      (w.segment != null ? ' · 段 ' + (w.segment + 1) + '/' + segCount(doc, id) : '');
+    var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + headHint + '</span><span class="insp-actions"><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
     w.el.innerHTML = head + '<div class="insp-body">' + html + '</div>';
     w.el.hidden = false;
     if (w.el !== primaryEl) stripIds(w.el);
@@ -846,7 +1050,7 @@ const SCRIPT = `
     var closeBtn = el.querySelector(".insp-close");
     if (closeBtn) closeBtn.addEventListener("click", function(ev){ ev.stopPropagation(); closeWin(w); });
     var copyBtn = el.querySelector(".copy-btn");
-    if (copyBtn) copyBtn.addEventListener("click", function(ev){ ev.stopPropagation(); copySelection(kind, id); });
+    if (copyBtn) copyBtn.addEventListener("click", function(ev){ ev.stopPropagation(); copySelection(kind, id, w.segment); });
     var pinBtn = el.querySelector(".pin-btn");
     if (pinBtn) {
       function paintPin(){
@@ -907,7 +1111,33 @@ const SCRIPT = `
     // 鼠标进入窗口本体不关闭 hover 预览（可在窗内继续操作）；离开后再延时收；按下即置顶
     el.addEventListener("pointerdown", function(){ activateWin(w); });
     el.addEventListener("pointerenter", function(){ if (w.state === "hover") clearTimeout(w.closeTimer); });
-    el.addEventListener("pointerleave", function(){ if (w.state === "hover") scheduleHoverClose(w); });
+    el.addEventListener("pointerleave", function(ev){
+      if (w.state !== "hover") return;
+      // 指针只是移回锚定对象/另一个窗口 → 仍在 hover 区域内，不关闭（防边界振荡闪烁）
+      var rt = ev.relatedTarget;
+      if (rt && rt.closest && rt.closest(".cvn-win")) return;
+      var anchorShape = shapeOf(w.kind, w.targetId);
+      if (anchorShape && rt && anchorShape.contains(rt)) return;
+      scheduleHoverClose(w);
+    });
+    // 段窗：折叠"整条边批注" + 打开整条边窗口
+    var wholeToggle = el.querySelector(".whole-edge-toggle");
+    if (wholeToggle) wholeToggle.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      var body = el.querySelector(".whole-edge-body");
+      var open = body ? body.hidden : false;
+      if (body) body.hidden = !open;
+      wholeToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      updateGuides();
+    });
+    var openEdgeBtn = el.querySelector(".open-edge-win");
+    if (openEdgeBtn) openEdgeBtn.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      openWindow("relation", id, "clicked", { x: ev.clientX, y: ev.clientY }, null);
+    });
+    // 新建批注的标注范围（本段 / 整条边）
+    var scopeSel = fieldOf(w, "f-scope");
+    if (scopeSel) scopeSel.addEventListener("change", function(){ w.formScope = String(scopeSel.value); });
     var editBtns = el.querySelectorAll(".edit-ann");
     for (var ei = 0; ei < editBtns.length; ei++){
       (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = btn.getAttribute("data-id"); renderWin(w); }); })(editBtns[ei]);
@@ -940,7 +1170,7 @@ const SCRIPT = `
       (function(btn){
         if (!btn.getAttribute("data-act")) return; // 编辑表单的按钮不走状态流转
         btn.addEventListener("click", function(){
-          setStatus(btn.getAttribute("data-id"), btn.getAttribute("data-act"), kind, id);
+          setStatus(btn.getAttribute("data-id"), btn.getAttribute("data-act"), w);
         });
       })(acts[j]);
     }
@@ -951,9 +1181,17 @@ const SCRIPT = `
     if (!doc || !w) return;
     var title = fieldVal(w, "f-title").trim();
     if (!title) { alert("标题必填"); return; }
+    // 段窗默认标注本段；用户可切"整条边"（target 不带 segment）
+    var target = { kind: w.kind, id: w.targetId };
+    if (w.kind === "relation" && w.segment != null){
+      var scopeEl = fieldOf(w, "f-scope");
+      var scope = scopeEl ? String(scopeEl.value) : (w.formScope || "segment");
+      w.formScope = scope;
+      if (scope !== "edge") target.segment = w.segment;
+    }
     var ann = {
       id: newId(),
-      target: { kind: w.kind, id: w.targetId },
+      target: target,
       type: fieldVal(w, "f-type"),
       severity: fieldVal(w, "f-sev"),
       title: title,
@@ -1048,7 +1286,7 @@ const SCRIPT = `
       if (doc) {
         delete local[doc.docId]; save();
         drawBadges(doc); updateHeader();
-        renderInspector(selected ? selected.kind : null, selected ? selected.id : null);
+        renderSelected();
       }
       showToast("批注已写回 .cvn.yaml（rev " + x.body.rev + "）");
     }).catch(function(){ showToast("写回请求失败：请确认 edit:serve 仍在运行"); });
@@ -1067,27 +1305,39 @@ const SCRIPT = `
   var shapes = document.querySelectorAll(".node, .edge");
   for (var k=0;k<shapes.length;k++){
     (function(el){
+      var isEdge = el.classList.contains("edge");
       function kindOf(){ return el.getAttribute("data-kind") || (el.classList.contains("node") ? "element" : "relation"); }
       function idOf(){ return el.getAttribute("data-id") || ""; }
+      // 指针从元素/窗口移入窗口或回到锚定对象时不算"移开"（防 hover 窗边界振荡闪烁）
+      function movedIntoWindow(rt){ return rt && rt.closest && rt.closest(".cvn-win"); }
       el.addEventListener("click", function(ev){
         ev.stopPropagation();
         if (moved) { moved = false; return; }
+        // 段热区（.seg-hit）自己 stopPropagation 处理；命中则整边 handler 不重复开窗
+        var segEl = ev.target && ev.target.closest ? ev.target.closest("[data-seg]") : null;
+        if (segEl) return;
         var kind = kindOf(), id = idOf();
         if (!id) return;
         // 点击另一个对象：保留已有点击窗，直接再开一个新窗（多窗并存）；
         // 只有点空白画布才关闭所有未钉住的窗（见 clearSelection）。
+        closeOtherHoverWins(kind, id, null);
         openWindow(kind, id, "clicked", { x: ev.clientX, y: ev.clientY });
       });
-      // 悬停 → 预览窗 + 同色高亮；移开（非点击/非钉住）→ 延时关闭
+      // 悬停 → 预览窗 + 同色高亮；移开（非点击/非钉住）→ 延时关闭。
+      // 有段热区的边由各 .seg-hit 自己处理悬停，整边 hover 不再介入。
       el.addEventListener("pointerenter", function(ev){
+        if (isEdge && el.querySelector(".seg-hit")) return;
         var kind = kindOf(), id = idOf();
         if (!id) return;
-        var w = findWin(kind, id);
+        closeOtherHoverWins(kind, id, null);
+        var w = findWin(kind, id, null);
         if (w){ clearTimeout(w.closeTimer); return; }
         openWindow(kind, id, "hover", { x: ev.clientX, y: ev.clientY });
       });
-      el.addEventListener("pointerleave", function(){
-        var w = findWin(kindOf(), idOf());
+      el.addEventListener("pointerleave", function(ev){
+        if (isEdge && el.querySelector(".seg-hit")) return;
+        if (movedIntoWindow(ev.relatedTarget)) return;
+        var w = findWin(kindOf(), idOf(), null);
         if (w) scheduleHoverClose(w);
       });
     })(shapes[k]);
@@ -1148,17 +1398,20 @@ const SCRIPT = `
     closeUnpinned();
   }
 
-  function selectionPayload(kind, id){
+  function selectionPayload(kind, id, segment){
     var doc = currentDoc();
     if (!doc) return null;
+    var seg = segment == null ? null : segment;
     var obj = kind === "element" ? byId(doc.elements, id) : byId(doc.relations, id);
-    var anns = annsFor(doc, kind, id).filter(function(a){ return !isAnnDeleted(doc, a.id); }).map(function(a){ return effAnn(doc, a); }).map(function(a){
+    var anns = annsForScope(doc, kind, id, seg).filter(function(a){ return !isAnnDeleted(doc, a.id); }).map(function(a){ return effAnn(doc, a); }).map(function(a){
       return {
         id: a.id, type: a.type, severity: a.severity, title: a.title,
         body: a.body, status: effStatus(doc, a), author: a.author, aiHint: a.aiHint || undefined
       };
     });
-    return { doc: doc.docId, rev: doc.rev, target: { kind: kind, id: id }, object: obj, annotations: anns };
+    var target = { kind: kind, id: id };
+    if (kind === "relation" && seg != null) target.segment = seg;
+    return { doc: doc.docId, rev: doc.rev, target: target, object: obj, annotations: anns };
   }
   function showToast(msg){
     var tip = document.getElementById("toast");
@@ -1176,8 +1429,8 @@ const SCRIPT = `
       document.body.removeChild(ta); done(ok);
     } catch (e) { done(false); }
   }
-  function copySelection(kind, id){
-    var payload = selectionPayload(kind, id);
+  function copySelection(kind, id, segment){
+    var payload = selectionPayload(kind, id, segment);
     if (!payload) return;
     var text = JSON.stringify(payload, null, 2);
     function done(ok){ showToast(ok ? "已复制选中对象 JSON" : "复制失败：浏览器不允许剪贴板，请手动选择文本"); }
