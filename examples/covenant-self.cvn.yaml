@@ -11,14 +11,16 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 4
+  rev: 5
   owners: [human:lily]
-  updated: 2026-11-03T00:00:00+08:00
+  updated: 2026-11-03T18:45:00+08:00
   ai:
     summary: |
-      Covenant 由 CLI/MCP/构建器/浏览器标注器四类进程构成，权威数据是 .cvn 项目文件；
-      AI 通过 MCP 读 digest 并提交补丁，校验器与语义 diff 是写入门禁。
-      本图的 6 条批注是自举发现的真实设计缺口（其中 a.01JAY0S3KV04 已关闭），其余需在 M1/M2 处理。
+      Covenant 由 CLI / MCP / serve / 浏览器标注器四类进程/端构成，权威数据是项目内 .cvn.yaml；
+      CLI 与 MCP 是并列前端，都直接调用共享库层（不经 CLI 进程）；构建管线产出单文件 HTML（默认）
+      与 dist/site 文件夹站点（第二模式）；写回走 patch 门禁 + write-ahead 审计。
+      本图 9 条批注来自自举与用户评审：6 条已解决，3 条 open（HTML 组织/大模型服务定位/审计是否基于 git），
+      其中 a.BBXNVV 与 a.0JCN 的答案已由 ai:arch-owner 追加批注并写入元素摘要，最终结案仍由人确认。
     budget_tokens: 1000
 
 elements:
@@ -36,69 +38,90 @@ elements:
     kind: container
     name: covenant CLI
     tech: Node / TypeScript
-    summary: check/render/build/apply/diff/approve 等命令入口
+    summary: 13 个子命令入口（check/render/build/bundle/apply/patch-check/diff/index/ai/adr/edit/doctor/serve），编排共享库与构建管线
     tags: [critical]
 
   - id: e.mcp
     kind: container
     name: MCP Server
-    tech: Node / TypeScript
-    summary: 把 CLI 能力以 MCP 工具暴露给 Agent
+    tech: Node / TypeScript + JSON-RPC
+    summary: stdio 进程：9 个工具（brief/check/read_doc/render/build/patch_check/apply/diff/index），直接调用共享库，不经 CLI 进程
+    tags: [critical]
+
+  - id: e.libs
+    kind: container
+    name: 共享库层
+    tech: TypeScript（pnpm workspace）
+    summary: core / profile / layout / render / indexer / ai / adr / editor；被 CLI / MCP / serve / 构建管线复用（validate 与 diff+patch 单列）
     tags: [critical]
 
   - id: e.validate
     kind: container
-    name: Validator
-    tech: TypeScript
-    summary: L0–L6 校验器，产出稳定排序的 findings
+    name: 校验库（validate）
+    tech: TypeScript + ajv
+    summary: 共享库之一：L1 schema / L2 完整性 / L3 剖面一致性，产出稳定排序 findings
     tags: [critical]
 
   - id: e.diff
     kind: container
-    name: Semantic Diff / Patch
+    name: 变更库（diff + patch）
     tech: TypeScript
-    summary: 语义 diff 分类 + 补丁应用 + 乐观锁
+    summary: 共享库之一：语义 diff 三分类 + 补丁门禁（base_rev/信任边界）+ 原子落盘 + write-ahead 审计
     tags: [critical]
 
   - id: e.builder
     kind: container
-    name: HTML Builder
-    tech: TypeScript + esbuild
-    summary: 把 .cvn 项目编译成自包含单文件 HTML
+    name: 构建管线
+    tech: TypeScript（layout + render）
+    summary: layout+render 构建：dist/covenant.html 单文件（默认）与 dist/site/ 文件夹站点（第二模式）
     tags: [critical]
 
   - id: e.viewer
     kind: container
     name: 浏览器标注器
     tech: TS bundle + SVG
-    summary: 离线渲染、元素级标注、导出补丁
+    summary: 离线查看/标注：点选、缩放平移、批注新增/编辑/删除撤销、导出补丁；编辑态经 serve 写回
     tags: [edge]
 
   - id: e.serve
     kind: container
     name: covenant serve
     tech: Node / HTTP
-    summary: 本地服务：直写磁盘 + 与 MCP 同进程
+    summary: serve 模式的本地 HTTP：静态托管 + 编辑态 API（/api/edit、/api/patch）；短时、loopback、随机 token；不与 MCP 同进程
     tags: [optional]
+
+  - id: e.schema
+    kind: datastore
+    name: JSON Schema（L1 契约）
+    tech: JSON
+    props: { storage_kind: file }
+    summary: schema/kernel.schema.json，校验器的输入，同时是仓库根锚点
 
   - id: e.arch
     kind: datastore
     name: .cvn 项目文件
     tech: 文件系统
     props: { storage_kind: file }
-    summary: 唯一权威事实源（arch/ 目录）
+    summary: 唯一权威事实源：项目内 .cvn.yaml（arch/、examples/、用户项目）
 
   - id: e.audit
     kind: datastore
     name: 审计日志
     tech: JSONL 追加文件
     props: { storage_kind: file }
-    summary: 谁在何时批准了什么
+    summary: 手搓 write-ahead JSONL（intent→rename→commit）+ 编辑备份；git 仅用于编辑 diff 展示，不参与审计
+
+  - id: e.dist
+    kind: datastore
+    name: 构建产物
+    tech: HTML + SVG + JSON
+    props: { storage_kind: file }
+    summary: dist/：covenant.html 单文件 + site/ 文件夹站点（index.html + manifest v3 + views/*.svg + annotations.json）
 
   - id: e.llm
     kind: external-system
     name: 大模型服务
-    summary: 外部推理服务，非本地默认
+    summary: 外部推理服务：仅外部 Agent 自行调用；Covenant 自身零网络请求（无网络通道）
 
 relations:
   - id: r.human-viewer
@@ -111,73 +134,140 @@ relations:
     kind: calls
     from: e.agent
     to: e.mcp
-    summary: MCP 工具调用（list/digest/patch）
+    summary: MCP 工具调用（brief/check/read_doc/render/build/patch_check/apply/diff/index）
 
   - id: r.agent-llm
     kind: calls
     from: e.agent
     to: e.llm
-    summary: 需要推理时调用外部模型
+    summary: 可选：外部 Agent 自行调用推理；非 Covenant 运行时
 
-  - id: r.mcp-cli
+  - id: r.cli-libs
     kind: calls
-    from: e.mcp
-    to: e.cli
-    summary: 薄壳转调 CLI 库
-
+    from: e.cli
+    to: e.libs
+    summary: 编排 layout/render/indexer/ai/adr/editor 等共享库
   - id: r.cli-validate
     kind: calls
     from: e.cli
     to: e.validate
     summary: 写前校验
-
   - id: r.cli-diff
     kind: calls
     from: e.cli
     to: e.diff
     summary: 补丁应用与语义 diff
-
+  - id: r.cli-builder
+    kind: calls
+    from: e.cli
+    to: e.builder
+    summary: build / bundle 子命令
   - id: r.cli-arch
     kind: reads
     from: e.cli
     to: e.arch
     summary: 读取项目文档
-
-  - id: r.diff-arch
+  - id: r.cli-arch-write
     kind: writes
-    from: e.diff
+    from: e.cli
     to: e.arch
-    summary: 批准后原子写入
+    summary: apply / edit --accept 落盘（经 patch/edit-flow）
+  - id: r.cli-audit
+    kind: writes
+    from: e.cli
+    to: e.audit
+    summary: edit --accept 备份与审计
 
-  - id: r.validate-arch
+  - id: r.mcp-libs
+    kind: calls
+    from: e.mcp
+    to: e.libs
+    summary: 直接调用共享库（layout/render/indexer/ai 等），不经 CLI 进程
+  - id: r.mcp-validate
+    kind: calls
+    from: e.mcp
+    to: e.validate
+    summary: check 工具
+  - id: r.mcp-diff
+    kind: calls
+    from: e.mcp
+    to: e.diff
+    summary: patch_check / apply / diff 工具
+  - id: r.mcp-arch
+    kind: reads
+    from: e.mcp
+    to: e.arch
+    summary: read_doc / brief 读取
+
+  - id: r.serve-libs
+    kind: calls
+    from: e.serve
+    to: e.libs
+    summary: 编辑门禁复用 validator/editor 等库
+  - id: r.serve-validate
+    kind: calls
+    from: e.serve
+    to: e.validate
+    summary: 写回前 checkDocument
+  - id: r.serve-diff
+    kind: calls
+    from: e.serve
+    to: e.diff
+    summary: /api/patch 走补丁门禁与原子落盘
+  - id: r.serve-arch
+    kind: writes
+    from: e.serve
+    to: e.arch
+    summary: 编辑态写回（预览 diff → 确认）
+  - id: r.serve-audit
+    kind: writes
+    from: e.serve
+    to: e.audit
+    summary: 备份 + audit jsonl
+
+  - id: r.viewer-serve
+    kind: calls
+    from: e.viewer
+    to: e.serve
+    summary: 加载页面与编辑态写回 API（POST /api/edit、/api/patch）
+
+  - id: r.validate-schema
     kind: reads
     from: e.validate
-    to: e.arch
-    summary: 读文档做校验
+    to: e.schema
+    summary: 读 schema/kernel.schema.json 做 L1 校验
 
+  - id: r.builder-libs
+    kind: calls
+    from: e.builder
+    to: e.libs
+    summary: 使用 layout + render
   - id: r.builder-arch
     kind: reads
     from: e.builder
     to: e.arch
     summary: 编译前读取
-
+  - id: r.builder-dist
+    kind: writes
+    from: e.builder
+    to: e.dist
+    summary: 产出单文件 HTML / 文件夹站点
   - id: r.builder-viewer
     kind: calls
     from: e.builder
     to: e.viewer
-    summary: 产出内联 doc 与渲染 bundle
+    summary: 把查看器资源内联进产物
 
-  - id: r.serve-viewer
-    kind: calls
-    from: e.serve
-    to: e.viewer
-    summary: 提供直写与热更新
-
+  - id: r.diff-arch
+    kind: writes
+    from: e.diff
+    to: e.arch
+    summary: 补丁原子替换（rev+1）
   - id: r.diff-audit
     kind: writes
     from: e.diff
     to: e.audit
-    summary: 记录 patch hash 与批准人
+    summary: 记录 patch hash 与 actor（write-ahead）
 
 views:
   - id: v.main
@@ -324,6 +414,36 @@ annotations:
     status: "open"
     author: "human:you"
     created: "2026-11-03T14:44:47+08:00"
+  - id: "a.01K8QZ3M9V7B4X2C6D5F1G0HNP"
+    target: {"kind":"element","id":"e.builder"}
+    type: "decision"
+    severity: "medium"
+    title: "HTML 产物：单文件默认 + dist/site 文件夹第二模式"
+    body: |
+      对 a.BBXNVV（html 的组织）的设计答复：bundle 已实现为文件夹站点——
+      dist/site/index.html（直接复用主查看器）+ manifest.json（version 3, entries）+ views/*.svg + annotations.json；
+      dist/covenant.html 单文件仍是默认主路径。两者共用同一 layout+render 管线，零外部请求。
+      详见 docs/design/html-output-bundle-proposal.md。
+    status: "open"
+    author: "ai:arch-owner"
+    created: "2026-11-03T18:45:00+08:00"
+    links:
+      - { kind: doc, ref: "../docs/design/html-output-bundle-proposal.md" }
+  - id: "a.01K8QZ3M9V7B4X2C6D5F1G0HQR"
+    target: {"kind":"element","id":"e.audit"}
+    type: "decision"
+    severity: "low"
+    title: "审计是手搓 write-ahead JSONL，不依赖 git"
+    body: |
+      对 a.0JCN（审计基于 git 还是手搓）的答复：手搓。
+      patch/apply.ts 先写 intent → 临时文件复验 → rename → commit（.audit/*.jsonl）；
+      edit --accept 另写备份 + edit-*.jsonl。git 仅在编辑 diff 展示中可选使用（git diff --no-index），
+      不参与审计与追溯。详见 docs/design/ai-trust-boundary.md §9 与 packages/patch/src/apply.ts。
+    status: "open"
+    author: "ai:arch-owner"
+    created: "2026-11-03T18:45:00+08:00"
+    links:
+      - { kind: doc, ref: "../docs/design/ai-trust-boundary.md" }
 
 constraints:
   - id: k.no-cycle

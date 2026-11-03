@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { JSDOM } from "jsdom";
+import { JSDOM, VirtualConsole } from "jsdom";
 import type { CovenantDoc } from "@covenant/core";
 import { layout } from "@covenant/layout";
 import { renderSvg } from "./index";
@@ -492,3 +492,166 @@ describe("批注内联编辑", () => {
     expect(d.getElementById("ae-title")).toBeNull();
     expect(d.getElementById("f-title")).not.toBeNull();
   });});
+
+/* ------------------- 交互回归：异常/跨文档/可见性 ------------------- */
+
+function multiHtml(): string {
+  const a = doc();
+  const b: CovenantDoc = {
+    covenant: "0.1",
+    id: "t/other",
+    profile: "c4-container@1",
+    meta: { title: "另一张图", purpose: "p", non_goals: [], rev: 1 },
+    elements: [
+      { id: "e.x", kind: "container", name: "服务 X", summary: "x", tech: "TS" },
+      { id: "e.y", kind: "container", name: "存储 Y", summary: "y", tech: "PG" },
+    ],
+    relations: [{ id: "r.xy", kind: "writes", from: "e.x", to: "e.y", summary: "写" }],
+    views: [{ id: "v.main", title: "主视图" }],
+    annotations: [],
+  };
+  const la = layout(a);
+  const lb = layout(b);
+  return renderHtml([
+    { doc: a, svg: renderSvg(a, la), layout: la },
+    { doc: b, svg: renderSvg(b, lb), layout: lb },
+  ]);
+}
+
+function stubDownload(window: JSDOM["window"]): { blob: { text: () => Promise<string> } | null; download: string } {
+  const state: { blob: { text: () => Promise<string> } | null; download: string } = { blob: null, download: "" };
+  class CaptureBlob {
+    private readonly parts: string[];
+    constructor(parts: string[]) {
+      this.parts = parts;
+    }
+    text(): Promise<string> {
+      return Promise.resolve(this.parts.join(""));
+    }
+  }
+  // @ts-expect-error 测试内替换浏览器 Blob
+  window.Blob = CaptureBlob;
+  window.URL.createObjectURL = ((b: unknown) => {
+    state.blob = b as { text: () => Promise<string> };
+    return "blob:mock";
+  }) as typeof window.URL.createObjectURL;
+  window.URL.revokeObjectURL = (() => undefined) as typeof window.URL.revokeObjectURL;
+  window.HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+    state.download = this.download;
+  };
+  return state;
+}
+
+describe("导出补丁 JSON（回归 doc 未定义）", () => {
+  it("点击「导出补丁 JSON」能设置下载文件名且不抛 ReferenceError", async () => {
+    const errors: string[] = [];
+    const vc = new VirtualConsole();
+    vc.on("jsdomError", (e) => errors.push(String((e as Error).message)));
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/", virtualConsole: vc });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    (d.getElementById("f-title") as HTMLInputElement).value = "导出补丁用例";
+    d.getElementById("f-submit")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const state = stubDownload(window);
+    d.getElementById("btn-export")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(errors).toEqual([]);
+    expect(state.download).toContain(".patch.json");
+    expect(state.blob).not.toBeNull();
+    const patch = JSON.parse(await state.blob!.text());
+    expect(patch.ops.length).toBeGreaterThan(0);
+  });
+});
+
+describe("批注内联编辑不再打断事件绑定", () => {
+  it("进入批注编辑态不抛异常，且同面板状态流转按钮仍可用", () => {
+    const errors: string[] = [];
+    const vc = new VirtualConsole();
+    vc.on("jsdomError", (e) => errors.push(String((e as Error).message)));
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/", virtualConsole: vc });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector(".edit-ann")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(d.getElementById("ae-title")).not.toBeNull();
+    expect(errors).toEqual([]);
+    // 编辑态下，下方批注列表的状态流转按钮应已绑定（旧实现被 f-submit 异常跳过）
+    const act = d.querySelector(".acts button") as HTMLElement | null;
+    expect(act).not.toBeNull();
+    expect(act!.getAttribute("data-act")).toBeTruthy();
+    act!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const store = window.localStorage.getItem("covenant:viewer:v1") ?? "";
+    expect(store).toContain("a.01JAXTEST0001AAAA0001");
+  });
+});
+
+describe("切图瞬态清理与跨文档编辑隔离", () => {
+  it("切图往返不残留批注内联编辑表单", () => {
+    const dom = new JSDOM(multiHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const btns = d.querySelectorAll("#views button");
+    const firstKey = btns[0]!.getAttribute("data-doc")!;
+    const secondKey = btns[1]!.getAttribute("data-doc")!;
+    d.querySelector("section.doc:not([hidden]) svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector(".edit-ann")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(d.getElementById("ae-title")).not.toBeNull();
+    btns[1]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector(`#views button[data-doc="${firstKey}"]`)!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(secondKey).not.toBe(firstKey);
+    d.querySelector("section.doc:not([hidden]) svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(d.getElementById("ae-title")).toBeNull();
+    expect(d.getElementById("f-title")).not.toBeNull();
+  });
+
+  it("切图重置钉住状态（窗口不再被隐式钉死）", () => {
+    const dom = new JSDOM(multiHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const btns = d.querySelectorAll("#views button");
+    d.querySelector("section.doc:not([hidden]) svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    (d.getElementById("insp-pin") as HTMLElement).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect((d.getElementById("insp-pin") as HTMLElement).getAttribute("aria-pressed")).toBe("true");
+    btns[1]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    btns[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector("section.doc:not([hidden]) svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect((d.getElementById("insp-pin") as HTMLElement).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("编辑暂存按文档隔离：切图后不把 A 图 ops 带进 B 图", async () => {
+    const dom = new JSDOM(multiHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const btns = d.querySelectorAll("#views button");
+    d.getElementById("btn-edit")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector("section.doc:not([hidden]) svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    (d.getElementById("e-name") as HTMLInputElement).value = "改名后的 A";
+    d.getElementById("edit-apply")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(d.getElementById("edit-pending")!.hidden).toBe(false);
+    const pendingText = (d.getElementById("edit-pending") as HTMLElement).textContent ?? "";
+    expect(Number(pendingText.replace(/\D+/g, ""))).toBeGreaterThan(0);
+    // 切到 B 图：B 图没有暂存修改 → 导出按钮隐藏
+    btns[1]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect((d.getElementById("btn-edit-export") as HTMLElement).hidden).toBe(true);
+    // 切回 A 图：A 的暂存修改还在，可导出且 doc 正确
+    btns[0]!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect((d.getElementById("btn-edit-export") as HTMLElement).hidden).toBe(false);
+    const state = stubDownload(window);
+    d.getElementById("btn-edit-export")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const payload = JSON.parse(await state.blob!.text());
+    expect(payload.doc).toBe("t/interact");
+    expect(payload.ops.map((o: { path: string }) => o.path)).toContain("/elements/e.a/name");
+  });
+
+  it("编辑已存批注后 pending 计数包含编辑（不再显示 0）", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector(".edit-ann")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    (d.getElementById("ae-title") as HTMLInputElement).value = "改标题";
+    d.querySelector(".ann-save")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const pending = d.getElementById("pending")!;
+    expect(pending.textContent).toContain("1");
+  });
+});

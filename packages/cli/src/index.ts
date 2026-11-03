@@ -251,6 +251,7 @@ function cmdBuild(args: string[], out?: string): number {
         viewTitle: v?.title,
         svg: renderSvg(loaded.doc, result, {
           title: v?.title ?? loaded.doc.meta?.title,
+          view: v, // 与 cmdRender/cmdBundle 一致：preset（如 junction）必须随视图传入
           showBadges: false, // 角标由浏览器端统一绘制（含新加的批注）
         }),
         layout: result,

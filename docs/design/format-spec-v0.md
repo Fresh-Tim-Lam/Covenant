@@ -148,7 +148,7 @@ views:                              # 可渲染投影（同一元素可出现在
       notation: c4
       theme: covenant-light
       annotations: { status: [open], severity: [high, medium] }
-      node_style: junction        # box（默认框）| junction（点+线；交叉画跳线弧）
+      node_style: junction        # box（默认框）| junction（点+线；交叉画空心圆=不相交、实心圆=真实连接）
 
 annotations:                        # 一等公民：人的问题记录
   - id: a.01JAX9K3Q7

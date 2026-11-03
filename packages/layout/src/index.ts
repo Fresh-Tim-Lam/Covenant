@@ -28,6 +28,11 @@ export interface EdgeGeom {
   points: Point[];
   /** 同跨度平行边的通道号（-1/0/1），用于标签错位 */
   lane: number;
+  /**
+   * 长边专用的"标签附着段"下标（points[i] → points[i+1]）。
+   * 长边为 6 点路径：水平布局通道段是 [2,3]；垂直布局通道段是 [1,2]。
+   */
+  labelSegment?: [number, number];
 }
 export interface LayoutResult {
   nodes: Record<string, Rect>;
@@ -119,6 +124,45 @@ const DEFAULTS = {
 };
 
 const endpoint = (ref: string): string => ref.split(":")[0] ?? ref;
+
+/* ------------------- 标签文本 / 宽度估算（layout 与 render 共用） ------------------- */
+
+/** 关系标签文本：props.label → transition trigger/guard → communicates → relates → kind。 */
+export function relationLabelText(rel: {
+  kind: string;
+  props?: Record<string, unknown>;
+}): string {
+  const props = rel.props ?? {};
+  if (typeof props.label === "string" && props.label.trim() !== "") return String(props.label);
+  if (rel.kind === "transition") {
+    const trigger = typeof props.trigger === "string" ? props.trigger : "";
+    const guard = typeof props.guard === "string" ? props.guard : "";
+    if (trigger) return guard ? `${trigger} [${guard}]` : trigger;
+  }
+  if (rel.kind === "communicates") {
+    const parts = [props.protocol, props.network].filter(
+      (v): v is string => typeof v === "string" && v.length > 0,
+    );
+    if (parts.length > 0) return parts.join(" · ");
+  }
+  if (rel.kind === "relates") {
+    const card = props.cardinality as { from?: string; to?: string } | undefined;
+    if (card?.from && card?.to) return `${card.from}:${card.to}`;
+  }
+  return rel.kind;
+}
+
+/** 确定性文本宽度估算（与 render 同口径）：CJK 记 1em，ASCII 记 0.55em。 */
+export function estimateTextWidth(text: string, fontPx = 10.5): number {
+  let units = 0;
+  for (const ch of text) units += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 1 : 0.55;
+  return units * fontPx;
+}
+
+/** 标签胶囊宽度（文本 + 左右 padding 10px）：给平行车道留间距用。 */
+export function estimateLabelWidth(rel: { kind: string; props?: Record<string, unknown> }): number {
+  return estimateTextWidth(relationLabelText(rel)) + 10;
+}
 
 /* ----------------------- 交叉最小化（barycenter） ----------------------- */
 
@@ -370,35 +414,107 @@ export function layout(
   const horizontal = opts.direction === "RIGHT" || opts.direction === "LEFT";
   const reverse = opts.direction === "LEFT" || opts.direction === "UP";
 
-  // 长边（跨层 > 1）走顶部通道，避免穿过中间层节点
-  const longEdges = horizontal
-    ? relations
-        .map((rel) => ({
-          rel,
-          span: Math.abs(
-            (rank.get(endpoint(rel.to)) ?? 0) - (rank.get(endpoint(rel.from)) ?? 0),
-          ),
-        }))
-        .filter((x) => x.span > 1)
-    : [];
+  /** 物理列/行序号：LEFT/UP 反向时镜像，用于判断"目标在右/下"与间隙归属 */
+  const phys = (r: number): number => (reverse ? maxRank - r : r);
+  const rankOf = (id: string): number => rank.get(id) ?? 0;
+  const relSpan = (rel: RelationDef): number =>
+    Math.abs(rankOf(endpoint(rel.to)) - rankOf(endpoint(rel.from)));
+
+  // 长边（跨层 > 1）走"通道 + 侧边走廊"：先从框侧引出短 stub，再进列/行间隙里的独立 lane，
+  // 上行（水平布局）/左行（垂直布局）到通道，横/竖走到目标侧 lane，最后 stub 进目标框。
+  // 竖/横段全部落在间隙与通道带里，因此不会穿过任何中间层节点；lane 互异，平行长边不贴合。
+  const longEdges = relations
+    .map((rel) => ({ rel, span: relSpan(rel) }))
+    .filter((x) => x.span > 1);
+  /** 通道间距 = 胶囊高 17 + 8：保证通道上的标签不压相邻通道线（通道偏移是竖直/水平方向） */
+  const CHANNEL_STEP = 25;
   const channelOf = new Map<string, number>();
-  longEdges.forEach((x, i) => channelOf.set(x.rel.id, 8 + i * 8));
-  const effPadding = opts.padding + (longEdges.length > 0 ? 8 + longEdges.length * 8 : 0);
+  longEdges.forEach((x, i) => channelOf.set(x.rel.id, 10 + i * CHANNEL_STEP));
+  const channelBand =
+    longEdges.length > 0 ? 10 + (longEdges.length - 1) * CHANNEL_STEP + 24 : 0;
+  /** 通道占用的外侧留白：水平布局在顶部、垂直布局在左侧 */
+  const padX = opts.padding + (horizontal ? 0 : channelBand);
+  const padY = opts.padding + (horizontal ? channelBand : 0);
+
+  // 列/行间隙要同时容纳：长边走廊段（无标签，可 10px 紧凑）+ 短边的中间车道（标签贴在这里）。
+  // 短边车道间距必须按胶囊尺寸预留：水平布局车道沿 x 偏移 → ≥ 最大胶囊宽 + 10；
+  // 垂直布局车道沿 y 偏移 → ≥ 胶囊高 17 + 8。间隙不够就加大 rankGap（不压回小间距）。
+  interface GapSlot {
+    relId: string;
+    kind: "long-src" | "long-dst" | "short";
+  }
+  const gapSlots = new Map<number, GapSlot[]>();
+  const addGapSlot = (gap: number, slot: GapSlot): void => {
+    const list = gapSlots.get(gap) ?? [];
+    list.push(slot);
+    gapSlots.set(gap, list);
+  };
+  const relById = new Map(relations.map((rel) => [rel.id, rel]));
+  const relInfos = relations.map((rel) => ({
+    rel,
+    pf: phys(rankOf(endpoint(rel.from))),
+    pt: phys(rankOf(endpoint(rel.to))),
+  }));
+  for (const info of relInfos) {
+    const span = Math.abs(info.pt - info.pf);
+    const forward = info.pt > info.pf;
+    if (span > 1) {
+      addGapSlot(forward ? info.pf : info.pf - 1, { relId: info.rel.id, kind: "long-src" });
+      addGapSlot(forward ? info.pt - 1 : info.pt, { relId: info.rel.id, kind: "long-dst" });
+    } else if (span === 1) {
+      addGapSlot(Math.min(info.pf, info.pt), { relId: info.rel.id, kind: "short" });
+    }
+  }
+  const gapStep = new Map<number, number>();
+  for (const [gap, slots] of gapSlots) {
+    let step = horizontal ? 10 : CHANNEL_STEP;
+    if (horizontal) {
+      for (const s of slots) {
+        if (s.kind !== "short") continue;
+        const rel = relById.get(s.relId);
+        if (rel) step = Math.max(step, estimateLabelWidth(rel) + 10);
+      }
+    }
+    slots.sort((u, v) => u.relId.localeCompare(v.relId) || u.kind.localeCompare(v.kind));
+    gapStep.set(gap, step);
+  }
+  const gapSize = new Map<number, number>();
+  for (let p = 0; p < maxRank; p++) {
+    const n = gapSlots.get(p)?.length ?? 0;
+    if (n === 0) {
+      gapSize.set(p, opts.rankGap);
+      continue;
+    }
+    const step = gapStep.get(p) ?? 10;
+    // 20 stub + lane 带 + 20 stub + 12 余量，保证最后一条 lane 仍距右列 32px
+    gapSize.set(p, Math.max(opts.rankGap, 52 + (n - 1) * step));
+  }
+  // 物理列/行坐标：按每个间隙的实际尺寸累加（间隙变大时仍完全确定性）
+  const axisAt = new Map<number, number>();
+  {
+    let cur = 0;
+    for (let p = 0; p <= maxRank; p++) {
+      axisAt.set(p, cur);
+      if (p < maxRank) {
+        cur += (horizontal ? opts.nodeWidth : opts.nodeHeight) + gapSize.get(p)!;
+      }
+    }
+  }
 
   const raw: Record<string, Rect> = {};
   for (const [r, list] of columns) {
-    const pos = reverse ? maxRank - r : r;
+    const pos = phys(r);
     for (let i = 0; i < list.length; i++) {
       const id = list[i]!;
       const w = opts.nodeWidth;
       const h = opts.nodeHeight;
       if (horizontal) {
-        const colX = pos * (w + opts.rankGap);
+        const colX = axisAt.get(pos)!;
         const colH = colHeights.get(r) ?? 0;
         const y = (maxColHeight - colH) / 2 + i * (h + opts.nodeGap);
         raw[id] = { x: colX, y, w, h };
       } else {
-        const colY = pos * (h + opts.rankGap);
+        const colY = axisAt.get(pos)!;
         const colW = list.length * w + Math.max(0, list.length - 1) * opts.nodeGap;
         const x = (maxColHeight - colW) / 2 + i * (w + opts.nodeGap);
         raw[id] = { x, y: colY, w, h };
@@ -411,17 +527,17 @@ export function layout(
     if (raw[id]) raw[id] = { ...raw[id]!, x: px, y: py };
   }
 
-  // 平移归一化（保证非负 + padding；长边通道留在顶部空白区）
+  // 平移归一化（保证非负 + padding；长边通道带留在顶部/左侧空白区）
   const minX = Math.min(...Object.values(raw).map((r) => r.x), 0);
   const minY = Math.min(...Object.values(raw).map((r) => r.y), 0);
   const nodes: Record<string, Rect> = {};
   for (const [id, r] of Object.entries(raw)) {
-    nodes[id] = { ...r, x: r.x - minX + effPadding, y: r.y - minY + effPadding };
+    nodes[id] = { ...r, x: r.x - minX + padX, y: r.y - minY + padY };
   }
 
   // 边路由：每条边独立接入点（同侧按对端位置排序、保留最小间距；端口不够则扩框）
   type PortSide = "left" | "right" | "top" | "bottom";
-  const PORT_GAP = 16;
+  const PORT_GAP = 18;
   const PORT_PAD = 12;
   const centerOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 
@@ -437,36 +553,30 @@ export function layout(
   for (const rel of relations) {
     const fromId = endpoint(rel.from);
     const toId = endpoint(rel.to);
-    const a = nodes[fromId]!;
-    const b = nodes[toId]!;
     const channel = channelOf.get(rel.id);
-    if (channel !== undefined) {
-      specs.push({ rel, fromId, toId, fromSide: "top", toSide: "top", channel });
-      continue;
-    }
-    const ac = centerOf(a);
-    const bc = centerOf(b);
-    if (Math.abs(bc.x - ac.x) >= Math.abs(bc.y - ac.y)) {
-      const toRight = bc.x >= ac.x;
-      specs.push({
-        rel,
-        fromId,
-        toId,
-        fromSide: toRight ? "right" : "left",
-        toSide: toRight ? "left" : "right",
-        channel,
-      });
+    const pf = phys(rankOf(fromId));
+    const pt = phys(rankOf(toId));
+    let fromSide: PortSide;
+    let toSide: PortSide;
+    if (horizontal) {
+      if (pt === pf) {
+        // 同列（防御性分支）：走列右侧走廊，避免竖穿同列节点
+        fromSide = "right";
+        toSide = "right";
+      } else {
+        const toRight = pt > pf;
+        fromSide = toRight ? "right" : "left";
+        toSide = toRight ? "left" : "right";
+      }
+    } else if (pt === pf) {
+      fromSide = "bottom";
+      toSide = "bottom";
     } else {
-      const toDown = bc.y >= ac.y;
-      specs.push({
-        rel,
-        fromId,
-        toId,
-        fromSide: toDown ? "bottom" : "top",
-        toSide: toDown ? "top" : "bottom",
-        channel,
-      });
+      const toDown = pt > pf;
+      fromSide = toDown ? "bottom" : "top";
+      toSide = toDown ? "top" : "bottom";
     }
+    specs.push({ rel, fromId, toId, fromSide, toSide, channel });
   }
 
   interface PortNeed {
@@ -505,6 +615,54 @@ export function layout(
     }
   }
 
+  // 扩框后同列（水平布局）/同排（垂直布局）节点可能相撞（端口很多时）：沿该维度顺向压紧，
+  // 保证最小 nodeGap；只向后推、不回移，保持确定性。pins（人工坐标）是权威，不参与压紧。
+  const pinnedIds = new Set(Object.keys(opts.pins ?? {}));
+  const physCols = new Map<number, string[]>();
+  for (const id of Object.keys(nodes)) {
+    const p = phys(rankOf(id));
+    const list = physCols.get(p) ?? [];
+    list.push(id);
+    physCols.set(p, list);
+  }
+  for (const list of physCols.values()) {
+    if (horizontal) list.sort((a, b) => nodes[a]!.y - nodes[b]!.y || nodes[a]!.x - nodes[b]!.x);
+    else list.sort((a, b) => nodes[a]!.x - nodes[b]!.x || nodes[a]!.y - nodes[b]!.y);
+    let cursor = -Infinity;
+    for (const id of list) {
+      const r = nodes[id]!;
+      if (horizontal) {
+        const y = pinnedIds.has(id) ? r.y : Math.max(r.y, cursor);
+        nodes[id] = { ...r, y };
+        cursor = Math.max(cursor, y + r.h + opts.nodeGap);
+      } else {
+        const x = pinnedIds.has(id) ? r.x : Math.max(r.x, cursor);
+        nodes[id] = { ...r, x };
+        cursor = Math.max(cursor, x + r.w + opts.nodeGap);
+      }
+    }
+  }
+
+  // 列/行几何（物理位置）：长边 lane 必须落在"列/行间隙"内——间隙里没有节点，天然不穿框。
+  const nodeRows = new Map<number, { lo: number; hi: number }>();
+  for (const [id, r] of Object.entries(nodes)) {
+    const p = phys(rankOf(id));
+    const g = nodeRows.get(p) ?? { lo: Infinity, hi: -Infinity };
+    g.lo = Math.min(g.lo, horizontal ? r.x : r.y);
+    g.hi = Math.max(g.hi, horizontal ? r.x + r.w : r.y + r.h);
+    nodeRows.set(p, g);
+  }
+  // 车道坐标：同一间隙内所有 lane（长边走廊段 + 短边中间车道）从间隙起点依次排布，
+  // 间距 gapStep 已按胶囊尺寸预留 → 平行边不会贴在一起，标签也不会压到相邻线。
+  const laneAt = new Map<string, number>();
+  for (const [gap, slots] of gapSlots) {
+    const a = nodeRows.get(gap);
+    const b = nodeRows.get(gap + 1);
+    if (!a || !b) continue;
+    const step = gapStep.get(gap) ?? 10;
+    slots.forEach((slot, i) => laneAt.set(`${slot.relId}|${slot.kind}`, a.hi + 20 + i * step));
+  }
+
   // 分配端口：同侧按对端位置排序（减少交叉），线性排布并保持最小间距
   const portOf = new Map<string, Point>();
   for (const [id, r] of Object.entries(nodes)) {
@@ -530,24 +688,54 @@ export function layout(
   }
 
   const edges: EdgeGeom[] = [];
-  const laneCounters = new Map<string, number>();
+  const longIndex = new Map(longEdges.map((x, i) => [x.rel.id, i]));
   for (const s of specs) {
     const start = portOf.get(`${s.rel.id}|from`)!;
     const end = portOf.get(`${s.rel.id}|to`)!;
     if (s.channel !== undefined) {
+      const srcLane = laneAt.get(`${s.rel.id}|long-src`);
+      const dstLane = laneAt.get(`${s.rel.id}|long-dst`);
+      const pts: Point[] = horizontal
+        ? [
+            start,
+            { x: srcLane ?? start.x, y: start.y },
+            { x: srcLane ?? start.x, y: s.channel },
+            { x: dstLane ?? end.x, y: s.channel },
+            { x: dstLane ?? end.x, y: end.y },
+            end,
+          ]
+        : [
+            start,
+            { x: start.x, y: srcLane ?? start.y },
+            { x: s.channel, y: srcLane ?? start.y },
+            { x: s.channel, y: dstLane ?? end.y },
+            { x: end.x, y: dstLane ?? end.y },
+            end,
+          ];
       edges.push({
         id: s.rel.id,
         from: s.rel.from,
         to: s.rel.to,
-        points: clearPath(routeAbovePorts(start, end, s.channel), nodes, s.fromId, s.toId),
-        lane: 0,
+        points: dedupe(pts),
+        lane: longIndex.get(s.rel.id) ?? 0,
+        labelSegment: horizontal ? [2, 3] : [1, 2],
       });
       continue;
     }
-    const key = `${rank.get(s.fromId) ?? 0}->${rank.get(s.toId) ?? 0}`;
-    const n = laneCounters.get(key) ?? 0;
-    laneCounters.set(key, n + 1);
-    const lane = (n % 3) - 1;
+    // 短边：把 lane 换算成 routePorts 的偏移（offset = lane * 14），使中间段正好落在分配到的车道 x/y 上
+    const slot = laneAt.get(`${s.rel.id}|short`);
+    const nf = s.fromSide === "right" ? 1 : s.fromSide === "left" ? -1 : 0;
+    const nt = s.toSide === "right" ? 1 : s.toSide === "left" ? -1 : 0;
+    const nfV = s.fromSide === "bottom" ? 1 : s.fromSide === "top" ? -1 : 0;
+    const ntV = s.toSide === "bottom" ? 1 : s.toSide === "top" ? -1 : 0;
+    let lane = 0;
+    if (slot !== undefined && horizontal && nf !== 0 && nt !== 0) {
+      const center = (start.x + nf * ROUTE_STUB + end.x + nt * ROUTE_STUB) / 2;
+      lane = (slot - center) / 14;
+    } else if (slot !== undefined && !horizontal && nfV !== 0 && ntV !== 0) {
+      const center = (start.y + nfV * ROUTE_STUB + end.y + ntV * ROUTE_STUB) / 2;
+      lane = (slot - center) / 14;
+    }
     edges.push({
       id: s.rel.id,
       from: s.rel.from,
@@ -561,8 +749,8 @@ export function layout(
   return {
     nodes,
     edges,
-    width: Math.ceil(maxX + effPadding),
-    height: Math.ceil(maxY + effPadding),
+    width: Math.ceil(maxX + (horizontal ? padX : opts.padding)),
+    height: Math.ceil(maxY + (horizontal ? opts.padding : padY)),
     ranks: Object.fromEntries(rank),
   };
 }

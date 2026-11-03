@@ -2,14 +2,14 @@
 
 > **用途**：Covenant 用自己的格式描述自己。这里的文件受 `covenant check` 与索引门禁保护，**改代码结构就要同步改这里**。
 > **目标读者**：实现者、评审者、AI Agent。
-> **状态**：M4 起有效（2026-11-03）。`system.cvn.yaml` 通过 L1–L3；`index.yaml` 通过 I1–I3。
+> **状态**：M4 起有效（2026-11-03；同日同步至 rev3：补齐 13 个包、交付/发布切片与 v.delivery 视图）。`system.cvn.yaml` 通过 L1–L3；`index.yaml` 通过 I1–I3。
 > **关联**：[../docs/prompts/paradigm-spec-v2.md](../docs/prompts/paradigm-spec-v2.md)（三契约）、[../docs/design/gate-spec-v0.md](../docs/design/gate-spec-v0.md)（门禁）。
 
 ## 文件清单
 
 | 文件 | 职责 |
 |------|------|
-| `system.cvn.yaml` | 仓库自身的容器视图：组件边界、依赖方向、已知缺口批注 |
+| `system.cvn.yaml` | 仓库自身的容器视图：组件边界、依赖方向、已知缺口批注；`v.main` 系统结构 / `v.delivery` 交付与发布 |
 | `index.yaml` | FRAS 索引：每个源文件的 File 职责 / 必读依赖 / 上层调用者 / 隐性约束 + `source_sha256` |
 
 ## 校验命令

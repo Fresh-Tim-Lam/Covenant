@@ -207,6 +207,7 @@ const SCRIPT = `
   var current = DATA.docs.length ? DATA.docs[0].id : null;
   var selected = null;
   var editing = false;
+  // 编辑暂存按 docId 分桶：{ [docId]: { [path]: op } }，避免 A 图的 ops 混进 B 图的 edits.json
   var editOps = {};
   var pendingDiff = null;
   var nodeDrag = null;
@@ -233,6 +234,12 @@ const SCRIPT = `
   function byId(list, id){ for (var i=0;i<list.length;i++) if (list[i].id===id) return list[i]; return null; }
   function docByKey(key){ for (var i=0;i<DATA.docs.length;i++) if (DATA.docs[i].key===key) return DATA.docs[i]; return null; }
   function currentDoc(){ return docByKey(current); }
+  function editOpsFor(doc){
+    if (!doc) return {};
+    if (!editOps[doc.docId]) editOps[doc.docId] = {};
+    return editOps[doc.docId];
+  }
+  function currentEditOps(){ return editOpsFor(currentDoc()); }
   function localFor(id){
     if (!local[id]) local[id] = { add: [], status: {}, deleted: [], edited: {} };
     return local[id];
@@ -249,7 +256,7 @@ const SCRIPT = `
   }
   function visibleAnns(doc){ var l = localFor(doc.docId); return doc.annotations.filter(function(a){ return l.deleted.indexOf(a.id) < 0; }).map(function(a){ return effAnn(doc, a); }).concat(l.add.map(function(a){ return effAnn(doc, a); })); }
   function effStatus(doc, a){ var ov = localFor(doc.docId).status[a.id]; return ov || a.status; }
-  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length; }
+  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length + Object.keys(l.edited).length; }
 
   function esc(s){
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -269,6 +276,9 @@ const SCRIPT = `
 
   function switchDoc(id){
     current = id; selected = null;
+    // 切图必须清掉悬浮窗的瞬态：批注内联编辑残留 + 钉住（否则回来时表单会"自动复现"、窗口被隐式钉死）
+    editingAnn = null;
+    pinned = false;
     var docs = document.querySelectorAll(".doc");
     for (var i=0;i<docs.length;i++) docs[i].hidden = docs[i].getAttribute("data-doc") !== id;
     var btns = document.querySelectorAll("#views button");
@@ -277,6 +287,7 @@ const SCRIPT = `
     renderInspector(null, null);
     drawBadges(doc);
     updateHeader();
+    updateEditPending();
     fitView();
   }
 
@@ -592,7 +603,10 @@ const SCRIPT = `
       var applyBtn = document.getElementById("edit-apply");
       if (applyBtn) applyBtn.addEventListener("click", function(){ applyEditUi(kind, id); });
     }
-    document.getElementById("f-submit").addEventListener("click", function(){ submit(kind, id); });
+    // 批注内联编辑态不渲染"新增批注"表单 → f-submit 可能不存在，必须判空
+    // （否则这里抛 TypeError 会跳过下面 .acts 状态流转按钮的事件绑定）
+    var fSubmit = document.getElementById("f-submit");
+    if (fSubmit) fSubmit.addEventListener("click", function(){ submit(kind, id); });
     var acts = box.querySelectorAll(".acts button");
     for (var j=0;j<acts.length;j++){
       (function(btn){
@@ -670,6 +684,8 @@ const SCRIPT = `
   }
 
   function exportPatch(){
+    var doc = currentDoc();
+    if (!doc) return;
     var patch = buildAnnotationPatch();
     if (!patch) { alert("没有改动可导出"); return; }
     var blob = new Blob([JSON.stringify(patch, null, 2)], {type: "application/json"});
@@ -850,16 +866,16 @@ const SCRIPT = `
   }
 
   function updateEditPending(){
-    var n = Object.keys(editOps).length;
+    var n = Object.keys(currentEditOps()).length;
     var el = document.getElementById("edit-pending");
-    if (el) el.textContent = "暂存修改 " + n;
+    if (el) { el.textContent = "暂存修改 " + n; el.hidden = !editing || n === 0; }
     var ex = document.getElementById("btn-edit-export");
     if (ex) ex.hidden = !editing || n === 0;
     var sb = document.getElementById("btn-edit-save");
     if (sb) sb.hidden = !(editing && window.__CVN_EDIT__);
   }
   function setEditOp(path, value){
-    editOps[path] = { op: "set", path: path, value: value };
+    currentEditOps()[path] = { op: "set", path: path, value: value };
     updateEditPending();
   }
   function fieldValue(id){ var el = document.getElementById(id); return el ? String(el.value) : ""; }
@@ -894,13 +910,14 @@ const SCRIPT = `
       if (!s) { alert("语义不能为空"); return; }
       setEditOp("/relations/" + id + "/summary", s);
     }
-    showToast("已暂存修改（共 " + Object.keys(editOps).length + " 条）");
+    showToast("已暂存修改（共 " + Object.keys(currentEditOps()).length + " 条）");
   }
   function exportEdits(){
     var doc = currentDoc();
     if (!doc) return;
+    var bucket = currentEditOps();
     var ops = [];
-    for (var k in editOps) if (Object.prototype.hasOwnProperty.call(editOps, k)) ops.push(editOps[k]);
+    for (var k in bucket) if (Object.prototype.hasOwnProperty.call(bucket, k)) ops.push(bucket[k]);
     if (!ops.length) { alert("还没有暂存的修改"); return; }
     var payload = {
       covenant: "0.1", doc: doc.docId, base_rev: doc.rev,
@@ -920,8 +937,9 @@ const SCRIPT = `
     if (!api) { showToast("未连接编辑服务：请用 covenant serve --edit 打开页面"); return; }
     var doc = currentDoc();
     if (!doc) return;
+    var bucket = currentEditOps();
     var ops = [];
-    for (var k in editOps) if (Object.prototype.hasOwnProperty.call(editOps, k)) ops.push(editOps[k]);
+    for (var k in bucket) if (Object.prototype.hasOwnProperty.call(bucket, k)) ops.push(bucket[k]);
     if (!ops.length) { alert("还没有暂存的修改"); return; }
     var payload = { covenant: "0.1", doc: doc.docId, base_rev: doc.rev, actor: "human:you", intent: "HTML 编辑（编辑态服务）", ops: ops };
     var accept = !!pendingDiff;
@@ -944,7 +962,7 @@ const SCRIPT = `
         if (b) b.textContent = "确认写回";
         showToast("已生成预览：检查 diff 后确认写回");
       } else {
-        pendingDiff = null; editOps = {}; updateEditPending();
+        pendingDiff = null; editOps[doc.docId] = {}; updateEditPending();
         var b2 = document.getElementById("btn-edit-save");
         if (b2) b2.textContent = "预览并写回";
         showToast("已写回 rev=" + res.rev + "（备份 " + res.backup + "）");

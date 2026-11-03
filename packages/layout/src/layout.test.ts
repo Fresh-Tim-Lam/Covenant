@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CovenantDoc } from "@covenant/core";
-import { layout, layoutSequence, route, selectView } from "./index";
+import { estimateLabelWidth, layout, layoutSequence, route, selectView } from "./index";
 
 function doc(): CovenantDoc {
   return {
@@ -113,13 +113,23 @@ describe("selectView", () => {
 });
 
 describe("渲染质量 v2", () => {
-  it("跨层长边走顶部通道（通道 y 在节点带之上）", () => {
+  it("跨层长边走顶部通道 + 侧边走廊（通道段在节点带之上，首末段垂直于框边）", () => {
     const d = doc(); // 含 r.ca：c(rank2) → a(rank0)，跨度 2
     const r = layout(d);
     const long = r.edges.find((e) => e.id === "r.ca")!;
     const minNodeY = Math.min(...Object.values(r.nodes).map((n) => n.y));
-    expect(long.points[1]!.y).toBeLessThan(minNodeY);
-    expect(long.points[2]!.y).toBe(long.points[1]!.y);
+    // 新路由：start → 侧边 stub → lane 竖线 → 通道横线 → lane 竖线 → 目标侧 stub
+    expect(long.labelSegment).toEqual([2, 3]);
+    expect(long.points[2]!.y).toBeLessThan(minNodeY);
+    expect(long.points[3]!.y).toBe(long.points[2]!.y);
+    expect(long.points[2]!.x).not.toBe(long.points[3]!.x);
+    // 首/末段水平（垂直于 left/right 框边）
+    const first = long.points[1]!;
+    const last = long.points[long.points.length - 2]!;
+    expect(Math.abs(first.y - long.points[0]!.y)).toBeLessThan(0.01);
+    expect(Math.abs(long.points[0]!.x - first.x)).toBeGreaterThanOrEqual(18);
+    expect(Math.abs(last.y - long.points[long.points.length - 1]!.y)).toBeLessThan(0.01);
+    expect(Math.abs(long.points[long.points.length - 1]!.x - last.x)).toBeGreaterThanOrEqual(18);
   });
 
   it("barycenter 降低交叉：a→d、b→c 时第二层顺序反转为 d、c", () => {
@@ -335,5 +345,149 @@ describe("接线出口垂直短引线 + 与框间距", () => {
         }
       }
     }
+  });
+});
+
+/* ------------------- 长边侧边走廊 / 胶囊感知车道间距 ------------------- */
+
+function segmentIntersectsRect(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  r: { x: number; y: number; w: number; h: number },
+): boolean {
+  if (Math.abs(a.y - b.y) < 0.01) {
+    const x0 = Math.min(a.x, b.x);
+    const x1 = Math.max(a.x, b.x);
+    return x0 < r.x + r.w && x1 > r.x && a.y > r.y && a.y < r.y + r.h;
+  }
+  if (Math.abs(a.x - b.x) < 0.01) {
+    const y0 = Math.min(a.y, b.y);
+    const y1 = Math.max(a.y, b.y);
+    return y0 < r.y + r.h && y1 > r.y && a.x > r.x && a.x < r.x + r.w;
+  }
+  return false;
+}
+
+function assertNoEdgeCrossesNodes(
+  result: ReturnType<typeof layout>,
+  edgeIds?: string[],
+): void {
+  const endpoint = (ref: string): string => ref.split(":")[0] ?? ref;
+  for (const e of result.edges) {
+    if (edgeIds && !edgeIds.includes(e.id)) continue;
+    const ends = [endpoint(e.from), endpoint(e.to)];
+    for (let i = 0; i + 1 < e.points.length; i++) {
+      for (const [id, r] of Object.entries(result.nodes)) {
+        if (ends.includes(id)) continue;
+        expect(segmentIntersectsRect(e.points[i]!, e.points[i + 1]!, r)).toBe(false);
+      }
+    }
+  }
+}
+
+/** a→b→c、b→d，a→d 跨两层：旧实现会竖向穿过同列的 C，新实现必须走列间隙。 */
+function stackedDoc(): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id: "t/long-side",
+    profile: "c4-container@1",
+    meta: { title: "L", purpose: "p", non_goals: [] },
+    elements: [
+      { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS" },
+      { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
+      { id: "e.c", kind: "container", name: "C", summary: "c", tech: "TS" },
+      { id: "e.d", kind: "container", name: "D", summary: "d", tech: "TS" },
+    ],
+    relations: [
+      { id: "r.ab", kind: "calls", from: "e.a", to: "e.b", summary: "ab" },
+      { id: "r.bc", kind: "calls", from: "e.b", to: "e.c", summary: "bc" },
+      { id: "r.bd", kind: "calls", from: "e.b", to: "e.d", summary: "bd" },
+      { id: "r.ad", kind: "calls", from: "e.a", to: "e.d", summary: "跨层" },
+    ],
+  };
+}
+
+describe("长边侧边走廊（不穿任何中间层节点）", () => {
+  it("水平布局：长边不穿过同列中间节点", () => {
+    const r = layout(stackedDoc());
+    expect(r.edges.find((e) => e.id === "r.ad")!.labelSegment).toEqual([2, 3]);
+    assertNoEdgeCrossesNodes(r);
+  });
+
+  it("垂直布局（DOWN）：长边不穿过中间行节点", () => {
+    const r = layout(stackedDoc(), { direction: "DOWN" });
+    const long = r.edges.find((e) => e.id === "r.ad")!;
+    expect(long.labelSegment).toEqual([1, 2]);
+    assertNoEdgeCrossesNodes(r);
+  });
+});
+
+describe("平行边车道按胶囊尺寸留距", () => {
+  function parallelDoc(label: string, count: number): CovenantDoc {
+    const relations = Array.from({ length: count }, (_, i) => ({
+      id: `r.${i}`,
+      kind: "calls",
+      from: "e.a",
+      to: "e.b",
+      summary: `s${i}`,
+      props: { label },
+    }));
+    return {
+      covenant: "0.1",
+      id: "t/parallel",
+      profile: "c4-container@1",
+      meta: { title: "P", purpose: "p", non_goals: [] },
+      elements: [
+        { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS" },
+        { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
+      ],
+      relations,
+    };
+  }
+
+  it("同间隙短边车道间距 ≥ 最大胶囊宽 + 10（不是固定 14px）", () => {
+    const label = "授权成功 [金额一致]";
+    const count = 3;
+    const d = parallelDoc(label, count);
+    const r = layout(d);
+    const step = estimateLabelWidth({ kind: "calls", props: { label } }) + 10;
+    expect(step).toBeGreaterThan(80);
+    // edge.lane 是"相对走廊中心的偏移/14"，相邻车道间距 = steps
+    const offsets = r.edges.map((e) => e.lane * 14).sort((a, b) => a - b);
+    for (let i = 1; i < offsets.length; i++) {
+      expect(offsets[i]! - offsets[i - 1]!).toBeGreaterThanOrEqual(step - 0.01);
+    }
+    // 间隙也应按胶囊宽扩大（不是压回 rankGap 默认值）
+    const a = r.nodes["e.a"]!;
+    const b = r.nodes["e.b"]!;
+    const gap = b.x - (a.x + a.w);
+    expect(gap).toBeGreaterThanOrEqual(52 + (count - 1) * (step - 0.01));
+  });
+
+  it("长边通道间距 ≥ 胶囊高 17 + 8（保证标签不压相邻通道线）", () => {
+    const d: CovenantDoc = {
+      covenant: "0.1",
+      id: "t/channels",
+      profile: "c4-container@1",
+      meta: { title: "CH", purpose: "p", non_goals: [] },
+      elements: [
+        { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS" },
+        { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
+        { id: "e.c", kind: "container", name: "C", summary: "c", tech: "TS" },
+        { id: "e.d", kind: "container", name: "D", summary: "d", tech: "TS" },
+      ],
+      relations: [
+        { id: "r.ab", kind: "calls", from: "e.a", to: "e.b", summary: "ab" },
+        { id: "r.bc", kind: "calls", from: "e.b", to: "e.c", summary: "bc" },
+        { id: "r.cd", kind: "calls", from: "e.c", to: "e.d", summary: "cd" },
+        { id: "r.ac", kind: "calls", from: "e.a", to: "e.c", summary: "ac" },
+        { id: "r.ad", kind: "calls", from: "e.a", to: "e.d", summary: "ad" },
+      ],
+    };
+    const r = layout(d);
+    const longs = r.edges.filter((e) => e.labelSegment);
+    expect(longs.length).toBe(2);
+    const ys = longs.map((e) => e.points![2]!.y).sort((a, b) => a - b);
+    expect(Math.abs(ys[1]! - ys[0]!)).toBeGreaterThanOrEqual(25);
   });
 });

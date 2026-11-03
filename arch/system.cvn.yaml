@@ -12,14 +12,16 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 2
+  rev: 3
   owners: [human:team]
-  updated: 2026-11-03T00:00:00+08:00
+  updated: 2026-11-03T18:45:00+08:00
   ai:
     summary: |
       单文件 HTML 优先的契约式图示工具：.cvn.yaml 为唯一事实源，
       渲染在构建期完成，浏览器端只做标注与导出补丁。
-      依赖方向 core ← validate/layout ← render/patch/diff ← cli。
+      依赖方向 core ← profile/validate/layout/render/patch/diff/indexer/ai/adr/editor ← cli/mcp；
+      cli 与 mcp 是并列前端，均直接依赖库包（mcp 不经 CLI 进程）。
+      交付链：cli build/bundle → dist 产物；scripts/build-kit → kit；GitHub Actions 负责 verify 与 Release。
 
 elements:
   - id: e.human
@@ -36,13 +38,25 @@ elements:
   - id: e.cli
     kind: container
     name: covenant CLI
-    summary: 命令入口：check / render / build / apply / patch-check / diff / index
+    summary: 命令入口：check/render/build/bundle/apply/patch-check/diff/index/ai/adr/edit/doctor/serve
     tech: TypeScript + tsx
+
+  - id: e.mcp
+    kind: container
+    name: MCP server
+    summary: stdio 进程，暴露 9 个工具（brief/check/read_doc/render/build/patch_check/apply/diff/index）
+    tech: TypeScript + JSON-RPC
 
   - id: e.core
     kind: container
     name: core
-    summary: 类型、YAML 解析（CORE_SCHEMA）、finding 排序
+    summary: 类型、YAML 解析（CORE_SCHEMA）、finding 排序、仓库根定位
+    tech: TypeScript
+
+  - id: e.profile
+    kind: container
+    name: profile
+    summary: 剖面注册表与专有规则（c4-container/dfd/er/flowchart/deployment/graph/sequence/state 等）
     tech: TypeScript
 
   - id: e.validate
@@ -54,19 +68,19 @@ elements:
   - id: e.layout
     kind: container
     name: layout
-    summary: 分层布局、barycenter 交叉最小化、长边通道、视图选择器
+    summary: 分层布局、barycenter 交叉最小化、长边通道、视图选择器、序列图专用布局
     tech: TypeScript
 
   - id: e.render
     kind: container
     name: render
-    summary: SVG 渲染 + 可标注自包含 HTML
+    summary: SVG 渲染 + 可标注自包含 HTML（单文件查看器）
     tech: TypeScript
 
   - id: e.patch
     kind: container
     name: patch
-    summary: 补丁门禁、状态流转、保留注释的文本块落盘
+    summary: 补丁门禁、状态流转、保留注释的文本块落盘与 write-ahead 审计
     tech: TypeScript
 
   - id: e.diff
@@ -78,13 +92,43 @@ elements:
   - id: e.indexer
     kind: container
     name: indexer
-    summary: FRAS 索引生成与新鲜度校验（I1–I3）
+    summary: FRAS 索引生成与 I1–I3 校验（覆盖 / 新鲜度 / 可读性）
     tech: TypeScript
+
+  - id: e.ai
+    kind: container
+    name: ai
+    summary: 本地 AI 协作：评审简报与 AI 批注补丁构造（不联网）
+    tech: TypeScript
+
+  - id: e.adr
+    kind: container
+    name: adr
+    summary: ADR front-matter 解析与校验（编号 / 状态 / supersedes / accepted 引用）
+    tech: TypeScript
+
+  - id: e.editor
+    kind: container
+    name: editor
+    summary: 受控语义编辑（属性 / pins）+ YAML 序列化 + 统一 diff
+    tech: TypeScript
+
+  - id: e.kitbuild
+    kind: container
+    name: 可交付包构建
+    summary: scripts/build-kit.mjs：esbuild 单文件 CLI + viewer + schema/模板/示例/docs → dist/covenant-kit-*
+    tech: Node + esbuild
+
+  - id: e.ci
+    kind: container
+    name: GitHub Actions
+    summary: verify.yml（typecheck/verify/kit 构建上传）与 release.yml（tag → kit → zip/sha → Release）
+    tech: GitHub Actions
 
   - id: e.docs
     kind: datastore
     name: .cvn.yaml 契约文件
-    summary: 唯一权威事实源（arch/ 与 examples/）
+    summary: 唯一权威事实源：项目内 .cvn.yaml（arch/、examples/、用户项目）
     tech: YAML
     props: { storage_kind: file }
     tags: [critical]
@@ -99,16 +143,35 @@ elements:
   - id: e.audit
     kind: datastore
     name: 审计日志
-    summary: .audit/*.jsonl，记录补丁 intent/commit
+    summary: 手搓 write-ahead 审计 .audit/*.jsonl（intent→rename→commit）与编辑备份；git 仅用于 diff 展示
     tech: JSONL
     props: { storage_kind: file }
 
   - id: e.html
     kind: datastore
     name: 自包含 HTML
-    summary: dist/covenant.html，构建期渲染的只读+标注产物
+    summary: dist/covenant.html 单文件（默认产物；离线可标注）
     tech: HTML + inline SVG
     props: { storage_kind: file }
+
+  - id: e.bundle
+    kind: datastore
+    name: 文件夹站点
+    summary: dist/site/（index.html + manifest.json v3 + views/*.svg + annotations.json），第二产物模式
+    tech: HTML + SVG + JSON
+    props: { storage_kind: file }
+
+  - id: e.kit
+    kind: datastore
+    name: 可交付包
+    summary: dist/covenant-kit-<ver>/ 与 .zip/.sha256（可移植交付包 / Release 资产）
+    tech: 文件目录 + ZIP
+    props: { storage_kind: file }
+
+  - id: e.github
+    kind: external-system
+    name: GitHub（Releases / Issues）
+    summary: 公开分发与反馈通道：Release 上传 kit 资产、Issue 收集需求（外部不可信输入）
 
 relations:
   - id: r.human-cli
@@ -121,7 +184,13 @@ relations:
     kind: calls
     from: e.agent
     to: e.cli
-    summary: 通过 CLI/MCP 提交补丁
+    summary: 通过 CLI 提交补丁
+
+  - id: r.agent-mcp
+    kind: calls
+    from: e.agent
+    to: e.mcp
+    summary: 通过 MCP 工具调用（9 个工具）
 
   - id: r.cli-core
     kind: calls
@@ -158,12 +227,78 @@ relations:
     from: e.cli
     to: e.indexer
     summary: 索引生成/校验
+  - id: r.cli-ai
+    kind: calls
+    from: e.cli
+    to: e.ai
+    summary: AI 简报与批注补丁
+  - id: r.cli-adr
+    kind: calls
+    from: e.cli
+    to: e.adr
+    summary: ADR 校验
+  - id: r.cli-editor
+    kind: calls
+    from: e.cli
+    to: e.editor
+    summary: 受控语义编辑
 
+  - id: r.mcp-core
+    kind: calls
+    from: e.mcp
+    to: e.core
+    summary: 解析与类型（直接调用库，不经 CLI）
+  - id: r.mcp-validate
+    kind: calls
+    from: e.mcp
+    to: e.validate
+    summary: check 工具
+  - id: r.mcp-layout
+    kind: calls
+    from: e.mcp
+    to: e.layout
+    summary: render 工具布局
+  - id: r.mcp-render
+    kind: calls
+    from: e.mcp
+    to: e.render
+    summary: render/build 工具
+  - id: r.mcp-patch
+    kind: calls
+    from: e.mcp
+    to: e.patch
+    summary: patch_check/apply 工具
+  - id: r.mcp-diff
+    kind: calls
+    from: e.mcp
+    to: e.diff
+    summary: diff 工具
+  - id: r.mcp-indexer
+    kind: calls
+    from: e.mcp
+    to: e.indexer
+    summary: index 工具
+  - id: r.mcp-ai
+    kind: calls
+    from: e.mcp
+    to: e.ai
+    summary: brief 工具
+
+  - id: r.profile-core
+    kind: calls
+    from: e.profile
+    to: e.core
+    summary: 复用类型
   - id: r.validate-core
     kind: calls
     from: e.validate
     to: e.core
     summary: 复用解析与类型
+  - id: r.validate-profile
+    kind: calls
+    from: e.validate
+    to: e.profile
+    summary: 取剖面定义
   - id: r.render-layout
     kind: calls
     from: e.render
@@ -179,32 +314,103 @@ relations:
     from: e.diff
     to: e.core
     summary: 复用文档模型
+  - id: r.ai-core
+    kind: calls
+    from: e.ai
+    to: e.core
+    summary: 复用文档模型
+  - id: r.ai-patch
+    kind: calls
+    from: e.ai
+    to: e.patch
+    summary: 生成 gate 可接受的补丁
+  - id: r.adr-core
+    kind: calls
+    from: e.adr
+    to: e.core
+    summary: 复用文档模型
+  - id: r.editor-core
+    kind: calls
+    from: e.editor
+    to: e.core
+    summary: 复用文档模型
 
   - id: r.cli-docs-read
     kind: reads
     from: e.cli
     to: e.docs
     summary: 读取契约文档
-  - id: r.cli-audit
+  - id: r.cli-docs-write
+    kind: writes
+    from: e.cli
+    to: e.docs
+    summary: apply / edit 落盘（经 patch/edit-flow 原子替换）
+  - id: r.mcp-docs-read
+    kind: reads
+    from: e.mcp
+    to: e.docs
+    summary: read_doc / brief 读取
+  - id: r.cli-audit-edit
     kind: writes
     from: e.cli
     to: e.audit
-    summary: 写前审计（intent/commit）
+    summary: edit --accept 备份与审计
+  - id: r.patch-audit
+    kind: writes
+    from: e.patch
+    to: e.audit
+    summary: write-ahead 审计（intent/commit）
   - id: r.cli-html
     kind: writes
     from: e.cli
     to: e.html
-    summary: 构建自包含 HTML
+    summary: 构建单文件 HTML
+  - id: r.cli-bundle
+    kind: writes
+    from: e.cli
+    to: e.bundle
+    summary: 构建文件夹站点
   - id: r.indexer-index
     kind: writes
     from: e.indexer
     to: e.index
     summary: 更新 FRAS 条目与哈希
+  - id: r.mcp-index
+    kind: writes
+    from: e.mcp
+    to: e.index
+    summary: index 工具校验/写哈希
   - id: r.cli-index-read
     kind: reads
     from: e.cli
     to: e.index
     summary: 索引校验时读取
+
+  - id: r.ci-cli
+    kind: calls
+    from: e.ci
+    to: e.cli
+    summary: 运行 pnpm verify（typecheck / check / index / adr / modules / test）
+  - id: r.ci-kitbuild
+    kind: calls
+    from: e.ci
+    to: e.kitbuild
+    summary: 构建可交付包
+  - id: r.kitbuild-cli
+    kind: calls
+    from: e.kitbuild
+    to: e.cli
+    summary: 用打包后的 CLI 自检模板并预构建 viewer
+  - id: r.kitbuild-kit
+    kind: writes
+    from: e.kitbuild
+    to: e.kit
+    summary: 产出 kit 目录与 zip/sha256
+  - id: r.ci-github
+    kind: calls
+    from: e.ci
+    to: e.github
+    summary: 上传 Release 资产 / 接收 Issue
 
 links:
   - kind: adr
@@ -220,12 +426,42 @@ views:
   - id: v.main
     title: 系统结构
     include:
-      elements: [e.*]
+      elements:
+        - e.human
+        - e.agent
+        - e.cli
+        - e.mcp
+        - e.core
+        - e.profile
+        - e.validate
+        - e.layout
+        - e.render
+        - e.patch
+        - e.diff
+        - e.indexer
+        - e.ai
+        - e.adr
+        - e.editor
+        - e.docs
+        - e.index
+        - e.audit
+        - e.html
+        - e.bundle
       relations: [r.*]
     layout:
       engine: elk
       direction: RIGHT
       spacing: { rank: 120, node: 44 }
+
+  - id: v.delivery
+    title: 交付与发布
+    include:
+      elements: [e.human, e.agent, e.cli, e.kitbuild, e.ci, e.github, e.kit]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 120, node: 60 }
 
 annotations:
   - id: a.01JAYS3KV0001AAAA0001

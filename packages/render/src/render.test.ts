@@ -216,8 +216,10 @@ describe("边标签胶囊与交叉跳线", () => {
     const svg = renderSvg(d, layout(d));
     expect(svg).toContain("edge-label-bg");
   });
+});
 
-  it("junction 模式：节点为点，交叉处有跳线弧，边是点间直线", () => {
+describe("交点圆点（空心=几何交叉 / 实心=真实连接）", () => {
+  it("junction 模式：边是点间直线，不再有跳线弧，交叉处是空心圆", () => {
     const d: CovenantDoc = {
       covenant: "0.1",
       id: "t/junction",
@@ -247,9 +249,105 @@ describe("边标签胶囊与交叉跳线", () => {
     const l = layout(d, { pins: view.layout?.pins, includeIds: sel.elementIds, includeRelationIds: sel.relationIds });
     const svg = renderSvg(d, l, { view });
     expect(svg).toContain('r="6"'); // 接线点
-    expect(svg.match(/ Q[-0-9]/g) ?? []).not.toHaveLength(0); // 跳线弧
+    expect(svg.match(/ Q[-0-9]/g) ?? []).toHaveLength(0); // 不再有跳线弧
+    expect(svg).toContain("crossing-hollow"); // 两条对角线交叉 → 空心圆
     // 接线点模式不应画节点大框（module 的 rect 不出现）
     expect((svg.match(/<rect x="40" y="40"/g) ?? []).length).toBe(0);
+  });
+
+  it("T 型汇入/共享折点画实心圆，纯几何交叉画空心圆", () => {
+    const d: CovenantDoc = {
+      covenant: "0.1",
+      id: "t/crossings",
+      profile: "c4-container@1",
+      meta: { title: "X", purpose: "p", non_goals: [] },
+      elements: [
+        { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS" },
+        { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
+        { id: "e.c", kind: "container", name: "C", summary: "c", tech: "TS" },
+        { id: "e.d", kind: "container", name: "D", summary: "d", tech: "TS" },
+      ],
+      relations: [
+        { id: "r.1", kind: "calls", from: "e.a", to: "e.b", summary: "1" },
+        { id: "r.2", kind: "calls", from: "e.b", to: "e.c", summary: "2" },
+        { id: "r.3", kind: "calls", from: "e.c", to: "e.d", summary: "3" },
+        { id: "r.4", kind: "calls", from: "e.d", to: "e.a", summary: "4" },
+        { id: "r.5", kind: "calls", from: "e.a", to: "e.c", summary: "5" },
+        { id: "r.6", kind: "calls", from: "e.b", to: "e.d", summary: "6" },
+      ],
+    };
+    // 手工布局：节点放在四角（远离交点），边是我们精确控制的折线
+    const nodes = {
+      "e.a": { x: 10, y: 10, w: 20, h: 20 },
+      "e.b": { x: 900, y: 10, w: 20, h: 20 },
+      "e.c": { x: 10, y: 700, w: 20, h: 20 },
+      "e.d": { x: 900, y: 700, w: 20, h: 20 },
+    };
+    const mk = (id: string, from: string, to: string, points: { x: number; y: number }[]) => ({
+      id, from, to, points, lane: 0,
+    });
+    const fabricated = {
+      nodes,
+      edges: [
+        mk("r.1", "e.a", "e.b", [{ x: 100, y: 100 }, { x: 100, y: 400 }]), // 竖线
+        mk("r.2", "e.b", "e.c", [{ x: 300, y: 250 }, { x: 100, y: 250 }]), // T 型：终点落在 r.1 上
+        mk("r.3", "e.c", "e.d", [{ x: 400, y: 100 }, { x: 400, y: 400 }]), // 竖线
+        mk("r.4", "e.d", "e.a", [{ x: 350, y: 250 }, { x: 450, y: 250 }]), // 与 r.3 纯交叉
+        mk("r.5", "e.a", "e.c", [{ x: 600, y: 100 }, { x: 700, y: 200 }, { x: 800, y: 100 }]), // 折点
+        mk("r.6", "e.b", "e.d", [{ x: 600, y: 300 }, { x: 700, y: 200 }, { x: 800, y: 300 }]), // 共享折点
+      ],
+      width: 1200,
+      height: 900,
+      ranks: {},
+    };
+    const svg = renderSvg(d, fabricated);
+    expect(svg).toContain("crossing-solid"); // T 型 + 共享折点
+    expect(svg).toContain("crossing-hollow"); // 纯几何交叉
+    // 纯几何交叉只应有一个空心点（T 型点不算空心）
+    expect((svg.match(/crossing-hollow/g) ?? []).length).toBe(1);
+    expect((svg.match(/crossing-solid/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(svg.match(/ Q[-0-9]/g) ?? []).toHaveLength(0);
+  });
+});
+
+describe("边标签不压别的边线", () => {
+  it("胶囊沿路径滑动，避开穿过的另一条边", () => {
+    const d: CovenantDoc = {
+      covenant: "0.1",
+      id: "t/avoid",
+      profile: "c4-container@1",
+      meta: { title: "AV", purpose: "p", non_goals: [] },
+      elements: [
+        { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS" },
+        { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
+      ],
+      relations: [
+        { id: "r.h", kind: "calls", from: "e.a", to: "e.b", summary: "h", props: { label: "很长的中文胶囊标签" } },
+        { id: "r.v", kind: "calls", from: "e.b", to: "e.a", summary: "v" },
+      ],
+    };
+    const nodes = {
+      "e.a": { x: 10, y: 10, w: 20, h: 20 },
+      "e.b": { x: 900, y: 10, w: 20, h: 20 },
+    };
+    const fabricated = {
+      nodes,
+      edges: [
+        { id: "r.h", from: "e.a", to: "e.b", points: [{ x: 100, y: 200 }, { x: 800, y: 200 }], lane: 0 },
+        { id: "r.v", from: "e.b", to: "e.a", points: [{ x: 450, y: 60 }, { x: 450, y: 340 }], lane: 0 },
+      ],
+      width: 1000,
+      height: 500,
+      ranks: {},
+    };
+    const svg = renderSvg(d, fabricated);
+    const rect = /<rect class="edge-label-bg" x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)"/.exec(svg);
+    expect(rect).not.toBeNull();
+    const box = { x: Number(rect![1]), y: Number(rect![2]), w: Number(rect![3]), h: Number(rect![4]) };
+    // 垂直边线段 (450,60)-(450,340)：胶囊不得与它相交
+    const verticalAt450 = 450;
+    const boxCovers450 = box.x < verticalAt450 && box.x + box.w > verticalAt450 && box.y < 340 && box.y + box.h > 60;
+    expect(boxCovers450).toBe(false);
   });
 });
 describe("标签避让回退（候选耗尽也不重叠）", () => {

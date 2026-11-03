@@ -150,7 +150,8 @@ AI 产出补丁
 ## 8. 传输与外泄（T7）
 
 - **默认全本地**：渲染、校验、digest 生成均不联网。
-- `serve --ai` 才开 AI 通道；MCP 仅绑定回环地址。
+- **当前实现无网络通道**：MCP 为 stdio（不监听网络）；`ai` 子命令只做本地简报/补丁构造；`serve` 仅 loopback 静态托管与短时编辑写回。若未来引入云端模型调用，须显式配置、首次调用前打印将发送的内容摘要并要求确认（本节即该未来约束）。
+- MCP 仅绑定回环地址（stdio，无监听端口）。
 - 云端模型调用需显式配置；**首次调用前打印将发送的内容摘要并要求确认**。
 - 元素 `tags` 含 `pii` / `secret` 时，digest 默认**脱敏**（名称保留、`tech`/`props` 摘要化），并提供 `--redact` 级别。
 - 导出（Markdown/HTML）默认不带代码路径与内部 URL，除非 `--include-links`。
@@ -177,6 +178,8 @@ audit:
 ```
 
 审计目录：`arch/.audit/`（git 跟踪或按需 gitignore，需拍板；建议**跟踪**，因为"谁批准了什么"必须可回溯）。
+
+> **实装（2026-11-03）**：`packages/patch/src/audit.ts` 写 `.audit/*.jsonl`，字段为 `at/actor/doc/base_rev/new_rev/intent/ops_sha256/phase`，采用 write-ahead（intent → 临时文件复验 → rename → commit）；`edit --accept` 另写备份与 `edit-*.jsonl`。**审计不依赖 git**（git 仅用于编辑 diff 展示，`git diff --no-index` 可选）。
 
 ---
 

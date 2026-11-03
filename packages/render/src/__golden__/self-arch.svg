@@ -1,144 +1,510 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1582" height="934" viewBox="0 0 1582 934" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="4447" height="1483" viewBox="0 0 4447 1483" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
 <title id="cvn-title">系统结构</title>
 <desc id="cvn-desc">说明仓库自身的组件边界、依赖方向与已知缺口，作为人/AI 的共同基线。</desc>
 <defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
-<rect x="0" y="0" width="1582" height="934" fill="#ffffff"/>
-<g class="edge" data-id="r.human-cli"><path d="M266 408 L286 408 L312 408 L312 459 L366 459 L386 459" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M266 408 L286 408 L312 408 L312 459 L366 459 L386 459" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.agent-cli"><path d="M266 526 L286 526 L326 526 L326 475 L366 475 L386 475" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M266 526 L286 526 L326 526 L326 475 L366 475 L386 475" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-core"><path d="M513 423 L513 8 L1403 8 L1403 430" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M513 423 L513 8 L1403 8 L1403 430" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-validate"><path d="M497 423 L497 16 L506 16 Q513 30 520 16 L1101 16 L1101 430" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M497 423 L497 16 L506 16 Q513 30 520 16 L1101 16 L1101 430" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-layout"><path d="M481 423 L481 24 L490 24 Q497 38 504 24 L506 24 Q513 38 520 24 L1101 24 L1101 312" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M481 423 L481 24 L490 24 Q497 38 504 24 L506 24 Q513 38 520 24 L1101 24 L1101 312" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-render"><path d="M449 423 L449 403 L449 280 L474 280 Q481 294 488 280 L490 280 Q497 294 504 280 L506 280 Q513 294 520 280 L791 280 L791 170 L791 150" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M449 423 L449 403 L449 280 L474 280 Q481 294 488 280 L490 280 Q497 294 504 280 L506 280 Q513 294 520 280 L791 280 L791 170 L791 150" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-patch"><path d="M576 435 L596 435 L636 435 L636 287 Q650 280 636 273 L636 231 L676 231 L696 231" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M576 435 L596 435 L636 435 L636 287 Q650 280 636 273 L636 231 L676 231 L696 231" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-diff"><path d="M576 451 L596 451 L650 451 L650 349 L676 349 L696 349" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M576 451 L596 451 L650 451 L650 349 L676 349 L696 349" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-indexer"><path d="M576 467 L596 467 L622 467 L676 467 L696 467" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M576 467 L596 467 L622 467 L676 467 L696 467" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.validate-core"><path d="M1196 467 L1216 467 L1242 467 L1296 467 L1316 467" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1196 467 L1216 467 L1242 467 L1296 467 L1316 467" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.render-layout"><path d="M886 113 L906 113 L932 113 L932 349 L986 349 L1006 349" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M886 113 L906 113 L932 113 L932 349 L986 349 L1006 349" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.patch-validate"><path d="M886 231 L906 231 L925 231 Q932 245 939 231 L946 231 L946 342 Q932 349 946 356 L946 467 L986 467 L1006 467" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M886 231 L906 231 L925 231 Q932 245 939 231 L946 231 L946 342 Q932 349 946 356 L946 467 L986 467 L1006 467" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.diff-core"><path d="M791 312 L791 32 L1094 32 Q1101 46 1108 32 L1396 32 Q1403 46 1410 32 L1419 32 L1419 430" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M791 312 L791 32 L1094 32 Q1101 46 1108 32 L1396 32 Q1403 46 1410 32 L1419 32 L1419 430" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-docs-read"><path d="M576 483 L596 483 L636 483 L636 585 L676 585 L696 585" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M576 483 L596 483 L636 483 L636 585 L676 585 L696 585" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-audit"><path d="M576 499 L596 499 L629 499 Q636 513 643 499 L650 499 L650 578 Q636 585 650 592 L650 703 L676 703 L696 703" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M576 499 L596 499 L629 499 Q636 513 643 499 L650 499 L650 578 Q636 585 650 592 L650 703 L676 703 L696 703" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-html"><path d="M481 511 L481 531 L481 634 L643 634 Q650 648 657 634 L791 634 L791 764 L791 784" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M481 511 L481 531 L481 634 L643 634 Q650 648 657 634 L791 634 L791 764 L791 784" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.indexer-index"><path d="M886 467 L906 467 L960 467 L960 585 L986 585 L1006 585" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M886 467 L906 467 L960 467 L960 585 L986 585 L1006 585" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.cli-index-read"><path d="M465 423 L465 287 Q479 280 465 273 L465 40 L474 40 Q481 54 488 40 L490 40 Q497 54 504 40 L506 40 Q513 54 520 40 L784 40 Q791 54 798 40 L1101 40 L1101 548" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M465 423 L465 287 Q479 280 465 273 L465 40 L474 40 Q481 54 488 40 L490 40 Q497 54 504 40 L506 40 Q513 54 520 40 L784 40 Q791 54 798 40 L1101 40 L1101 548" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<rect class="edge-label-bg" x="286.56" y="397" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="306" y="408" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="286.56" y="515" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="306" y="526" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="938.56" y="11" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="958" y="22" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="779.56" y="19" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="799" y="30" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="771.56" y="41" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="791" y="52" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="429.56" y="392" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="449" y="403" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="556.56" y="404" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="576" y="415" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="596.56" y="440" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="616" y="451" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="596.56" y="456" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="616" y="467" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="1216.56" y="456" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="1236" y="467" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="906.56" y="102" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="926" y="113" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="906.56" y="220" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="926" y="231" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="1085.56" y="35" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="1105" y="46" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="596.56" y="472" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="616" y="483" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
-<rect class="edge-label-bg" x="593.67" y="488" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="616" y="499" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
-<rect class="edge-label-bg" x="458.68" y="520" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="481" y="531" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
-<rect class="edge-label-bg" x="903.68" y="456" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="926" y="467" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
-<rect class="edge-label-bg" x="763.56" y="57" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="783" y="68" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect x="0" y="0" width="4447" height="1483" fill="#ffffff"/>
+<g class="edge" data-id="r.human-cli"><path d="M218 887 L238 887 L335.75 887 L335.75 878 L347.75 878 L367.75 878" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 887 L238 887 L335.75 887 L335.75 878 L347.75 878 L367.75 878" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-cli"><path d="M218 996 L238 996 L238 896 L347.75 896 L367.75 896" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 996 L238 996 L238 896 L347.75 896 L367.75 896" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-mcp"><path d="M218 1014 L238 1014 L286.88 1014 L286.88 1171 L347.75 1171 L367.75 1171" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 1014 L238 1014 L286.88 1014 L286.88 1171 L347.75 1171 L367.75 1171" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-core"><path d="M557.75 860 L796.35 860 L796.35 10 L3952.15 10 L3952.15 919 L4228.52 919" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 860 L796.35 860 L796.35 10 L3952.15 10 L3952.15 919 L4228.52 919" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-validate"><path d="M557.75 842 L1397.5 842 L1397.5 35 L3138.45 35 L3138.45 869 L3334.4 869" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 842 L1397.5 842 L1397.5 35 L3138.45 35 L3138.45 869 L3334.4 869" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-layout"><path d="M557.75 824 L1233.55 824 L1233.55 60 L2404.6 60 L2404.6 810 L2873.8 810" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 824 L1233.55 824 L1233.55 60 L2404.6 60 L2404.6 810 L2873.8 810" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-render"><path d="M557.75 968 L577.75 968 L1342.85 968 L1342.85 1055 L1956 1055 L1976 1055" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 968 L577.75 968 L1342.85 968 L1342.85 1055 L1956 1055 L1976 1055" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-patch"><path d="M557.75 950 L1288.2 950 L1288.2 85 L2459.25 85 L2459.25 1046 L2873.8 1046" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 950 L1288.2 950 L1288.2 85 L2459.25 85 L2459.25 1046 L2873.8 1046" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-diff"><path d="M557.75 986 L577.75 986 L851 986 L851 1173 L1956 1173 L1976 1173" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 986 L577.75 986 L851 986 L851 1173 L1956 1173 L1976 1173" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-indexer"><path d="M557.75 1004 L577.75 1004 L1178.9 1004 L1178.9 1291 L1956 1291 L1976 1291" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1004 L577.75 1004 L1178.9 1004 L1178.9 1291 L1956 1291 L1976 1291" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-ai"><path d="M557.75 1022 L577.75 1022 L632.4 1022 L632.4 1409 L1956 1409 L1976 1409" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1022 L577.75 1022 L632.4 1022 L632.4 1409 L1956 1409 L1976 1409" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-adr"><path d="M557.75 752 L577.75 752 L577.75 474 L1956 474 L1976 474" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 752 L577.75 752 L577.75 474 L1956 474 L1976 474" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-editor"><path d="M557.75 770 L577.75 770 L1014.95 770 L1014.95 592 L1956 592 L1976 592" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 770 L577.75 770 L1014.95 770 L1014.95 592 L1956 592 L1976 592" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-core"><path d="M557.75 1126 L1506.8 1126 L1506.8 110 L4098.77 110 L4098.77 973 L4228.52 973" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1126 L1506.8 1126 L1506.8 110 L4098.77 110 L4098.77 973 L4228.52 973" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-validate"><path d="M557.75 1108 L1944 1108 L1944 135 L3193.1 135 L3193.1 905 L3334.4 905" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1108 L1944 1108 L1944 135 L3193.1 135 L3193.1 905 L3334.4 905" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-layout"><path d="M557.75 1090 L1780.05 1090 L1780.05 160 L2732.5 160 L2732.5 846 L2873.8 846" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1090 L1780.05 1090 L1780.05 160 L2732.5 160 L2732.5 846 L2873.8 846" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-render"><path d="M557.75 1198 L577.75 1198 L1889.35 1198 L1889.35 1073 L1956 1073 L1976 1073" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1198 L577.75 1198 L1889.35 1198 L1889.35 1073 L1956 1073 L1976 1073" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-patch"><path d="M557.75 1180 L1834.7 1180 L1834.7 185 L2787.15 185 L2787.15 1064 L2873.8 1064" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1180 L1834.7 1180 L1834.7 185 L2787.15 185 L2787.15 1064 L2873.8 1064" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-diff"><path d="M557.75 1216 L577.75 1216 L1561.45 1216 L1561.45 1191 L1956 1191 L1976 1191" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1216 L577.75 1216 L1561.45 1216 L1561.45 1191 L1956 1191 L1976 1191" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-indexer"><path d="M557.75 1234 L577.75 1234 L1725.4 1234 L1725.4 1309 L1956 1309 L1976 1309" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1234 L577.75 1234 L1725.4 1234 L1725.4 1309 L1956 1309 L1976 1309" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-ai"><path d="M557.75 1252 L577.75 1252 L1452.15 1252 L1452.15 1427 L1956 1427 L1976 1427" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1252 L577.75 1252 L1452.15 1252 L1452.15 1427 L1956 1427 L1976 1427" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.profile-core"><path d="M3834.4 946 L3854.4 946 L4147.65 946 L4147.65 955 L4208.52 955 L4228.52 955" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M3834.4 946 L3854.4 946 L4147.65 946 L4147.65 955 L4208.52 955 L4228.52 955" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.validate-core"><path d="M3524.4 878 L3544.4 878 L3544.4 210 L4196.52 210 L4196.52 937 L4228.52 937" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M3524.4 878 L3544.4 878 L3544.4 210 L4196.52 210 L4196.52 937 L4228.52 937" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.validate-profile"><path d="M3524.4 896 L3544.4 896 L3593.28 896 L3593.28 946 L3624.4 946 L3644.4 946" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M3524.4 896 L3544.4 896 L3593.28 896 L3593.28 946 L3624.4 946 L3644.4 946" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.render-layout"><path d="M2166 1064 L2186 1064 L2841.8 1064 L2841.8 828 L2853.8 828 L2873.8 828" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 1064 L2186 1064 L2841.8 1064 L2841.8 828 L2853.8 828 L2873.8 828" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.patch-validate"><path d="M3063.8 1055 L3083.8 1055 L3302.4 1055 L3302.4 887 L3314.4 887 L3334.4 887" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M3063.8 1055 L3083.8 1055 L3302.4 1055 L3302.4 887 L3314.4 887 L3334.4 887" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.diff-core"><path d="M2166 1182 L2513.9 1182 L2513.9 235 L4001.03 235 L4001.03 991 L4228.52 991" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 1182 L2513.9 1182 L2513.9 235 L4001.03 235 L4001.03 991 L4228.52 991" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.ai-core"><path d="M2166 1409 L2240.65 1409 L2240.65 260 L3903.28 260 L3903.28 1009 L4228.52 1009" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 1409 L2240.65 1409 L2240.65 260 L3903.28 260 L3903.28 1009 L4228.52 1009" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.ai-patch"><path d="M2166 1427 L2186 1427 L2295.3 1427 L2295.3 1082 L2853.8 1082 L2873.8 1082" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 1427 L2186 1427 L2295.3 1427 L2295.3 1082 L2853.8 1082 L2873.8 1082" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.adr-core"><path d="M2166 474 L2186 474 L2186 285 L3854.4 285 L3854.4 883 L4228.52 883" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 474 L2186 474 L2186 285 L3854.4 285 L3854.4 883 L4228.52 883" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.editor-core"><path d="M2166 592 L2568.55 592 L2568.55 310 L4049.9 310 L4049.9 901 L4228.52 901" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 592 L2568.55 592 L2568.55 310 L4049.9 310 L4049.9 901 L4228.52 901" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-docs-read"><path d="M557.75 878 L577.75 878 L905.65 878 L905.65 928 L1956 928 L1976 928" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 878 L577.75 878 L905.65 878 L905.65 928 L1956 928 L1976 928" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-docs-write"><path d="M557.75 896 L577.75 896 L960.3 896 L960.3 946 L1956 946 L1976 946" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 896 L577.75 896 L960.3 896 L960.3 946 L1956 946 L1976 946" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-docs-read"><path d="M557.75 1144 L577.75 1144 L1616.1 1144 L1616.1 964 L1956 964 L1976 964" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1144 L577.75 1144 L1616.1 1144 L1616.1 964 L1956 964 L1976 964" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-audit-edit"><path d="M557.75 932 L687.05 932 L687.05 335 L3083.8 335 L3083.8 996 L3334.4 996" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 932 L687.05 932 L687.05 335 L3083.8 335 L3083.8 996 L3334.4 996" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.patch-audit"><path d="M3063.8 1073 L3083.8 1073 L3247.75 1073 L3247.75 1014 L3314.4 1014 L3334.4 1014" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M3063.8 1073 L3083.8 1073 L3247.75 1073 L3247.75 1014 L3314.4 1014 L3334.4 1014" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-html"><path d="M557.75 788 L577.75 788 L1069.6 788 L1069.6 710 L1956 710 L1976 710" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 788 L577.75 788 L1069.6 788 L1069.6 710 L1956 710 L1976 710" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-bundle"><path d="M557.75 806 L577.75 806 L741.7 806 L741.7 828 L1956 828 L1976 828" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 806 L577.75 806 L741.7 806 L741.7 828 L1956 828 L1976 828" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.indexer-index"><path d="M2166 1300 L2186 1300 L2623.2 1300 L2623.2 964 L2853.8 964 L2873.8 964" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M2166 1300 L2186 1300 L2623.2 1300 L2623.2 964 L2853.8 964 L2873.8 964" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-index"><path d="M557.75 1162 L1670.75 1162 L1670.75 360 L2677.85 360 L2677.85 946 L2873.8 946" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 1162 L1670.75 1162 L1670.75 360 L2677.85 360 L2677.85 946 L2873.8 946" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-index-read"><path d="M557.75 914 L1124.25 914 L1124.25 385 L2349.95 385 L2349.95 928 L2873.8 928" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M557.75 914 L1124.25 914 L1124.25 385 L2349.95 385 L2349.95 928 L2873.8 928" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<circle class="crossing crossing-solid" cx="2787.15" cy="1064" r="3" fill="#94a3b8" stroke="none" pointer-events="none"/>
+<circle class="crossing crossing-solid" cx="2841.8" cy="1064" r="3" fill="#94a3b8" stroke="none" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="842" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="824" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="60" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="842" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="85" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="85" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="810" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1004" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1173" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1233.55" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="770" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1233.55" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1126" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1126" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1126" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="110" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="110" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="110" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3952.15" cy="110" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4098.77" cy="919" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="135" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="135" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="135" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3193.1" cy="869" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="160" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="160" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="160" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="810" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1198" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1198" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1889.35" cy="1173" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1889.35" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="1073" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1180" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1180" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="185" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="185" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="185" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="185" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="810" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="846" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="1046" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1216" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1216" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1889.35" cy="1191" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1234" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1234" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1725.4" cy="1291" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1252" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1252" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1452.15" cy="1291" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1452.15" cy="1409" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4098.77" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3952.15" cy="210" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4098.77" cy="210" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4196.52" cy="919" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2841.8" cy="1046" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2841.8" cy="846" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3302.4" cy="905" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="1064" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="1046" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="810" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3193.1" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3544.4" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3952.15" cy="235" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4001.03" cy="919" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4001.03" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="1182" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="1064" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3193.1" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3544.4" cy="260" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3903.28" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2295.3" cy="1182" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="1082" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3193.1" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3544.4" cy="285" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3903.28" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3952.15" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4001.03" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4098.77" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4196.52" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3138.45" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3193.1" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3544.4" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3854.4" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3903.28" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3952.15" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4001.03" cy="310" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4049.9" cy="883" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4098.77" cy="901" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="4196.52" cy="901" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="905.65" cy="896" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="960.3" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1144" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1144" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1144" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1616.1" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1616.1" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1616.1" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="896" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="878" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="860" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="842" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="824" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="770" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1233.55" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2186" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2568.55" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2732.5" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="335" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3302.4" cy="996" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3247.75" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="3302.4" cy="1014" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="788" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="788" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1233.55" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="806" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="796.35" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="1300" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2295.3" cy="1300" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2623.2" cy="1082" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2623.2" cy="1064" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2623.2" cy="1046" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2841.8" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="632.4" cy="1162" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="851" cy="1162" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1178.9" cy="1162" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="1108" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="1090" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="1055" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="964" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2186" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2404.6" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2568.55" cy="360" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2677.85" cy="810" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2841.8" cy="946" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="687.05" cy="914" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="905.65" cy="914" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="960.3" cy="914" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1124.25" cy="842" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1124.25" cy="828" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1124.25" cy="710" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1124.25" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1124.25" cy="474" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1233.55" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1288.2" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1397.5" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1506.8" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1670.75" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1780.05" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1834.7" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="1944" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2186" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2240.65" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2349.95" cy="592" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2459.25" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2513.9" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2677.85" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2787.15" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="2841.8" cy="928" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<rect class="edge-label-bg" x="273.15" y="878.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="292.59" y="889.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="218.56" y="940.06" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="238" y="951.06" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="236.47" y="1005.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="255.91" y="1016.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2007.67" y="1.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2027.11" y="12.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2152.79" y="26.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2172.22" y="37.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1799.64" y="51.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1819.07" y="62.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="874.66" y="959.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="894.1" y="970.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1918.7" y="76.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1938.13" y="87.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="594.16" y="977.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="613.6" y="988.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="750.31" y="995.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="769.75" y="1006.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="578.67" y="1013.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="598.1" y="1024.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="558.31" y="699.65" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="577.75" y="710.65" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="591.23" y="761.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="610.67" y="772.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3068.47" y="101.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3087.9" y="112.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2411.71" y="126.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2431.15" y="137.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2184.45" y="151.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2203.89" y="162.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1391.75" y="1189.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1411.19" y="1200.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2291.49" y="176.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2310.93" y="187.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="998.28" y="1207.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1017.72" y="1218.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1179.59" y="1225.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1199.03" y="1236.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1054.85" y="1243.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1074.29" y="1254.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="4002.54" y="937.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="4021.98" y="948.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3886.89" y="201.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3906.33" y="212.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3545.73" y="887.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3565.17" y="898.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2530.27" y="1055.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2549.71" y="1066.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3178.21" y="1046.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3197.65" y="1057.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3401.61" y="226.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3421.05" y="237.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2869.64" y="251.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2889.07" y="262.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2202.92" y="1418.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2222.36" y="1429.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="2909" y="276.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2928.44" y="287.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="3289.79" y="301.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3309.23" y="312.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="622.55" y="869.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="641.99" y="880.5" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="607.3" y="887.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="629.62" y="898.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="1245.65" y="1135.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1265.09" y="1146.5" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="1994.92" y="326.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2017.25" y="337.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="3156.75" y="1064.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="3179.08" y="1075.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="636.58" y="779.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="658.9" y="790.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="596.71" y="797.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="619.03" y="808.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="2391.38" y="1291.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2413.7" y="1302.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="2262.76" y="351.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="2285.08" y="362.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="1582.84" y="376.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1602.27" y="387.5" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
 <g class="node kind-person" data-id="e.human">
-<rect x="76" y="371" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="88" y="395" font-size="13" font-weight="650" fill="#0f172a">人工架构师</text>
-<text x="88" y="431" font-size="10.5" fill="#94a3b8">在 HTML 图上标注问题、审批 br…</text>
+<rect x="28" y="850" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="874" font-size="13" font-weight="650" fill="#0f172a">人工架构师</text>
+<text x="40" y="910" font-size="10.5" fill="#94a3b8">在 HTML 图上标注问题、审批 br…</text>
 </g>
 <g class="node kind-person" data-id="e.agent">
-<rect x="76" y="489" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="88" y="513" font-size="13" font-weight="650" fill="#0f172a">AI Agent</text>
-<text x="88" y="531" font-size="11" fill="#64748b">MCP / CLI</text>
-<text x="88" y="549" font-size="10.5" fill="#94a3b8">读语义副本、提交补丁（受门禁约…</text>
+<rect x="28" y="968" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="992" font-size="13" font-weight="650" fill="#0f172a">AI Agent</text>
+<text x="40" y="1010" font-size="11" fill="#64748b">MCP / CLI</text>
+<text x="40" y="1028" font-size="10.5" fill="#94a3b8">读语义副本、提交补丁（受门禁约…</text>
 </g>
 <g class="node kind-container" data-id="e.cli">
-<rect x="386" y="423" width="190" height="88" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="398" y="447" font-size="13" font-weight="650" fill="#0f172a">covenant CLI</text>
-<text x="398" y="465" font-size="11" fill="#64748b">TypeScript + tsx</text>
-<text x="398" y="483" font-size="10.5" fill="#94a3b8">命令入口：check / render / b…</text>
+<rect x="367.75" y="740" width="190" height="294" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="379.75" y="764" font-size="13" font-weight="650" fill="#0f172a">covenant CLI</text>
+<text x="379.75" y="782" font-size="11" fill="#64748b">TypeScript + tsx</text>
+<text x="379.75" y="800" font-size="10.5" fill="#94a3b8">命令入口：check/render/build…</text>
+</g>
+<g class="node kind-container" data-id="e.mcp">
+<rect x="367.75" y="1078" width="190" height="186" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="379.75" y="1102" font-size="13" font-weight="650" fill="#0f172a">MCP server</text>
+<text x="379.75" y="1120" font-size="11" fill="#64748b">TypeScript + JSON-RPC</text>
+<text x="379.75" y="1138" font-size="10.5" fill="#94a3b8">stdio 进程，暴露 9 个工具（br…</text>
 </g>
 <g class="node kind-container" data-id="e.core">
-<rect x="1316" y="430" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="1328" y="454" font-size="13" font-weight="650" fill="#0f172a">core</text>
-<text x="1328" y="472" font-size="11" fill="#64748b">TypeScript</text>
-<text x="1328" y="490" font-size="10.5" fill="#94a3b8">类型、YAML 解析（CORE_SCHEMA…</text>
+<rect x="4228.52" y="871" width="190" height="150" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="4240.52" y="895" font-size="13" font-weight="650" fill="#0f172a">core</text>
+<text x="4240.52" y="913" font-size="11" fill="#64748b">TypeScript</text>
+<text x="4240.52" y="931" font-size="10.5" fill="#94a3b8">类型、YAML 解析（CORE_SCHEMA…</text>
+</g>
+<g class="node kind-container" data-id="e.profile">
+<rect x="3644.4" y="909" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="3656.4" y="933" font-size="13" font-weight="650" fill="#0f172a">profile</text>
+<text x="3656.4" y="951" font-size="11" fill="#64748b">TypeScript</text>
+<text x="3656.4" y="969" font-size="10.5" fill="#94a3b8">剖面注册表与专有规则（c4-cont…</text>
 </g>
 <g class="node kind-container" data-id="e.validate">
-<rect x="1006" y="430" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="1018" y="454" font-size="13" font-weight="650" fill="#0f172a">validate</text>
-<text x="1018" y="472" font-size="11" fill="#64748b">TypeScript + ajv</text>
-<text x="1018" y="490" font-size="10.5" fill="#94a3b8">L1 schema（ajv）/ L2 完整性 …</text>
+<rect x="3334.4" y="850" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="3346.4" y="874" font-size="13" font-weight="650" fill="#0f172a">validate</text>
+<text x="3346.4" y="892" font-size="11" fill="#64748b">TypeScript + ajv</text>
+<text x="3346.4" y="910" font-size="10.5" fill="#94a3b8">L1 schema（ajv）/ L2 完整性 …</text>
 </g>
 <g class="node kind-container" data-id="e.layout">
-<rect x="1006" y="312" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="1018" y="336" font-size="13" font-weight="650" fill="#0f172a">layout</text>
-<text x="1018" y="354" font-size="11" fill="#64748b">TypeScript</text>
-<text x="1018" y="372" font-size="10.5" fill="#94a3b8">分层布局、barycenter 交叉最小…</text>
+<rect x="2873.8" y="791" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="2885.8" y="815" font-size="13" font-weight="650" fill="#0f172a">layout</text>
+<text x="2885.8" y="833" font-size="11" fill="#64748b">TypeScript</text>
+<text x="2885.8" y="851" font-size="10.5" fill="#94a3b8">分层布局、barycenter 交叉最小…</text>
 </g>
 <g class="node kind-container" data-id="e.render">
-<rect x="696" y="76" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="708" y="100" font-size="13" font-weight="650" fill="#0f172a">render</text>
-<text x="708" y="118" font-size="11" fill="#64748b">TypeScript</text>
-<text x="708" y="136" font-size="10.5" fill="#94a3b8">SVG 渲染 + 可标注自包含 HTML</text>
+<rect x="1976" y="1027" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="1051" font-size="13" font-weight="650" fill="#0f172a">render</text>
+<text x="1988" y="1069" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="1087" font-size="10.5" fill="#94a3b8">SVG 渲染 + 可标注自包含 HTML…</text>
 </g>
 <g class="node kind-container" data-id="e.patch">
-<rect x="696" y="194" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="708" y="218" font-size="13" font-weight="650" fill="#0f172a">patch</text>
-<text x="708" y="236" font-size="11" fill="#64748b">TypeScript</text>
-<text x="708" y="254" font-size="10.5" fill="#94a3b8">补丁门禁、状态流转、保留注释的…</text>
+<rect x="2873.8" y="1027" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="2885.8" y="1051" font-size="13" font-weight="650" fill="#0f172a">patch</text>
+<text x="2885.8" y="1069" font-size="11" fill="#64748b">TypeScript</text>
+<text x="2885.8" y="1087" font-size="10.5" fill="#94a3b8">补丁门禁、状态流转、保留注释的…</text>
 </g>
 <g class="node kind-container" data-id="e.diff">
-<rect x="696" y="312" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="708" y="336" font-size="13" font-weight="650" fill="#0f172a">diff</text>
-<text x="708" y="354" font-size="11" fill="#64748b">TypeScript</text>
-<text x="708" y="372" font-size="10.5" fill="#94a3b8">语义 diff（cosmetic / materi…</text>
+<rect x="1976" y="1145" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="1169" font-size="13" font-weight="650" fill="#0f172a">diff</text>
+<text x="1988" y="1187" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="1205" font-size="10.5" fill="#94a3b8">语义 diff（cosmetic / materi…</text>
 </g>
 <g class="node kind-container" data-id="e.indexer">
-<rect x="696" y="430" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="708" y="454" font-size="13" font-weight="650" fill="#0f172a">indexer</text>
-<text x="708" y="472" font-size="11" fill="#64748b">TypeScript</text>
-<text x="708" y="490" font-size="10.5" fill="#94a3b8">FRAS 索引生成与新鲜度校验（I1…</text>
+<rect x="1976" y="1263" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="1287" font-size="13" font-weight="650" fill="#0f172a">indexer</text>
+<text x="1988" y="1305" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="1323" font-size="10.5" fill="#94a3b8">FRAS 索引生成与 I1–I3 校验（…</text>
+</g>
+<g class="node kind-container" data-id="e.ai">
+<rect x="1976" y="1381" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="1405" font-size="13" font-weight="650" fill="#0f172a">ai</text>
+<text x="1988" y="1423" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="1441" font-size="10.5" fill="#94a3b8">本地 AI 协作：评审简报与 AI …</text>
+</g>
+<g class="node kind-container" data-id="e.adr">
+<rect x="1976" y="437" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="461" font-size="13" font-weight="650" fill="#0f172a">adr</text>
+<text x="1988" y="479" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="497" font-size="10.5" fill="#94a3b8">ADR front-matter 解析与校验…</text>
+</g>
+<g class="node kind-container" data-id="e.editor">
+<rect x="1976" y="555" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1988" y="579" font-size="13" font-weight="650" fill="#0f172a">editor</text>
+<text x="1988" y="597" font-size="11" fill="#64748b">TypeScript</text>
+<text x="1988" y="615" font-size="10.5" fill="#94a3b8">受控语义编辑（属性 / pins）+ …</text>
 </g>
 <g class="node kind-datastore" data-id="e.docs">
-<rect x="696" y="548" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="708" y="572" font-size="13" font-weight="650" fill="#0f172a">.cvn.yaml 契约文件</text>
-<text x="708" y="590" font-size="11" fill="#64748b">YAML</text>
-<text x="708" y="608" font-size="10.5" fill="#94a3b8">唯一权威事实源（arch/ 与 exam…</text>
+<rect x="1976" y="909" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1988" y="933" font-size="13" font-weight="650" fill="#0f172a">.cvn.yaml 契约文件</text>
+<text x="1988" y="951" font-size="11" fill="#64748b">YAML</text>
+<text x="1988" y="969" font-size="10.5" fill="#94a3b8">唯一权威事实源：项目内 .cvn.y…</text>
 </g>
 <g class="node kind-datastore" data-id="e.index">
-<rect x="1006" y="548" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="1018" y="572" font-size="13" font-weight="650" fill="#0f172a">FRAS 索引</text>
-<text x="1018" y="590" font-size="11" fill="#64748b">YAML</text>
-<text x="1018" y="608" font-size="10.5" fill="#94a3b8">arch/index.yaml，记录源码文件…</text>
+<rect x="2873.8" y="909" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="2885.8" y="933" font-size="13" font-weight="650" fill="#0f172a">FRAS 索引</text>
+<text x="2885.8" y="951" font-size="11" fill="#64748b">YAML</text>
+<text x="2885.8" y="969" font-size="10.5" fill="#94a3b8">arch/index.yaml，记录源码文件…</text>
 </g>
 <g class="node kind-datastore" data-id="e.audit">
-<rect x="696" y="666" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="708" y="690" font-size="13" font-weight="650" fill="#0f172a">审计日志</text>
-<text x="708" y="708" font-size="11" fill="#64748b">JSONL</text>
-<text x="708" y="726" font-size="10.5" fill="#94a3b8">.audit/*.jsonl，记录补丁 int…</text>
+<rect x="3334.4" y="968" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="3346.4" y="992" font-size="13" font-weight="650" fill="#0f172a">审计日志</text>
+<text x="3346.4" y="1010" font-size="11" fill="#64748b">JSONL</text>
+<text x="3346.4" y="1028" font-size="10.5" fill="#94a3b8">手搓 write-ahead 审计 .audit…</text>
 </g>
 <g class="node kind-datastore" data-id="e.html">
-<rect x="696" y="784" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="708" y="808" font-size="13" font-weight="650" fill="#0f172a">自包含 HTML</text>
-<text x="708" y="826" font-size="11" fill="#64748b">HTML + inline SVG</text>
-<text x="708" y="844" font-size="10.5" fill="#94a3b8">dist/covenant.html，构建期渲…</text>
+<rect x="1976" y="673" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1988" y="697" font-size="13" font-weight="650" fill="#0f172a">自包含 HTML</text>
+<text x="1988" y="715" font-size="11" fill="#64748b">HTML + inline SVG</text>
+<text x="1988" y="733" font-size="10.5" fill="#94a3b8">dist/covenant.html 单文件（…</text>
 </g>
-<g class="badge"><circle cx="874" cy="796" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="874" y="799.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="badge"><circle cx="2154" cy="685" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="2154" y="688.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="node kind-datastore" data-id="e.bundle">
+<rect x="1976" y="791" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1988" y="815" font-size="13" font-weight="650" fill="#0f172a">文件夹站点</text>
+<text x="1988" y="833" font-size="11" fill="#64748b">HTML + SVG + JSON</text>
+<text x="1988" y="851" font-size="10.5" fill="#94a3b8">dist/site/（index.html + ma…</text>
+</g>
 </svg>

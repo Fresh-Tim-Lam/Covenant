@@ -117,6 +117,17 @@ packages/
 
 依赖方向必须单向：`core ← profile ← validate ← layout ← render ← editor`；`ai` 只依赖 `core/validate`；`cli/mcp` 依赖全部但无反向依赖。
 
+### 5.1 实装对照（2026-11-03 同步）
+
+> 本节记录 M0 提案落地后的实际结构；与上文不一致处，以本节与 `packages/README.md` / `arch/index.yaml` 为准。
+
+- **实装包（13 个）**：`core` / `profile` / `validate` / `layout` / `render` / `patch` / `diff` / `indexer` / `ai` / `adr` / `editor` / `cli` / `mcp`。
+- **实际依赖**：`core ← profile/validate/layout/render/patch/diff/indexer/ai/adr/editor ← cli/mcp`；其中 `validate→profile`、`patch→validate`、`ai→patch`；`cli` 与 `mcp` 是并列前端薄壳，`mcp` 直接依赖库包（不依赖 `cli` 进程）。
+- **命令（CLI）**：`check` / `render` / `build` / `bundle` / `apply` / `patch-check` / `diff` / `index` / `ai` / `adr` / `edit` / `doctor` / `serve`。
+- **产物**：`dist/covenant.html`（单文件，默认）+ `dist/site/`（文件夹站点：`index.html` + `manifest.json` v3 + `views/*.svg` + `annotations.json`）；另有可交付包 `dist/covenant-kit-<ver>/` + `.zip`/`.sha256`（`scripts/build-kit.mjs`）。
+- **服务**：`covenant serve` 默认只读；`--edit` 为短时本地编辑态（loopback + 随机 token，`POST /api/edit`、`POST /api/patch` 写回，human-only，写前校验 + 备份 + 审计）。
+- **尚未实现**：ELK/dagre 适配（布局为自研确定性分层算法）、Scene 中间表示、PNG/PDF 导出、L5/L6、任何网络/大模型通道。
+
 ---
 
 ## 6. 技术选型（推荐 + 被否方案）
@@ -162,8 +173,9 @@ packages/
 
 | 形态 | 入口 | 特点 |
 |------|------|------|
-| **① 自包含 HTML**（主路径） | `covenant build arch/ -o dist/arch.html` | 单文件、离线、无 CDN；内联文档 JSON + 渲染器 bundle + 样式；支持标注、导出补丁 |
-| ② 本地服务 / 编辑器 | `covenant serve arch/` | localhost；标注直写磁盘；AI/MCP 同进程；热更新 |
+| **① 自包含 HTML**（主路径） | `covenant build <dir> -o dist/covenant.html` | 单文件、离线、无 CDN；内联文档 JSON + 渲染器 bundle + 样式；支持标注、导出补丁 |
+| **①-b 文件夹站点**（第二模式） | `covenant bundle <dir> -o dist/site` | 一整套图/站点：`index.html` + `manifest.json` v3 + `views/*.svg` + `annotations.json`；离线、零外部请求 |
+| ② 本地服务 / 编辑器 | `covenant serve <dir> --edit` | localhost + 随机 token；标注写回磁盘（human-only，写前校验/备份/审计）；无热更新、不与 MCP 同进程 |
 | ③ Headless 渲染 | `covenant render x.cvn -o x.svg` | CI/文档站/AI 预览；无 DOM |
 | ④ 只读查看器 | 形态 ① 的 `readonly` 模式 | 评审场景：只批注、不过改语义 |
 
@@ -173,11 +185,11 @@ packages/
 - 写回默认走"导出补丁"（`file://` 不可写盘），`serve` 下升级为直写。
 - 所有标注文本渲染前转义 + CSP `default-src 'none'`。
 
-**打包产物结构**：
+**打包产物结构**（实装）：
 ```
-dist/arch.html            # 单文件（含全部文档 + 视图切换）
-dist/arch.svg             # 可选：静态图（给文档站/PR diff）
-dist/arch.png             # 可选：栅格图
+dist/covenant.html        # 单文件（含全部文档 + 视图切换，默认模式）
+dist/site/                # 文件夹站点（covenant bundle）：index.html + manifest.json(v3) + views/*.svg + annotations.json
+dist/<doc>.svg            # 可选：covenant render 出的静态图（给文档站/PR diff）
 ```
 
 ---

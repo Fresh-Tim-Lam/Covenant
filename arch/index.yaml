@@ -28,7 +28,7 @@ entries:
       - finding 排序保证输出可比对
     source_sha256: 5cd2d4c5823b0e477373a738474c7e426a3bf51d59655817776252b73e4c980d
   - file: packages/profile/src/index.ts
-    f: 剖面注册表：c4-container@1 / dfd@1 的词表与关系矩阵
+    f: 剖面注册表：10 个内置剖面的词表、关系矩阵与专有规则
     r:
       - packages/core/src/index.ts
     a:
@@ -56,7 +56,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 显式 undefined 参数会覆盖默认值导致 NaN，必须逐字段兜底
-    source_sha256: ddce8a54b63cdfcc1c6801f1c95a3bc33a8c9f6f34ce5f176685dda1574a71d1
+    source_sha256: cc9e2f5d9aea0ca5443ccdbb964cdeb78fe0bc3712ee931c7eea96670bb2622e
   - file: packages/render/src/index.ts
     f: SVG 渲染：节点/边/标签/frame/批注角标
     r:
@@ -66,7 +66,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 渲染必须确定性：同输入逐字节一致
-    source_sha256: aa4c087f72401bea796d1284bde7450a63f3818612475ec044b12c45f7cb39a1
+    source_sha256: 42e0f98cccf12d9ed957564a64b4174bcf514986858066ec611595b64e43ff8d
   - file: packages/render/src/html.ts
     f: 可标注自包含 HTML：内联 SVG + 内嵌语义 JSON + 状态流转
     r:
@@ -77,12 +77,15 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: b6bbca841b59b1398541efd36bbae39cd970f918cac31da6ddd36be115e78bac
+    source_sha256: 0118719703099623d276a9bd2f2d5cbd93aaeec51b4226fafc1453f40b0dff51
   - file: packages/patch/src/index.ts
-    f: 补丁门禁、状态流转、保留注释的文本块落盘与审计
+    f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
-      - packages/core/src/index.ts
-      - packages/validate/src/index.ts
+      - packages/patch/src/parse.ts
+      - packages/patch/src/gate.ts
+      - packages/patch/src/apply.ts
+      - packages/patch/src/text.ts
+      - packages/patch/src/audit.ts
     a:
       - packages/cli/src/index.ts
     s:
@@ -108,7 +111,7 @@ entries:
       - 机器只更新哈希，不编造 F/R/A/S 语义
     source_sha256: b38ada0fb03f59488f84ad6b1debb75f374a975086b1593dea2917a4c30c7714
   - file: packages/cli/src/index.ts
-    f: 命令入口：check/render/build/apply/diff/index 等子命令
+    f: 命令入口：13 个子命令（含 bundle/serve/edit/ai/adr 等）
     r:
       - packages/core/src/index.ts
       - packages/validate/src/index.ts
@@ -117,10 +120,16 @@ entries:
       - packages/patch/src/index.ts
       - packages/diff/src/index.ts
       - packages/indexer/src/index.ts
+      - packages/ai/src/index.ts
+      - packages/adr/src/index.ts
+      - packages/editor/src/index.ts
+      - packages/cli/src/serve.ts
+      - packages/cli/src/doctor.ts
+      - packages/cli/src/edit-flow.ts
     a: []
     s:
       - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
-    source_sha256: c36e35bb70c2aee409483edbd78f55e82235a551f2018e5ec81224a91583ed14
+    source_sha256: f2cf93332c17c5e62b76127c2e049af8ca5a0999a8659c4e9965537a1d3296ae
   - file: scripts/svg-to-png.mjs
     f: 开发期视觉核对：SVG→PNG
     r: []
@@ -132,7 +141,7 @@ entries:
     a: []
     source_sha256: da92489e335481afd0d4d7d636d278c2a46cf4b58213b9afc667a6dca1608198
   - file: packages/mcp/src/index.ts
-    f: MCP stdio server：8 个工具，让陌生 Agent 无需读文档即可使用
+    f: MCP stdio server：9 个工具，让陌生 Agent 无需读文档即可使用
     r:
       - packages/core/src/index.ts
       - packages/validate/src/index.ts
@@ -141,6 +150,7 @@ entries:
       - packages/patch/src/index.ts
       - packages/diff/src/index.ts
       - packages/indexer/src/index.ts
+      - packages/ai/src/index.ts
     a:
       - scripts/mcp-smoke.mjs
     s:
@@ -193,7 +203,7 @@ entries:
     a:
       - packages/cli/src/index.ts
     s:
-      - accepted 必须被文档 links.kind=adr 引用尚未实现（格式暂无 links）
+      - accepted ADR 必须被文档 links.kind=adr 引用（cli adr 做跨文档校验）
     source_sha256: e4c352931c934a99e156c41a594bed0c28d00740dfd9cdbf632cb04fa1eabad7
   - file: scripts/clean-room-verify.mjs
     f: 干净环境复现：复制仓库排除产物，重装依赖并跑 verify
@@ -203,17 +213,20 @@ entries:
       - 失败即代表别人 clone 后跑不起来，不能靠本机缓存掩盖
     source_sha256: eb1dbdd89e24064018ad1478589d1311e12e31c56affc08f0c687a51111d3db8
   - file: packages/cli/src/serve.ts
-    f: 只读静态托管（本地 HTTP），用于真实浏览器验收
-    r: []
+    f: 本地静态托管 + 短时编辑态服务（--edit：预览 diff → 确认写回，human-only、审计）
+    r:
+      - packages/core/src/index.ts
+      - packages/patch/src/index.ts
+      - packages/cli/src/edit-flow.ts
     a:
       - packages/cli/src/index.ts
     s:
-      - 只读：不做浏览器直写；防目录穿越；默认入口探测 covenant.html
+      - 默认只读；编辑态仅 loopback + 启动随机 token；防目录穿越；写回走门禁/备份/审计
     source_sha256: 15b2841d22562ed17ff2f3b7a9edab26839c06ed158013b8d240d2a72ff7fbe1
   - file: packages/cli/src/doctor.ts
     f: 环境自检：Node/pnpm/锁文件/schema/BOM/索引/ADR/git/产物
     r:
-      - packages/cli/src/index.ts
+      - packages/indexer/src/index.ts
     a:
       - packages/cli/src/index.ts
     s:
@@ -239,6 +252,7 @@ entries:
   - file: packages/cli/src/edit-flow.ts
     f: 编辑落盘共享流程：预览写新文件+diff / accept 备份+审计
     r:
+      - packages/core/src/index.ts
       - packages/editor/src/index.ts
       - packages/validate/src/index.ts
     a:

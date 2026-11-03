@@ -3,7 +3,7 @@
  * 输出确定性：同输入逐字节一致（黄金测试的前提）。
  */
 import type { CovenantDoc, ViewDef } from "@covenant/core";
-import { layoutSequence } from "@covenant/layout";
+import { layoutSequence, relationLabelText } from "@covenant/layout";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
 export * from "./html";
@@ -152,28 +152,67 @@ function edgeCrossings(points: Point[], others: Point[][], nodes: Rect[]): Cross
   return dedup;
 }
 
-/** 画带跳线弧的边路径：交叉处用二次贝塞尔半圆跳过（表示"不相交的交点"） */
-function pathWithHops(points: Point[], hops: Crossing[]): string {
-  const R = 7;
-  const parts: string[] = [];
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i]!;
-    parts.push(`${i === 0 ? "M" : "L"}${round(p.x)} ${round(p.y)}`);
-    if (i >= points.length - 1) continue;
-    const q = points[i + 1]!;
-    const dx = q.x - p.x, dy = q.y - p.y;
-    const len = Math.hypot(dx, dy);
-    if (len < 1e-6) continue;
-    const ux = dx / len, uy = dy / len;
-    for (const h of hops.filter((x) => x.seg === i).sort((a, b) => a.t - b.t)) {
-      const before = { x: h.x - ux * R, y: h.y - uy * R };
-      const after = { x: h.x + ux * R, y: h.y + uy * R };
-      const nx = -uy, ny = ux;
-      parts.push(`L${round(before.x)} ${round(before.y)}`);
-      parts.push(`Q${round(h.x + nx * R * 2)} ${round(h.y + ny * R * 2)} ${round(after.x)} ${round(after.y)}`);
+function distPointSegment(p: Point, a: Point, b: Point): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-9) return Math.hypot(p.x - a.x, p.y - a.y);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
+}
+
+/**
+ * 真实连接点（实心圆）：某条边的折点落在另一条边的线段上（T 型汇入、共享折点、合并走廊）。
+ * 排除节点内部与端口附近（那里由节点/箭头表达）；同点去重。
+ */
+function solidJoinPoints(edges: Point[][], nodes: Rect[]): Point[] {
+  const out: Point[] = [];
+  for (let i = 0; i < edges.length; i++) {
+    const verts = edges[i]!;
+    // 端点也算：T 型汇入可能是"一条边的端点落在另一条边内部"；
+    // 落在节点边界附近的端口由节点/箭头表达，nearNode 会排除。
+    for (let vi = 0; vi < verts.length; vi++) {
+      const p = verts[vi]!;
+      if (nearNode(p, nodes)) continue;
+      let hit = false;
+      for (let j = 0; j < edges.length && !hit; j++) {
+        if (j === i) continue;
+        const other = edges[j]!;
+        for (let k = 0; k < other.length - 1; k++) {
+          if (distPointSegment(p, other[k]!, other[k + 1]!) <= 2) {
+            hit = true;
+            break;
+          }
+        }
+      }
+      if (hit && !out.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 4)) out.push(p);
     }
   }
-  return parts.join(" ");
+  return out;
+}
+
+/** 交叉点标记：空心=仅几何穿越；实心=真实连接（T 型/共享折点） */
+interface CrossingMarker extends Point {
+  kind: "hollow" | "solid";
+}
+
+function crossingMarkers(
+  geoms: { points: Point[] }[],
+  crossings: Point[],
+  nodes: Rect[],
+): CrossingMarker[] {
+  const out: CrossingMarker[] = [];
+  for (const p of solidJoinPoints(geoms.map((g) => g.points), nodes)) {
+    out.push({ x: p.x, y: p.y, kind: "solid" });
+  }
+  for (const p of crossings) {
+    if (nearNode(p, nodes)) continue;
+    if (out.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 4)) continue;
+    if (out.some((q) => q.kind === "hollow" && Math.hypot(q.x - p.x, q.y - p.y) < 4)) continue;
+    out.push({ x: p.x, y: p.y, kind: "hollow" });
+  }
+  return out;
 }
 const round = (n: number): number => Math.round(n * 100) / 100;
 
@@ -183,6 +222,10 @@ export interface LabelRequest {
   text: string;
   primary: Point;
   candidates: Point[];
+  /** true = 必须贴附在边路径上（沿路径滑动选位），禁止垂直偏移"悬浮" */
+  attach?: boolean;
+  /** 其他边的线段：胶囊不得压到它们（用户要求"胶囊别挡住别的线"） */
+  avoid?: [Point, Point][];
 }
 
 export interface PlacedLabel extends Point {
@@ -190,16 +233,60 @@ export interface PlacedLabel extends Point {
 }
 
 const LABEL_FONT = 10.5;
-const LABEL_H = 13;
+/** 胶囊实际高度（碰撞盒必须与它完全一致，否则会出现"检测不碰、实际压 1-2px"） */
+const LABEL_CAPSULE_H = 17;
 
 function labelBox(p: Point, width: number): Rect {
-  return { x: p.x - width / 2 - 2, y: p.y - 10, w: width + 4, h: LABEL_H + 2 };
+  return {
+    x: p.x - width / 2 - 5,
+    y: p.y - LABEL_CAPSULE_H / 2,
+    w: width + 10,
+    h: LABEL_CAPSULE_H,
+  };
 }
 
 function hitsAny(box: Rect, obstacles: Rect[]): boolean {
   return obstacles.some(
     (o) => box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h,
   );
+}
+
+function orientation(a: Point, b: Point, c: Point): number {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+function segmentsIntersect(a: Point, b: Point, c: Point, d: Point): boolean {
+  const o1 = orientation(a, b, c);
+  const o2 = orientation(a, b, d);
+  const o3 = orientation(c, d, a);
+  const o4 = orientation(c, d, b);
+  const eps = 1e-9;
+  if (((o1 > eps && o2 < -eps) || (o1 < -eps && o2 > eps)) &&
+      ((o3 > eps && o4 < -eps) || (o3 < -eps && o4 > eps))) return true;
+  return false;
+}
+
+/** 线段是否穿过矩形（含端点落入/贴边） */
+function segmentHitsRect(a: Point, b: Point, box: Rect): boolean {
+  const inside = (p: Point): boolean =>
+    p.x >= box.x - 0.5 && p.x <= box.x + box.w + 0.5 && p.y >= box.y - 0.5 && p.y <= box.y + box.h + 0.5;
+  if (inside(a) || inside(b)) return true;
+  const corners = [
+    { x: box.x, y: box.y },
+    { x: box.x + box.w, y: box.y },
+    { x: box.x + box.w, y: box.y + box.h },
+    { x: box.x, y: box.y + box.h },
+  ];
+  for (let i = 0; i < 4; i++) {
+    if (segmentsIntersect(a, b, corners[i]!, corners[(i + 1) % 4]!)) return true;
+  }
+  return false;
+}
+
+/** 胶囊矩形是否压到任意"别的边"线段 */
+function hitsEdge(box: Rect, avoid?: [Point, Point][]): boolean {
+  if (!avoid || avoid.length === 0) return false;
+  return avoid.some(([a, b]) => segmentHitsRect(a, b, box));
 }
 
 /**
@@ -229,12 +316,33 @@ export function placeLabels(requests: LabelRequest[], obstacles: Rect[]): Placed
     const width = textWidth(req.text, LABEL_FONT);
     let chosen: Point | null = null;
     for (const cand of req.candidates) {
-      if (!hitsAny(labelBox(cand, width), occupied)) {
+      const box = labelBox(cand, width);
+      if (!hitsAny(box, occupied) && !hitsEdge(box, req.avoid)) {
         chosen = cand;
         break;
       }
     }
-    if (!chosen) chosen = fallbackLabelPoint(req.primary, width, occupied) ?? req.primary;
+    if (!chosen) {
+      if (req.attach) {
+        // 贴线标签：宁可沿路径轻微重叠，也不离开线；优先不压别的边
+        let best = req.primary;
+        let bestScore = Number.POSITIVE_INFINITY;
+        for (const cand of req.candidates) {
+          const box = labelBox(cand, width);
+          let area = 0;
+          for (const o of occupied) {
+            const w = Math.max(0, Math.min(box.x + box.w, o.x + o.w) - Math.max(box.x, o.x));
+            const h = Math.max(0, Math.min(box.y + box.h, o.y + o.h) - Math.max(box.y, o.y));
+            area += w * h;
+          }
+          const score = area + (hitsEdge(box, req.avoid) ? 1e6 : 0);
+          if (score < bestScore) { bestScore = score; best = cand; }
+        }
+        chosen = best;
+      } else {
+        chosen = fallbackLabelPoint(req.primary, width, occupied) ?? req.primary;
+      }
+    }
     placed.push({ x: chosen.x, y: chosen.y, width });
     occupied.push(labelBox(chosen, width));
   }
@@ -258,26 +366,9 @@ export function labelCandidates(
   return deltas.map(([dx, dy]) => ({ x: primary.x + dx, y: primary.y + dy }));
 }
 
-/** 边标签：优先 props.label，其次按关系语义生成（transition/communicates/relates） */
+/** 边标签文本来源与 layout 的宽度估算共用同一实现，避免"估算宽度 ≠ 实际渲染文本" */
 function edgeLabelText(rel: { kind: string; props?: Record<string, unknown> }): string {
-  const props = rel.props ?? {};
-  if (typeof props.label === "string" && props.label.trim() !== "") return String(props.label);
-  if (rel.kind === "transition") {
-    const trigger = typeof props.trigger === "string" ? props.trigger : "";
-    const guard = typeof props.guard === "string" ? props.guard : "";
-    if (trigger) return guard ? `${trigger} [${guard}]` : trigger;
-  }
-  if (rel.kind === "communicates") {
-    const parts = [props.protocol, props.network].filter(
-      (v): v is string => typeof v === "string" && v.length > 0,
-    );
-    if (parts.length > 0) return parts.join(" · ");
-  }
-  if (rel.kind === "relates") {
-    const card = props.cardinality as { from?: string; to?: string } | undefined;
-    if (card?.from && card?.to) return `${card.from}:${card.to}`;
-  }
-  return rel.kind;
+  return relationLabelText(rel);
 }
 
 function kindFill(kind: string): string {
@@ -435,7 +526,7 @@ export function renderSvg(
   const nodeStyle = options.view?.present?.node_style ?? "box";
   const junction = nodeStyle === "junction";
 
-  // edges：先画路径（交叉处用跳线弧表示"不相交"），再统一做标签避让
+  // edges：先画路径（交叉不再拱起/断开，改用交点圆点表达），再画圆点、标签
   interface EdgeGeom {
     edge: LayoutResult["edges"][number];
     rel: NonNullable<CovenantDoc["relations"]>[number];
@@ -448,7 +539,7 @@ export function renderSvg(
       if (!rel) return null;
       let points = edge.points.map((p) => ({ x: p.x, y: p.y }));
       if (junction) {
-        // 接线点模式：边是"点与点之间的直线"，交叉处才需要跳线弧
+        // 接线点模式：边是"点与点之间的直线"
         const from = layout.nodes[rel.from];
         const to = layout.nodes[rel.to];
         if (from && to) {
@@ -466,11 +557,21 @@ export function renderSvg(
   const edgeParts: string[] = [];
   const labelRequests: LabelRequest[] = [];
   const badgeIndexes: { index: number; n: number }[] = [];
+  const hollowCrossings: Point[] = [];
+  // 所有边的线段（供标签避让"别的线"用）
+  const allSegments: { owner: number; seg: [Point, Point] }[] = [];
+  edgeGeoms.forEach((g, owner) => {
+    for (let k = 0; k + 1 < g.points.length; k++) {
+      allSegments.push({ owner, seg: [g.points[k]!, g.points[k + 1]!] });
+    }
+  });
   for (let i = 0; i < edgeGeoms.length; i++) {
     const { edge, rel, points, lane } = edgeGeoms[i]!;
     const earlier = edgeGeoms.slice(0, i).map((g) => g.points);
-    const hops = edgeCrossings(points, earlier, nodeRects);
-    const d = pathWithHops(points, hops);
+    for (const hit of edgeCrossings(points, earlier, nodeRects)) {
+      hollowCrossings.push({ x: hit.x, y: hit.y });
+    }
+    const d = pointsToPath(points);
     edgeParts.push(
       `<g class="edge" data-id="${esc(edge.id)}">` +
         `<path d="${d}" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/>` +
@@ -478,30 +579,38 @@ export function renderSvg(
         `</g>`,
     );
     const p = points;
-    const horizontal =
-      p.length === 4 && Math.abs(p[0]!.x - p[3]!.x) >= Math.abs(p[0]!.y - p[3]!.y);
-    const aboveChannel = p.length === 4 && p[1]!.y < p[0]!.y;
-    const primary =
-      p.length === 2
-        ? (() => {
-            const a = p[0]!, b = p[1]!;
-            const dx = b.x - a.x, dy = b.y - a.y;
-            const len = Math.hypot(dx, dy) || 1;
-            return { x: (a.x + b.x) / 2 - (dy / len) * 12, y: (a.y + b.y) / 2 + (dx / len) * 12 };
-          })()
-        : aboveChannel
-          ? { x: (p[1]!.x + p[2]!.x) / 2, y: p[1]!.y + 14 }
-      : !horizontal
-        ? p.length === 4
-          ? { x: p[1]!.x + 8 + lane * 14, y: (p[1]!.y + p[2]!.y) / 2 }
-          : (p[0] ?? { x: 0, y: 0 })
-        : p.length === 4
-          ? { x: (p[1]!.x + p[2]!.x) / 2, y: p[1]!.y - 6 - lane * 12 }
-          : (p[0] ?? { x: 0, y: 0 });
+    // 胶囊必须"连在线上"：候选点全部取自路径本身（长边优先通道段），碰撞时沿路径滑动，不垂直偏移。
+    const segs: [Point, Point][] = [];
+    if (p.length === 2) segs.push([p[0]!, p[1]!]);
+    else for (let k = 0; k + 1 < p.length; k++) segs.push([p[k]!, p[k + 1]!]);
+    const primarySeg = p.length === 2 ? 0 : (edge.labelSegment?.[0] ?? Math.min(1, segs.length - 1));
+    const orderedSegs: [Point, Point][] = [];
+    if (segs[primarySeg]) orderedSegs.push(segs[primarySeg]!);
+    segs.forEach((s, k) => {
+      if (k !== primarySeg) orderedSegs.push(s);
+    });
+    const laneShift = ((lane % 5) - 2) * 0.055;
+    const ts = [0.5, 0.35, 0.65, 0.2, 0.8, 0.1, 0.9].map((t) =>
+      Math.min(0.94, Math.max(0.06, t + laneShift)),
+    );
+    const candidates: Point[] = [];
+    for (const seg of orderedSegs) {
+      for (const t of ts) {
+        const cand = {
+          x: seg[0]!.x + (seg[1]!.x - seg[0]!.x) * t,
+          y: seg[0]!.y + (seg[1]!.y - seg[0]!.y) * t,
+        };
+        if (!candidates.some((q) => Math.hypot(q.x - cand.x, q.y - cand.y) < 1)) {
+          candidates.push(cand);
+        }
+      }
+    }
     labelRequests.push({
       text: edgeLabelText(rel),
-      primary,
-      candidates: labelCandidates(primary, aboveChannel, horizontal),
+      primary: candidates[0]!,
+      candidates,
+      attach: true,
+      avoid: allSegments.filter((s) => s.owner !== i).map((s) => s.seg),
     });
     const n = openAnnotations(doc, "relation", edge.id);
     if (n > 0 && options.showBadges !== false) {
@@ -518,18 +627,27 @@ export function renderSvg(
   const placedLabels = placeLabels(labelRequests, nodeObstacles);
 
   out.push(...edgeParts);
+  // 交点圆点：空心=仅几何穿越（不相交）；实心=真实连接（T 型汇入/共享折点）。
+  // 画在所有边之后，避免被后续边覆盖；同点去重（实心优先）。
+  for (const m of crossingMarkers(edgeGeoms, hollowCrossings, nodeRects)) {
+    out.push(
+      m.kind === "solid"
+        ? `<circle class="crossing crossing-solid" cx="${round(m.x)}" cy="${round(m.y)}" r="3" fill="${THEME.edge}" stroke="none" pointer-events="none"/>`
+        : `<circle class="crossing crossing-hollow" cx="${round(m.x)}" cy="${round(m.y)}" r="3.2" fill="${THEME.bg}" stroke="${THEME.edge}" stroke-width="1.3" pointer-events="none"/>`,
+    );
+  }
   for (let i = 0; i < placedLabels.length; i++) {
     const l = placedLabels[i]!;
     const req = labelRequests[i]!;
     out.push(
-      // 边标签用胶囊承载，压住线也不影响阅读
-      `<rect class="edge-label-bg" x="${round(l.x - l.width / 2 - 5)}" y="${round(l.y - 11)}" width="${round(l.width + 10)}" height="17" rx="8.5" fill="${THEME.labelBg}" stroke="${THEME.labelStroke}" stroke-width="0.8"/>`,
-      `<text class="edge-label" x="${round(l.x)}" y="${round(l.y)}" text-anchor="middle" font-size="${LABEL_FONT}" fill="${THEME.edgeLabel}">${esc(req.text)}</text>`,
+      // 边标签用胶囊承载，胶囊中心贴在线/通道上（与碰撞盒同几何）
+      `<rect class="edge-label-bg" x="${round(l.x - l.width / 2 - 5)}" y="${round(l.y - LABEL_CAPSULE_H / 2)}" width="${round(l.width + 10)}" height="${LABEL_CAPSULE_H}" rx="8.5" fill="${THEME.labelBg}" stroke="${THEME.labelStroke}" stroke-width="0.8"/>`,
+      `<text class="edge-label" x="${round(l.x)}" y="${round(l.y + 2.5)}" text-anchor="middle" font-size="${LABEL_FONT}" fill="${THEME.edgeLabel}">${esc(req.text)}</text>`,
     );
   }
   for (const b of badgeIndexes) {
     const l = placedLabels[b.index];
-    if (l) out.push(badge(l.x + Math.max(18, l.width / 2 + 8), l.y - 8, b.n));
+    if (l) out.push(badge(l.x + Math.max(18, l.width / 2 + 8), l.y - 10, b.n));
   }
   // nodes
   const nameById = new Map((doc.elements ?? []).map((e) => [e.id, e.name]));
