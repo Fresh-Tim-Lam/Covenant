@@ -9,7 +9,8 @@
 |---|---|---|---|---|
 | lead | — | — | 共享文件、发布、验收 | 全仓 |
 | core-owner | core-semantics | core | core, profile, validate | 上述 3 包 |
-| viz-owner | visualization | viewer | layout, render | 上述 2 包 |
+| diagram-owner | visualization | viewer | layout, render | 上述 2 包（viz-owner 为历史角色，已由 diagram-owner 接管） |
+| arch-owner | architecture | architecture | 无（架构文档） | `arch/`、`examples/covenant-self.cvn.yaml`、`docs/design/` |
 | tools-owner | authoring | authoring | patch, diff, indexer, ai, adr, editor | 上述 6 包 |
 | iface-owner | interfaces | interface | cli, mcp | 上述 2 包 |
 | arch-guard | governance | architecture | 无（只读） | `docs/audits/` |

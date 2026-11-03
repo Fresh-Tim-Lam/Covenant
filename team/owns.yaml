@@ -15,7 +15,7 @@ groups:
     packages: [packages/core, packages/profile, packages/validate]
   visualization:
     domain: viewer
-    owner: viz-owner
+    owner: diagram-owner
     packages: [packages/layout, packages/render]
   authoring:
     domain: authoring
@@ -25,6 +25,11 @@ groups:
     domain: interface
     owner: iface-owner
     packages: [packages/cli, packages/mcp]
+  architecture:
+    domain: architecture
+    owner: arch-owner
+    packages: [arch, examples]
+    write_scope: arch, examples/covenant-self.cvn.yaml, docs/design
   governance:
     domain: architecture
     owner: arch-guard
