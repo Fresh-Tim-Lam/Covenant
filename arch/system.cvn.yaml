@@ -12,9 +12,9 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 5
+  rev: 6
   owners: [human:team]
-  updated: 2026-11-03T21:35:00+08:00
+  updated: 2026-11-03T22:20:00+08:00
   ai:
     summary: |
       单文件 HTML 优先的契约式图示工具：.cvn.yaml 为唯一事实源，
@@ -22,9 +22,10 @@ meta:
       依赖方向 core ← profile/validate/layout/render/patch/diff/indexer/ai/adr/editor ← cli/mcp；
       cli 与 mcp 是并列前端，均直接依赖库包（mcp 不经 CLI 进程）。
       交付链：cli build/bundle → dist 产物；scripts/build-kit → kit；GitHub Actions 负责 verify 与 Release。
-      浏览器查看器（v.viewer）内部拆为 inspector（多小窗/颜色/引导线/段级批注）与 sidebar（文档分组）：
-      多窗三态 + 400ms 色忆防闪色 + 弧长锚点引导线 + segment 级批注；编辑态经 serve --edit 写回，
-      离线导出 .patch.json / edits.json 后由 CLI 落盘。
+      浏览器查看器内部架构（v.viewer）：外壳装配 canvas / sidebar / inspector / annot-editor / export；
+      inspector 下分窗口管理器（三态/级联/置顶）、颜色系统（8 色+400ms 色忆）、引导线 overlay；
+      seg-annot 提供段热区与段窗；annot-editor 经 serve 写回，export 导出补丁/编辑 JSON。
+      编辑态经 serve --edit 写回，离线导出 .patch.json / edits.json 后由 CLI 落盘。
 
 elements:
   - id: e.human
@@ -53,20 +54,69 @@ elements:
   - id: e.viewer
     kind: container
     name: 浏览器查看器
-    summary: 内联于 dist HTML/bundle 的查看器外壳：加载产物数据、路由指针/键盘事件、装配侧栏与小窗系统；编辑态经 serve 写回、离线导出补丁
+    summary: 内联于 dist HTML/bundle 的查看器外壳：装配画布/侧栏/小窗/批注编辑/导出，路由指针与键盘事件；编辑态经 serve 写回、离线导出补丁
     tech: 内联 TS + SVG
 
   - id: e.inspector
     kind: container
     name: 小窗系统（inspector）
-    summary: 多窗三态（hover 预览 / clicked 保留 / 📌 pinned）、8 色确定性调色板 + 400ms 色忆防闪色、同色锚点高亮与弧长锚点引导线、段级批注窗（本段 + 折叠整边批注）、新增批注表单折叠
+    summary: 小窗系统外壳：装配窗口管理器、颜色系统与引导线 overlay，驱动段窗与新增批注表单折叠
     tech: 内联 TS + SVG overlay
+
+  - id: e.win-manager
+    kind: container
+    name: 窗口管理器
+    summary: wins[] 数组与三态流转（hover 预览 → clicked 保留 → 📌 pinned）、级联偏移 +18、点击置顶、× 只关自己、切图清空
+    tech: 内联 TS
+
+  - id: e.color-sys
+    kind: container
+    name: 颜色系统
+    summary: 8 色确定性调色板（未占用优先、满 8 循环）、400ms 色忆防闪、同色贯穿窗口/锚点高亮/引导线
+    tech: 内联 TS
+
+  - id: e.guide-overlay
+    kind: container
+    name: 引导线 overlay
+    summary: "#insp-guides SVG：窗口最近边中点 → 锚点（元素中心/整边弧长 t=0.5/段中点），拖拽/缩放/平移/resize/侧栏折叠实时更新"
+    tech: 内联 TS + SVG
 
   - id: e.sidebar
     kind: container
-    name: 侧栏导航
-    summary: 文档分组（meta.group → 源路径 → 命名空间；组序 自身架构/系统契约/示例演示/模板/其他）、组标题不可点、当前组高亮、切图
+    name: 侧栏文档分组
+    summary: docGroup 优先级（meta.group → 源路径 → 命名空间）、GROUP_ORDER（自身架构/系统契约/示例演示/模板/其他）、组标题不可点、当前组高亮、切图
     tech: 内联 TS
+
+  - id: e.seg-annot
+    kind: container
+    name: 段级批注
+    summary: 运行时 .seg-hit 段热区（不改静态 SVG）、段窗 (relation,id,segment)、badge 按段计数、本段/整边范围切换
+    tech: 内联 TS
+
+  - id: e.annot-editor
+    kind: container
+    name: 批注编辑流
+    summary: 内联编辑（保存/←返回/删除撤销/回收桶）、状态流转、新增表单折叠、localStorage 暂存 → 导出 patch / serve 写回
+    tech: 内联 TS
+
+  - id: e.canvas
+    kind: container
+    name: 画布交互
+    summary: 缩放（0.15–4）/平移/双击适配、拖拽节点改写 pins（编辑态）、键盘 Esc 关窗
+    tech: 内联 TS + SVG
+
+  - id: e.export
+    kind: container
+    name: 导出
+    summary: 导出补丁 JSON（.patch.json 下载）/ 编辑 JSON（edits.json），离线写回通道
+    tech: 内联 TS
+
+  - id: e.doc-data
+    kind: datastore
+    name: 内嵌产物数据
+    summary: HTML 内联 JSON：docs 的 elements/relations/annotations/views/layout/anchors/centers/segments
+    tech: 内联 JSON
+    props: { storage_kind: file }
 
   - id: e.serve
     kind: container
@@ -236,12 +286,78 @@ relations:
     kind: calls
     from: e.viewer
     to: e.inspector
-    summary: 装配并驱动小窗系统（悬停/点击/钉住、段窗、引导线）
+    summary: 装配小窗系统外壳（窗口管理器/颜色/引导线）
   - id: r.viewer-sidebar
     kind: calls
     from: e.viewer
     to: e.sidebar
-    summary: 渲染分组侧栏并切换文档
+    summary: 装配分组侧栏并切换文档
+
+  - id: r.inspector-win-manager
+    kind: calls
+    from: e.inspector
+    to: e.win-manager
+    summary: 外壳装配窗口数组与三态流转
+  - id: r.win-manager-color
+    kind: calls
+    from: e.win-manager
+    to: e.color-sys
+    summary: 新窗分配 / 复用颜色
+  - id: r.win-manager-guide
+    kind: calls
+    from: e.win-manager
+    to: e.guide-overlay
+    summary: 打开/关闭/拖拽/置顶时驱动引导线
+  - id: r.guide-overlay-data
+    kind: reads
+    from: e.guide-overlay
+    to: e.doc-data
+    summary: 读取锚点坐标（elements / relations / segments）
+  - id: r.win-manager-data
+    kind: reads
+    from: e.win-manager
+    to: e.doc-data
+    summary: 取对象与批注内容渲染窗口
+  - id: r.seg-annot-win-manager
+    kind: calls
+    from: e.seg-annot
+    to: e.win-manager
+    summary: 段窗走窗口管理器（窗口键含 segment）
+  - id: r.annot-editor-serve
+    kind: calls
+    from: e.annot-editor
+    to: e.serve
+    summary: 保存写回：POST /api/edit、/api/patch（段级 target 原样带出）
+  - id: r.canvas-data
+    kind: reads
+    from: e.canvas
+    to: e.doc-data
+    summary: 读取布局坐标/尺寸做缩放平移与 pins
+  - id: r.viewer-canvas
+    kind: calls
+    from: e.viewer
+    to: e.canvas
+    summary: 装配画布与缩放/平移/拖拽
+  - id: r.viewer-seg-annot
+    kind: calls
+    from: e.viewer
+    to: e.seg-annot
+    summary: 注入段热区并接管段点击/悬停
+  - id: r.viewer-annot-editor
+    kind: calls
+    from: e.viewer
+    to: e.annot-editor
+    summary: 装配批注面板与内联编辑
+  - id: r.viewer-export
+    kind: calls
+    from: e.viewer
+    to: e.export
+    summary: 装配导出按钮
+  - id: r.viewer-data
+    kind: reads
+    from: e.viewer
+    to: e.doc-data
+    summary: 解析内嵌 docs 数据并分发
 
   - id: r.cli-core
     kind: calls
@@ -454,9 +570,9 @@ relations:
     summary: 编辑态写回：POST /api/edit、/api/patch（段级批注 target 原样带出）
   - id: r.viewer-patch
     kind: writes
-    from: e.viewer
+    from: e.export
     to: e.patchfile
-    summary: 导出补丁 / 编辑 JSON（含 target.segment，离线写回通道）
+    summary: 下载 .patch.json / edits.json（含 target.segment，离线写回通道）
   - id: r.cli-patchfile-read
     kind: reads
     from: e.cli
@@ -566,9 +682,19 @@ views:
       spacing: { rank: 120, node: 60 }
 
   - id: v.viewer
-    title: 查看器与写回
+    title: 查看器内部架构
     include:
-      elements: [e.human, e.viewer, e.inspector, e.sidebar, e.serve, e.cli, e.html, e.bundle, e.patchfile, e.docs, e.audit]
+      elements: [e.human, e.viewer, e.inspector, e.win-manager, e.color-sys, e.guide-overlay, e.sidebar, e.seg-annot, e.annot-editor, e.canvas, e.export, e.doc-data, e.serve, e.patchfile, e.docs]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 120, node: 52 }
+
+  - id: v.viewer-flow
+    title: 查看器写回链路
+    include:
+      elements: [e.human, e.viewer, e.inspector, e.win-manager, e.seg-annot, e.annot-editor, e.export, e.doc-data, e.serve, e.patchfile, e.docs, e.audit]
       relations: [r.*]
     layout:
       engine: elk

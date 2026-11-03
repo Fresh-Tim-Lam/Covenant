@@ -173,6 +173,26 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 
 **代码与测试参照**：`packages/render/src/html.ts`（docGroup/GROUP_ORDER ~L30-70、段几何/弧长中点 `relationSegments`/`polylineMidpoint` ~L95-200、悬停色忆 ~L388-580、窗口/段窗 ~L700-1090、段热区与事件命中 ~L1360-1400、壳与侧栏 ~L1720-1790）；`packages/render/src/html.dom.test.ts`（表单折叠、悬停/多窗/钉住/引导线、段热区/段窗/导出、防闪色、侧栏分组 ~L780-1470）。
 
+### 4.6 查看器内部模块图（对应 `arch/system.cvn.yaml` 的 `v.viewer` / `v.viewer-flow`）
+
+> 前端面板的完整业务架构已独立成视图：`v.viewer`（15 元素/19 边，查看器内部全量）与 `v.viewer-flow`（写回链路，12 元素/14 边）。
+
+| 模块（元素） | 职责 | 关键实现 |
+|---|---|---|
+| `e.viewer` 查看器外壳 | 装配画布/侧栏/小窗/批注编辑/导出，路由指针与键盘事件 | `html.ts` 主 IIFE + `projectDoc` 数据投影 |
+| `e.doc-data` 内嵌产物数据 | docs 的 elements/relations/annotations/views/layout/anchors/centers/segments | `<script id="covenant-data">` + `projectDoc` |
+| `e.sidebar` 侧栏文档分组 | docGroup 优先级 + GROUP_ORDER + 组标题不可点/高亮 | `docGroup` / `GROUP_ORDER` / `renderShell` |
+| `e.inspector` 小窗系统外壳 | 装配窗口管理器/颜色/引导线，驱动段窗与表单折叠 | `wins[]` 状态 + `openWindow` |
+| `e.win-manager` 窗口管理器 | wins[] 三态（hover/clicked/pinned）、级联偏移、置顶、关闭/钉住、切图清空 | `openWindow` / `activateWin` / `closeWin` |
+| `e.color-sys` 颜色系统 | 8 色调色板 + 400ms 色忆 + 占用检查 + 同色贯穿 | `colorFor` / `hoverColorMemo` |
+| `e.guide-overlay` 引导线 overlay | `#insp-guides` SVG：窗口最近边 → 锚点（弧长 t=0.5 / 段中点），随拖拽/缩放/平移/resize/侧栏折叠更新 | `guidePoints` / `updateGuides` / `polylineMidpoint` |
+| `e.seg-annot` 段级批注 | 运行时 `.seg-hit` 热区（不改静态 SVG）、段窗、badge 按段计数 | `relationSegments` / `drawBadges` / `seg-hit` 注入 |
+| `e.annot-editor` 批注编辑流 | 内联编辑（保存/返回/删除撤销/回收桶）、状态流转、表单折叠、localStorage 暂存 | `renderWin` 批注区 + `saveAnnEdit` / `submit` |
+| `e.canvas` 画布交互 | 缩放 0.15–4 / 平移 / 双击适配 / 节点拖拽改 pins（编辑态） | `applyTransform` / `fitView` / `zoomAt` |
+| `e.export` 导出 | 补丁 JSON（下载）/ 编辑 JSON（edits.json） | `exportPatch` / `exportEdits` |
+
+写回链路：`e.annot-editor → e.serve`（`POST /api/edit`、`POST /api/patch`）与 `e.export → e.patchfile`（离线 C1）；`e.guide-overlay/e.canvas/e.win-manager → e.doc-data` 只读数据。仍无网络通道/不做 C2 直写（Q9）。
+
 ---
 
 ## 5. AI 侧：如何"看到并读懂"
