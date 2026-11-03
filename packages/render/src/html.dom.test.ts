@@ -4,6 +4,7 @@ import type { CovenantDoc } from "@covenant/core";
 import { layout } from "@covenant/layout";
 import { renderSvg } from "./index";
 import { renderHtml } from "./html";
+import type { DocView } from "./html";
 
 function doc(): CovenantDoc {
   return {
@@ -1324,5 +1325,154 @@ describe("悬停窗颜色稳定（不闪色）", () => {
     const again = visibleWins(d)[0]!;
     expect(again).toBeTruthy();
     expect(again.getAttribute("data-color")).toBe(color);
+  });
+});
+
+/* ------------------- 侧栏文档分组 ------------------- */
+
+function miniDoc(id: string, title: string): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id,
+    profile: "c4-container@1",
+    meta: { title, purpose: "p", non_goals: [] },
+    elements: [
+      { id: "e.a", kind: "container", name: "A", summary: "a", tech: "ts" },
+      { id: "e.b", kind: "container", name: "B", summary: "b", tech: "ts" },
+    ],
+    relations: [{ id: "r.ab", kind: "calls", from: "e.a", to: "e.b", summary: "ab" }],
+  };
+}
+
+function viewOf(d: CovenantDoc): DocView {
+  const l = layout(d);
+  return { doc: d, svg: renderSvg(d, l, { showBadges: false }), layout: l };
+}
+
+function groupedHtml(): string {
+  return renderHtml([
+    viewOf(miniDoc("covenant/self-architecture", "自身架构图")),
+    viewOf(miniDoc("covenant/self", "系统结构")),
+    viewOf(miniDoc("payments/context", "支付上下文")),
+    viewOf(miniDoc("payments/components", "支付组件")),
+    viewOf(miniDoc("t/custom", "未知文档")),
+  ]);
+}
+
+describe("侧栏文档分组", () => {
+  it("按组渲染标题；组内按钮数正确；按钮归属正确；组标题不可点击", () => {
+    const dom = new JSDOM(groupedHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const d = dom.window.document;
+    const groups = Array.from(d.querySelectorAll<HTMLElement>(".views-group"));
+
+    expect(groups.map((g) => g.getAttribute("data-group"))).toEqual([
+      "自身架构",
+      "系统契约",
+      "示例演示",
+      "其他",
+    ]);
+    expect(Array.from(d.querySelectorAll(".views-group-title")).map((e) => e.textContent)).toEqual([
+      "自身架构",
+      "系统契约",
+      "示例演示",
+      "其他",
+    ]);
+    // 每组文档按钮数：自身架构1 / 系统契约1 / 示例演示2 / 其他1
+    expect(groups.map((g) => g.querySelectorAll("button[data-doc]").length)).toEqual([1, 1, 2, 1]);
+    // 当前选中 doc 的按钮在正确组内
+    expect(
+      groups[0]!.querySelector('button[data-doc="covenant/self-architecture"]'),
+    ).not.toBeNull();
+    expect(groups[2]!.querySelector('button[data-doc="payments/components"]')).not.toBeNull();
+    // 组标题是不可点击的标题（不是 button），默认全部展开（组内按钮都可见）
+    expect(d.querySelectorAll("#views button.views-group-title").length).toBe(0);
+    for (const g of groups) {
+      for (const b of Array.from(g.querySelectorAll<HTMLElement>("button[data-doc]"))) {
+        expect(b.hidden).toBe(false);
+      }
+    }
+  });
+
+  it("当前激活 view 所在组的标题高亮；切到示例文档后高亮跟随", () => {
+    const dom = new JSDOM(groupedHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const groupOf = (name: string): HTMLElement =>
+      d.querySelector(`.views-group[data-group="${name}"]`)!;
+
+    expect(groupOf("自身架构").className).toContain("on");
+    expect(groupOf("示例演示").className).not.toContain("on");
+
+    d.querySelector('button[data-doc="payments/components"]')!.dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true }),
+    );
+    expect(groupOf("示例演示").className).toContain("on");
+    expect(groupOf("自身架构").className).not.toContain("on");
+    // 按钮仍保留 views-doc 缩进类
+    expect(
+      d.querySelector('button[data-doc="payments/components"]')!.className,
+    ).toContain("views-doc");
+  });
+
+  it("真实看板形状：自身架构 1 + 示例演示 15（含多视图），不渲染空组", () => {
+    const self = viewOf(miniDoc("covenant/self-architecture", "Covenant 自身架构"));
+    const examples: DocView[] = [
+      viewOf(miniDoc("covenant/package-graph", "包依赖")),
+      { ...viewOf(miniDoc("example/multi-view", "多视图")), viewId: "v.core", viewTitle: "核心" },
+      { ...viewOf(miniDoc("example/multi-view", "多视图")), viewId: "v.public", viewTitle: "公开" },
+      viewOf(miniDoc("orders/dfd", "数据流")),
+      viewOf(miniDoc("order/er", "数据模型")),
+      viewOf(miniDoc("order/flow", "主流程")),
+      viewOf(miniDoc("order/sequence", "交互")),
+      viewOf(miniDoc("order/state", "生命周期")),
+      { ...viewOf(miniDoc("payments/containers", "容器")), viewId: "v.main", viewTitle: "主视图" },
+      { ...viewOf(miniDoc("payments/containers", "容器")), viewId: "v.data", viewTitle: "数据视图" },
+      viewOf(miniDoc("payments/components", "组件")),
+      viewOf(miniDoc("payments/context", "上下文")),
+      viewOf(miniDoc("payments/deployment", "部署")),
+      viewOf(miniDoc("quickstart/mini", "快速开始")),
+      viewOf(miniDoc("topology/junction", "接线点")),
+    ];
+    const dom = new JSDOM(renderHtml([self, ...examples]), {
+      runScripts: "dangerously",
+      url: "https://example.test/",
+    });
+    const d = dom.window.document;
+    expect(Array.from(d.querySelectorAll(".views-group-title")).map((e) => e.textContent)).toEqual([
+      "自身架构",
+      "示例演示",
+    ]);
+    expect(d.querySelectorAll("#views button[data-doc]")).toHaveLength(16);
+    expect(
+      d.querySelectorAll('.views-group[data-group="示例演示"] button[data-doc]'),
+    ).toHaveLength(15);
+    expect(d.querySelector('.views-group[data-group="自身架构"]')!.className).toContain("on");
+  });
+
+  it("分组优先级：source 路径优先于 id 推断；meta.group 可覆盖", () => {
+    const archView: DocView = { ...viewOf(miniDoc("custom/whatever", "X")), source: "arch/system.cvn.yaml" };
+    const metaDoc = miniDoc("x/with-meta", "Z");
+    (metaDoc.meta as unknown as Record<string, unknown>).group = "自定义";
+    const dom = new JSDOM(renderHtml([archView, viewOf(metaDoc)]), {
+      runScripts: "dangerously",
+      url: "https://example.test/",
+    });
+    const d = dom.window.document;
+    expect(Array.from(d.querySelectorAll(".views-group-title")).map((e) => e.textContent)).toEqual([
+      "系统契约",
+      "自定义",
+    ]);
+  });
+
+  it("分组后点按钮仍能正常切图（回归）", () => {
+    const dom = new JSDOM(groupedHtml(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector('button[data-doc="payments/components"]')!.dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true }),
+    );
+    expect((d.querySelector('section.doc[data-doc="payments/components"]') as HTMLElement).hidden).toBe(false);
+    expect((d.querySelector('section.doc[data-doc="covenant/self-architecture"]') as HTMLElement).hidden).toBe(true);
+    expect(d.querySelector('button[data-doc="payments/components"]')!.className).toContain("on");
   });
 });

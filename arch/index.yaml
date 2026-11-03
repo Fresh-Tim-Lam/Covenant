@@ -77,7 +77,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: e8c4082b3b1e93ad97cc46a7b2e4c20e085962c887fc4a372fdcfa90b06fed6c
+    source_sha256: 29c1b6790d6072e05ed48617c8377e5646be2cf9ad4b97a8bf4dbc88d86804e2
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

@@ -720,6 +720,66 @@
   - `arch/system.cvn.yaml`：静态**唯一元素 id 24、唯一关系 id 15（文件内 46 处关系引用，含 v.main/v.delivery 两视图重复）**；lead 报"20 节点/41 边"应为**渲染视图口径**，与文件口径不同，此处只记录差异、不裁决；
   - **v.libs 拆分仅为建议，未实施**（静态无 `v.libs` 视图定义）；待用户决定是否拆（todo/Q16）。
 
+## R-038 多段连线：每段可视为独立数据元素并加段级批注；小窗连到边中点
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 20:59 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 对于连线，如果它线上有多个实心圆交点，那他是多边的连线，每一条边都可以表示一个数据，并且视作一个元素添加批注， 另外，小窗连到边不要连端点，连到中间的位置
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. **多段连线**：线上有多个实心圆交点的边 = **多段连线（polyline）**，**每一条段都可表示一个数据**，可**视为元素单独加批注**；
+  2. **小窗引导线**：连到边时**不要连端点，连到中段位置**。
+  - lead 已执行：①**task-12 ✅** 引导线锚点改为**弧长 t=0.5**（根因：紧凑布局后所有边 6 点路径，旧代码 `p[0]` 回退=起点端口）；②**task-13 P0 ✅** 格式扩展 `annotation.target.segment?: integer`（schema/core/types/docs 契约）+ layout `segmentCount`/`segmentMidpoint` + render 段级 badge + gate `gate/segment`/`gate/segment-kind`（diagram-owner）+ viewer 多段窗/热区/导出（viewer-owner）。
+  - 对应任务：T45（已完成）、T46（已完成）；对应决策：D-053。
+- **现状核对**（2026-11-03 20:59 +08:00，只读静态检查，**未运行 pnpm**）：
+  - `schema/kernel.schema.json` L271 `"segment"` 定义；`packages/core/src/types.ts` L106 `{ kind: "relation"; id; aspect?; segment?: number }`；
+  - `packages/layout/src/index.ts` L29-30（路径段数=points.length-1，合法下标 [0,segmentCount)）、L733/L759 `segmentCount`、L832 `segmentMidpoint(points,k)`；
+  - `packages/validate/src/gate.ts` L258 `gate/segment-kind`、L270 `gate/segment`；`packages/patch/src/patch.test.ts` L318-338 负/浮点/字符串/越类用例；
+  - `packages/render/src/html.ts` L89/L112 `segmentCount`、L421 `segCount`、L444 `data-seg`（热区）、L661/L701 `data-segment`（多小窗）；`html.dom.test.ts` L1121/L1154/L1161-1179/L1259（多段窗/热区/段角标）；
+  - **引导线弧长中点**：commit **00e96e2**（viewer guide line anchor = arc-length midpoint");
+  - 对应 commit：契约 `3abbb20`、layout/render/gate/viewer `64fa645`。
+
+## R-039 hover 一次悬停不离开会一直闪不同颜色，需完善状态设计
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 20:59 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 一次悬停不离开会一直闪不同颜色，请完善状态设计
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. hover 悬停时**颜色不断闪变** → 需要**状态设计**：同一目标在短时间内保持颜色稳定，避免每次重开换色。
+  - lead 已执行：**task-15 ✅** hover 闪色修复（**色忆 400ms + relatedTarget 区域感知 + 目标键收敛**）；commit `64fa645`。
+  - 对应任务：T47（已完成）；对应决策：D-054。
+- **现状核对**（20:59 静态）：`packages/render/src/html.ts` L343-345 hover 色忆注释与 `hoverColorMemo`、L470/L1117 `relatedTarget` 区域感知、L520 记录、L522-523 400ms 清理、L692-693 复用（<400ms 且颜色未被占用）、L1339 `movedIntoWindow(ev.relatedTarget)`；测试 `html.dom.test.ts:1276`（边界振荡不关闭/不变色）、`:1310`（400ms 内同一目标重开复用颜色）。
+
+### 本轮收尾记录（2026-11-03 20:59，lead 实测）
+
+- **task-12 ✅** 引导线弧长中点（commit `00e96e2`）；**task-13 P0 ✅** 段级批注契约/实现（`3abbb20` + `64fa645`）；**task-15 ✅** hover 闪色（`64fa645`）；**task-11 ✅** 小窗设计写入自身架构（system **rev4** `v.viewer`、covenant-self viewer 摘要、design §4.5；commit `586bbfe`）；**批注 12/12 resolved**（含 3 条用户提问 + 2 条 AI 决策；commit `53297bc`）。
+- **最终基线（lead 实测）**：**317 tests** 全绿、verify 全绿、CI verify success（`64fa645`）、covenant.html 273 KB、arch.html 3 视图 217.8 KB、dist/site 16 views。
+- **静态补充**：`dist/covenant.html` **295,125 B** @20:57:46、`dist/arch.html` **234,767 B** @20:57:47（lead 报 273 KB / 217.8 KB 应为 `html.length/1024` 打印口径，按 19:15 结论**以字节为准**）；`dist/site/views` 16 个；`arch/system.cvn.yaml` **rev 4**（含 `v.viewer` L544）、`examples/covenant-self.cvn.yaml` **rev 8**（lead 报 rev7，静态已 rev8——以磁盘为准）；covenant-self **12 resolved / 0 open**（与"12/12 resolved"一致）；`docs/design/interaction-and-ai-loop.md` L107 §4.5 已实装。
+- **待用户**：真实浏览器验收（含段级热区手感，a.01JAYS3KV0003）+ v.libs 是否拆（Q16）。
+
+## R-040 看板左栏按组分类；架构团队一人一模块责任制
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 21:02 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 架构图看板（我以后就这样叫）里面还是只有两个和本项目有关，其他看起来都像是示例演示，请给左栏添加分组，另外，架构团队可以安排专人对接某个模块，做到一人一模块，保证架构等图绘制的正确
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. **命名约定**：**"看板" = 架构图查看器**（用户以后就这样叫，文档沿用）；
+  2. **侧栏分组**：左栏目前只 2 个与本项目有关、其余像示例 → 需按 **自身架构 / 系统契约 / 示例演示**（+ 模板/其他）**分组**；
+  3. **一人一模块**：架构团队可**安排专人对接某个模块**，保证架构等图绘制正确。
+  - lead 已执行：①viewer-owner **已派发侧栏分组任务**（按 meta/path 推断 `group` 字段，渲染分组标题）；②`docs/team/architecture-team.md` 新增 **§6 模块架构责任人（一人一模块）**：20 行表格（每个包/产物映射唯一责任人：core-owner / diagram-owner / viewer-owner / tools-owner / iface-owner / arch-owner）+ **职责四条**（主动巡检 / 批注结案 / 发现不一致派 arch-owner / 不亲自改图）；commit **ea738b6** 已推送。
+  - 对应任务：T48（进行中，viewer-owner）、T49（已完成）；对应决策：D-055。
+- **现状核对**（2026-11-03 21:02 +08:00，只读静态检查，**未运行 pnpm**）：
+  - 分组代码**已在源码实现**：`packages/render/src/html.ts` L29-30 `GROUP_ORDER = ["自身架构","系统契约","示例演示","模板","其他"]`、L32 `groupFromId`、L43-56 `docGroup`（优先 `meta.group`，未传按 `doc.id` 推断）、L59-61 `groupRank`、L191 `group: docGroup(view)`、L252-255 `.views-group/.views-group-title` 样式、L773 分组渲染；**但 `dist/covenant.html` 尚未重建**（静态无 `views-group`/分组标记）→ T48 **进行中**，未完成；
+  - `docs/team/architecture-team.md` 5,923 B @21:01:36：L53 `## 6. 模块架构责任人（一人一模块）`，表格 **22 行 = 表头+分隔+20 条数据**（core/profile/validate→core-owner；layout→diagram-owner；render→viewer-owner；patch/diff/indexer/ai/adr/editor/审计→tools-owner；cli/mcp/serve/bundle/kit/CI→iface-owner；文件系统/JSON Schema→arch-owner）；L81 `### 责任人职责`（四条）；（commit `ea738b6`）
+
 ---
 
 ## 核对记录
@@ -757,3 +817,5 @@
 | 2026-11-03 19:11 +08:00 | R-034 ~ R-036 转引 | 未拿到原始消息，以 lead 转引为准；R-034"空心原点/实心远点"（"圆点"笔误）与双空格、R-035"得按照胶囊宽度考虑"、R-036"得绕过"均按原样保留 |
 | 2026-11-03 19:15 +08:00 | 产物口径更正（`231.2 KB`/`151.5 KB`、`hollow 218+solid 11`、`kit 191,383+a6fe`） | **以 lead 口径核对结果为准**：①KB→字节（covenant.html 249,956 B≈244.1 KiB，打印 231.2 KB；arch.html 161,574 B≈157.8 KiB，打印 151.5 KB；site/index.html 249,956 B）；②圆点数按文件分开（covenant.html 218/11；arch.html 269/5）；③kit zip 三口径（本地最新 191,667/`89627c2d…`；早期本地 191,383/`a6fe6836…` 被覆盖；GitHub Release 194,425 B，附 CI `.sha256`）——**不跨环境钉 zip sha**；以上已改入 R-031/R-033/T43 记录，旧数保留在"早期构建/打印值"备注中 |
 | 2026-11-03 19:40 +08:00 | R-037 转引 | 未拿到原始消息，以 lead 转引为准；"看我架构图更新的；画布变宽完全能接受"按原样保留（"的"为口语语气词） |
+| 2026-11-03 20:59 +08:00 | R-038 / R-039 转引 | 未拿到原始消息，以 lead 转引为准；R-038 逗号后空格（"批注， 另外"）与 R-039"请完善状态设计"按原样保留；另：self rev 静态 rev8（lead 报 rev7）、html KB 为打印口径（字节见核对） |
+| 2026-11-03 21:02 +08:00 | R-040 转引 | 未拿到原始消息，以 lead 转引为准；"架构图看板（我以后就这样叫）"括号与"一人一模块"约定表述按原样保留 |

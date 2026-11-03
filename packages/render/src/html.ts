@@ -15,10 +15,50 @@ export interface DocView {
   /** 视图 id：一份文档多视图时用于区分导航/本地存储 */
   viewId?: string;
   viewTitle?: string;
+  /**
+   * 来源路径（可选）：CLI 若传入 `examples/covenant-self.cvn.yaml` 这类相对路径，
+   * 侧栏分组可据此精确判定；未传时退回按 doc.id 推断。
+   */
+  source?: string;
 }
 
 export interface SiteOptions {
   title?: string;
+}
+
+/** 侧栏分组的规范顺序（未声明的自定义组追加在最后，保持首次出现顺序） */
+const GROUP_ORDER = ["自身架构", "系统契约", "示例演示", "模板", "其他"];
+
+function groupFromId(id: string): string {
+  if (id === "covenant/self-architecture") return "自身架构";
+  if (id === "covenant/self") return "系统契约";
+  // 示例工程的命名空间（与 examples/ 下文件对应）
+  if (id === "covenant/package-graph") return "示例演示";
+  if (/^templates?\//.test(id)) return "模板";
+  if (/^(example|examples|order|orders|payments|topology|quickstart)\//.test(id)) return "示例演示";
+  return "其他";
+}
+
+/**
+ * 侧栏分组：优先 doc.meta.group（格式未正式声明字段，按可选扩展读取）；
+ * 其次按来源路径；最后按 doc.id 命名空间推断（CLI 目前未传 source，线上看板走这条）。
+ */
+function docGroup(view: DocView): string {
+  const declared = (view.doc.meta as unknown as Record<string, unknown> | undefined)?.group;
+  if (typeof declared === "string" && declared.trim()) return declared.trim();
+  const src = (view.source ?? "").replace(/\\/g, "/");
+  if (src) {
+    if (/(^|\/)arch\//.test(src)) return "系统契约";
+    if (/examples\/covenant-self[^/]*$/.test(src)) return "自身架构";
+    if (/(^|\/)examples\//.test(src)) return "示例演示";
+    if (/(^|\/)templates\//.test(src)) return "模板";
+  }
+  return groupFromId(view.doc.id);
+}
+
+function groupRank(name: string): number {
+  const i = GROUP_ORDER.indexOf(name);
+  return i < 0 ? GROUP_ORDER.length : i;
 }
 
 function esc(s: unknown): string {
@@ -148,6 +188,7 @@ function projectDoc(view: DocView) {
     viewId: view.viewId ?? null,
     defaultViewId: d.views && d.views.length ? d.views[0].id : null,
     title: view.viewTitle ?? d.meta?.title ?? d.id,
+    group: docGroup(view),
     purpose: d.meta?.purpose ?? "",
     nonGoals: d.meta?.non_goals ?? [],
     rev: d.meta?.rev ?? 0,
@@ -207,6 +248,11 @@ header button.pri{background:var(--accent);color:#fff;border-color:var(--accent)
 #views button{display:block;width:100%;text-align:left;white-space:normal;word-break:break-word;font:inherit;font-size:12.5px;line-height:1.35;padding:7px 9px;border:1px solid transparent;border-radius:7px;background:transparent;cursor:pointer;color:var(--ink)}
 #views button:hover{background:#f1f5f9}
 #views button.on{background:#dbeafe;border-color:var(--accent);color:var(--accent);font-weight:600}
+#views button.views-doc{padding-left:16px}
+.views-group{margin:0 0 10px}
+.views-group:last-child{margin-bottom:0}
+.views-group-title{font-size:11px;font-weight:600;color:#94a3b8;padding:3px 9px 5px;letter-spacing:.03em;user-select:none;-webkit-user-select:none}
+.views-group.on>.views-group-title{color:var(--accent)}
 body.nav-collapsed #views{display:none}
 main{position:relative;flex:1;min-height:0;overflow:hidden}
 #stage-wrap{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none}
@@ -721,8 +767,13 @@ const SCRIPT = `
     var docs = document.querySelectorAll(".doc");
     for (var i=0;i<docs.length;i++) docs[i].hidden = docs[i].getAttribute("data-doc") !== id;
     var btns = document.querySelectorAll("#views button");
-    for (var j=0;j<btns.length;j++) btns[j].className = btns[j].getAttribute("data-doc") === id ? "on" : "";
+    for (var j=0;j<btns.length;j++) btns[j].className = btns[j].getAttribute("data-doc") === id ? "views-doc on" : "views-doc";
     var doc = currentDoc();
+    // 高亮当前 view 所在分组标题（分组默认全部展开，不折叠）
+    var groups = document.querySelectorAll(".views-group");
+    for (var g=0; g<groups.length; g++){
+      groups[g].className = doc && groups[g].getAttribute("data-group") === doc.group ? "views-group on" : "views-group";
+    }
     renderInspector(null, null);
     ensureSegHits(doc);
     drawBadges(doc);
@@ -1667,8 +1718,27 @@ export function renderHtml(views: DocView[], options: SiteOptions = {}): string 
   const labelOf = (v: DocView): string =>
     `${v.doc.meta?.title ?? v.doc.id}${v.viewTitle ? ` · ${v.viewTitle}` : ""}`;
 
-  const nav = views
-    .map((v) => `<button data-doc="${esc(keyOf(v))}">${esc(labelOf(v))}</button>`)
+  // 侧栏按 group 分组：组标题不可点击、组内按钮缩进；默认全部展开（不折叠）
+  const grouped = new Map<string, DocView[]>();
+  for (const v of views) {
+    const g = docGroup(v);
+    const list = grouped.get(g);
+    if (list) list.push(v);
+    else grouped.set(g, [v]);
+  }
+  const groupNames = [...grouped.keys()].sort((a, b) => groupRank(a) - groupRank(b));
+  const firstGroup = views.length ? docGroup(views[0]!) : "";
+  const nav = groupNames
+    .map((g) => {
+      const buttons = grouped
+        .get(g)!
+        .map((v) => `<button class="views-doc" data-doc="${esc(keyOf(v))}">${esc(labelOf(v))}</button>`)
+        .join("\n        ");
+      return (
+        `<div class="views-group${g === firstGroup ? " on" : ""}" data-group="${esc(g)}">` +
+        `<div class="views-group-title">${esc(g)}</div>\n        ${buttons}\n      </div>`
+      );
+    })
     .join("\n      ");
 
   const sections = views
