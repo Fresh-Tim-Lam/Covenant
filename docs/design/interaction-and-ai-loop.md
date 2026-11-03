@@ -2,7 +2,7 @@
 
 > **用途**：把"用户打开生成好的本地 HTML → 在架构图上标注 → AI 读懂并执行动作"这个真实场景，落成可实现的交互模型、数据回流通道与 AI 契约。
 > **目标读者**：实现者（编辑器 / CLI / MCP）、产品决策者。
-> **状态**：提案 v0，核验于 2026-11-03。**本文件是 Q2 用户答复的正式化。** §4.5「viewer interaction v1」于同日按实装补写（多小窗/颜色/引导线）。
+> **状态**：提案 v0，核验于 2026-11-03。**本文件是 Q2 用户答复的正式化。** §4.5「viewer interaction v1」于同日按实装补写（多小窗/颜色/引导线），v1.1 增补段级批注、防闪色、分组侧栏。
 > **关联文档**：[format-spec-v0.md](format-spec-v0.md)（批注模型）；[engine-architecture-v0.md](engine-architecture-v0.md)（渲染形态）；[open-questions.md](open-questions.md)（决策记录）。
 
 ---
@@ -104,16 +104,17 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 - **不允许在 HTML 里直接改语义**（改名字、加节点）→ 必须走"AI/CLI 补丁 + 批准"。原因：浏览器端没有校验器与审计，直接改会产生非法文档。
 - **不允许自由手绘笔迹**进入语义层；若要，只进 `view.canvas` 视觉层（后期）。
 
-### 4.5 viewer interaction v1：多小窗、彩色锚点与引导线（2026-11-03 实装）
+### 4.5 viewer interaction v1：多小窗、段级批注、分组侧栏（2026-11-03 实装）
 
 > 本节记录 `packages/render/src/html.ts` 已实现并受 `html.dom.test.ts` 覆盖的查看器交互；以代码与测试为准。
+> v1.1 增补：段级批注（`target.segment`）、悬停防闪色（色忆 + 区域感知）、侧栏文档分组、弧长锚点引导线。
 
 **状态机（单窗）**
 
 | 状态 | 进入 | 行为 | 关闭条件 |
 |---|---|---|---|
-| `hover`（预览） | 指针进入元素/边 | 打开小窗 + 同色高亮锚点 | 移出形状/窗口后 **120ms** 定时关闭；再次进入形状或移入窗口会取消计时 |
-| `clicked`（固定） | 左键点击元素/边 | 窗口保留（移开不关）；可继续点其他对象 | 点画布/画布外空白、Esc（仅未钉住）；× 只关自己 |
+| `hover`（预览） | 指针进入元素/边/段热区 | 打开小窗 + 同色高亮锚点 | 移出形状/窗口后 **120ms** 定时关闭；`relatedTarget` 落在任一 `.cvn-win` 内或再次进入形状会取消计时；进入新的 hover 目标会先收掉其它 hover 窗 |
+| `clicked`（固定） | 左键点击元素/边/段热区 | 窗口保留（移开不关）；可继续点其他对象 | 点画布/画布外空白、Esc（仅未钉住）；× 只关自己 |
 | `pinned`（📌 钉住） | 点击窗口标题栏 📌 | 点空白/Esc 也不关闭；再点取消 | 仅 ×（或切图时统一清理） |
 
 补充规则：
@@ -123,6 +124,9 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 - **拖拽**：按住标题栏移动（位移 > 3px 才算拖拽），坐标 clamp 在舞台内；拖拽过程实时更新引导线。
 - **切图**：切换文档时关闭全部窗口（含 📌 钉住）并清空批注内联编辑态，避免"切回来表单自动复现/窗口被隐式钉死"。
 - **表单**：「＋ 新增批注」在窗口内默认**折叠**，点击展开；提交后收起；切到别的对象时新窗重新默认折叠。
+- **悬停区域感知**：形状/段热区 `pointerleave` 时若 `relatedTarget` 在 `.cvn-win` 内则不关；窗口自身 `pointerleave` 回到锚定对象或另一窗口也不关（防边界振荡）。
+- **防闪色（色忆）**：`hoverColorMemo[(kind,id,segment)] = {color, ts}`；400ms 内同一目标 hover 窗重开且该色仍未被占用则复用同色，否则重新分配（修复"悬停不离开却一直闪不同颜色"的 P0）。
+- **hover 互斥**：进入新的 hover 目标时 `closeOtherHoverWins()` 立即收掉旧预览，避免多个预览窗叠加。
 
 **颜色（确定性）**
 
@@ -130,11 +134,12 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 - 取色规则：优先取当前未被占用的颜色（按调色板顺序扫描），8 色占满后循环复用；不随主题/文档变化。
 - 同色贯穿一窗：窗口边框、标题条、色点（win-dot）、锚点高亮、引导线全部使用该窗颜色；锚点高亮通过 CSS 变量 `--hl` 注入。
 - 新窗默认级联偏移 18px（最多 8 档循环），避免与现存窗口完全重叠。
+- **色忆（防闪色）**：hover 窗关闭时记录 `(kind,target,segment) → color + 时间戳`；400ms 内同目标重开且该色未被其它现存窗占用时复用，否则重新分配；过期记忆（>10s）在分配/清理时丢弃，避免无限增长。
 
 **引导线（guide line）**
 
 - 载体：独立 SVG overlay `#insp-guides`（`position:absolute; inset:0; pointer-events:none; z-index:15`），虚线 `5 4`、线宽 1.5、圆头。
-- 端点：窗口**最近边中点** → 锚点（元素中心 / 关系边中点，来自布局 anchors，带 fallback）。
+- 端点：窗口**最近边中点** → 锚点（元素中心 / 整条边按**弧长 t=0.5** 的中点（`polylineMidpoint`，不是端口/箭头）；段窗用该段中点）。
 - 更新时机：窗口拖拽与内容变化（表单展开）、缩放/平移（`applyTransform`）、窗口 resize（未手动缩放时 fitView）、侧栏折叠（fitView）、窗口打开/关闭/置顶。关闭窗口时删除自己的线。
 - 坐标：锚点按 `translate + scale` 换算到舞台坐标系；窗口端按 `style.left/top` 与 `offsetWidth/Height` 计算，保证缩放/平移下仍贴合。
 
@@ -145,7 +150,28 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 - 纯键盘可达性只覆盖 Esc 关窗；元素/边的键盘选中不在 v1 范围。
 - 写回仍只有两条：C1 离线导出 `.patch.json`/`edits.json`（file:// 兜底）与 C3 `serve --edit` 直写（loopback + token + 写前校验/备份/审计）；**不做 C2 浏览器直写**（Q9）。
 
-**代码与测试参照**：`packages/render/src/html.ts`（多窗状态 ~L240-538、引导线 ~L403-450、钉住/拖拽 ~L824-885、命中与空白关闭 ~L1041-1081、清窗 ~L1120-1123）；`packages/render/src/html.dom.test.ts`（悬停/点击/多窗/钉住/引导线用例 ~L740-931）。
+**段级批注（segment，v1.1）**
+
+- 段定义：`annotation.target = {kind:"relation", id, segment?}`；`segment` 是渲染折线 `points[k] → points[k+1]` 的 0-based 下标（`EdgeGeom.segmentCount = points.length - 1`）；省略 = 整条边（旧行为不变，见 format-spec §8.1）。
+- build 期把每条关系的**有效折线**（junction 视图为 2 点直线，与静态渲染一致）写入内联数据 `segments`；浏览器运行时给每个 `.edge` 注入透明 `.seg-hit[data-seg]` 热区（**不改静态 SVG → 黄金图不变**）。
+- 命中段 → 窗口键 `(relation, id, segment)`；点/悬停都用段窗；未命中段热区（整边命中区/标签）→ 旧整边窗。
+- 段窗内容：本段批注 + 折叠的「整条边批注（n）」（旧批注仍可查看/改状态）；「新建批注」默认范围＝本段，可切「整条边」（target 不带 segment）。
+- badge：按 `(relation, segment)` 分开计数；整边角标沿用原位置，段角标画在段中点；本地未保存批注同规则。
+- 段索引是**布局相关**的路径下标（随 rev/布局漂移）；越界由渲染/构建期 `annotation/segment-range` warning 提示，不阻断。
+
+**侧栏文档分组（v1.1）**
+
+- `docGroup(view)` 优先级：显式 `meta.group` → source 路径（`arch/` → 系统契约；`examples/covenant-self` → 自身架构；`examples/` 其他 → 示例演示；`templates/` → 模板）→ `doc.id` 命名空间 → 其他。
+- 组序 `GROUP_ORDER`：自身架构 → 系统契约 → 示例演示 → 模板 → 其他；空组不渲染；组标题不可点击，组内按钮缩进，当前激活视图所在组标题高亮。
+- 切换分组后仍可正常切图/缩放/小窗（回归测试覆盖）。
+
+**边界与已知局限（v1.1 补充）**
+
+- 段索引只用于定位，布局变化可能指向别的物理段；当前仅对越界给 warning，无法检测"漂移但未越界"。
+- 分组依赖构建期传入的文档来源信息（`meta.group` / DocView 路径）；缺失时退化为 `doc.id` 命名空间推断；bundle manifest v3 暂未携带 source path（需要时再扩）。
+- 真实浏览器（非 jsdom）仍待人工验收（对应 `arch/system.cvn.yaml` 的 `a.01JAYS3KV0003`）。
+
+**代码与测试参照**：`packages/render/src/html.ts`（docGroup/GROUP_ORDER ~L30-70、段几何/弧长中点 `relationSegments`/`polylineMidpoint` ~L95-200、悬停色忆 ~L388-580、窗口/段窗 ~L700-1090、段热区与事件命中 ~L1360-1400、壳与侧栏 ~L1720-1790）；`packages/render/src/html.dom.test.ts`（表单折叠、悬停/多窗/钉住/引导线、段热区/段窗/导出、防闪色、侧栏分组 ~L780-1470）。
 
 ---
 

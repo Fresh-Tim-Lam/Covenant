@@ -12,9 +12,9 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 4
+  rev: 5
   owners: [human:team]
-  updated: 2026-11-03T20:20:00+08:00
+  updated: 2026-11-03T21:35:00+08:00
   ai:
     summary: |
       单文件 HTML 优先的契约式图示工具：.cvn.yaml 为唯一事实源，
@@ -22,8 +22,9 @@ meta:
       依赖方向 core ← profile/validate/layout/render/patch/diff/indexer/ai/adr/editor ← cli/mcp；
       cli 与 mcp 是并列前端，均直接依赖库包（mcp 不经 CLI 进程）。
       交付链：cli build/bundle → dist 产物；scripts/build-kit → kit；GitHub Actions 负责 verify 与 Release。
-      浏览器查看器（v.viewer）支持多小窗并存：悬停预览、点击固定、📌 钉住、8 色锚点与同色引导线；
-      编辑态经 serve --edit 写回，离线导出 .patch.json / edits.json 后由 CLI 落盘。
+      浏览器查看器（v.viewer）内部拆为 inspector（多小窗/颜色/引导线/段级批注）与 sidebar（文档分组）：
+      多窗三态 + 400ms 色忆防闪色 + 弧长锚点引导线 + segment 级批注；编辑态经 serve --edit 写回，
+      离线导出 .patch.json / edits.json 后由 CLI 落盘。
 
 elements:
   - id: e.human
@@ -52,8 +53,20 @@ elements:
   - id: e.viewer
     kind: container
     name: 浏览器查看器
-    summary: 内联于 dist HTML/bundle：多小窗（悬停预览/点击固定/📌钉住）、8 色锚点、同色高亮与引导线 overlay、批注面板；编辑态经 serve 写回
+    summary: 内联于 dist HTML/bundle 的查看器外壳：加载产物数据、路由指针/键盘事件、装配侧栏与小窗系统；编辑态经 serve 写回、离线导出补丁
     tech: 内联 TS + SVG
+
+  - id: e.inspector
+    kind: container
+    name: 小窗系统（inspector）
+    summary: 多窗三态（hover 预览 / clicked 保留 / 📌 pinned）、8 色确定性调色板 + 400ms 色忆防闪色、同色锚点高亮与弧长锚点引导线、段级批注窗（本段 + 折叠整边批注）、新增批注表单折叠
+    tech: 内联 TS + SVG overlay
+
+  - id: e.sidebar
+    kind: container
+    name: 侧栏导航
+    summary: 文档分组（meta.group → 源路径 → 命名空间；组序 自身架构/系统契约/示例演示/模板/其他）、组标题不可点、当前组高亮、切图
+    tech: 内联 TS
 
   - id: e.serve
     kind: container
@@ -218,6 +231,17 @@ relations:
     from: e.human
     to: e.viewer
     summary: 双击 HTML / 打开 bundle 进入查看与标注
+
+  - id: r.viewer-inspector
+    kind: calls
+    from: e.viewer
+    to: e.inspector
+    summary: 装配并驱动小窗系统（悬停/点击/钉住、段窗、引导线）
+  - id: r.viewer-sidebar
+    kind: calls
+    from: e.viewer
+    to: e.sidebar
+    summary: 渲染分组侧栏并切换文档
 
   - id: r.cli-core
     kind: calls
@@ -417,7 +441,7 @@ relations:
     kind: reads
     from: e.viewer
     to: e.html
-    summary: 读取单文件内联的文档数据与视图
+    summary: 读取单文件内联数据（anchors / centers / segments）与视图
   - id: r.viewer-bundle
     kind: reads
     from: e.viewer
@@ -427,12 +451,12 @@ relations:
     kind: calls
     from: e.viewer
     to: e.serve
-    summary: 编辑态写回 API（POST /api/edit、/api/patch）
+    summary: 编辑态写回：POST /api/edit、/api/patch（段级批注 target 原样带出）
   - id: r.viewer-patch
     kind: writes
     from: e.viewer
     to: e.patchfile
-    summary: 导出补丁 / 编辑 JSON（离线写回通道）
+    summary: 导出补丁 / 编辑 JSON（含 target.segment，离线写回通道）
   - id: r.cli-patchfile-read
     kind: reads
     from: e.cli
@@ -544,12 +568,12 @@ views:
   - id: v.viewer
     title: 查看器与写回
     include:
-      elements: [e.human, e.viewer, e.serve, e.cli, e.html, e.bundle, e.patchfile, e.docs, e.audit]
+      elements: [e.human, e.viewer, e.inspector, e.sidebar, e.serve, e.cli, e.html, e.bundle, e.patchfile, e.docs, e.audit]
       relations: [r.*]
     layout:
       engine: elk
       direction: RIGHT
-      spacing: { rank: 120, node: 56 }
+      spacing: { rank: 120, node: 52 }
 
 annotations:
   - id: a.01JAYS3KV0001AAAA0001

@@ -777,7 +777,8 @@
   - lead 已执行：①viewer-owner **已派发侧栏分组任务**（按 meta/path 推断 `group` 字段，渲染分组标题）；②`docs/team/architecture-team.md` 新增 **§6 模块架构责任人（一人一模块）**：20 行表格（每个包/产物映射唯一责任人：core-owner / diagram-owner / viewer-owner / tools-owner / iface-owner / arch-owner）+ **职责四条**（主动巡检 / 批注结案 / 发现不一致派 arch-owner / 不亲自改图）；commit **ea738b6** 已推送。
   - 对应任务：T48（进行中，viewer-owner）、T49（已完成）；对应决策：D-055。
 - **现状核对**（2026-11-03 21:02 +08:00，只读静态检查，**未运行 pnpm**）：
-  - 分组代码**已在源码实现**：`packages/render/src/html.ts` L29-30 `GROUP_ORDER = ["自身架构","系统契约","示例演示","模板","其他"]`、L32 `groupFromId`、L43-56 `docGroup`（优先 `meta.group`，未传按 `doc.id` 推断）、L59-61 `groupRank`、L191 `group: docGroup(view)`、L252-255 `.views-group/.views-group-title` 样式、L773 分组渲染；**但 `dist/covenant.html` 尚未重建**（静态无 `views-group`/分组标记）→ T48 **进行中**，未完成；
+  - 分组代码**已在源码实现**：`packages/render/src/html.ts` L29-30 `GROUP_ORDER = ["自身架构","系统契约","示例演示","模板","其他"]`、L32 `groupFromId`、L43-56 `docGroup`（优先 `meta.group`，未传按 `doc.id` 推断）、L59-61 `groupRank`、L191 `group: docGroup(view)`、L252-255 `.views-group/.views-group-title` 样式、L773 分组渲染；
+  - **更新（2026-11-03 21:08，lead）**：**dist 已重建**（commit **ba5157a**），`dist/covenant.html` **296,708 B** @21:04:54，静态实测 `views-group` **12** 处 / `views-group-title` **4** 处 / `data-group` **3** 处（与 lead 一致）→ **T48 已完成**（此前"dist 尚未重建、进行中"的判断作废）；口径：covenant-self **rev 8**（非 7）；arch.html 静态实测 **235,671 B** @21:04:55（lead 报 234,767，**待确认**，以磁盘为准记录）；
   - `docs/team/architecture-team.md` 5,923 B @21:01:36：L53 `## 6. 模块架构责任人（一人一模块）`，表格 **22 行 = 表头+分隔+20 条数据**（core/profile/validate→core-owner；layout→diagram-owner；render→viewer-owner；patch/diff/indexer/ai/adr/editor/审计→tools-owner；cli/mcp/serve/bundle/kit/CI→iface-owner；文件系统/JSON Schema→arch-owner）；L81 `### 责任人职责`（四条）；（commit `ea738b6`）
 
 ---

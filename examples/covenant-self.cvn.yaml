@@ -11,17 +11,18 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 8
+  rev: 9
   owners: [human:lily]
-  updated: 2026-11-03T20:20:00+08:00
+  updated: 2026-11-03T21:35:00+08:00
   ai:
     summary: |
       Covenant 由 CLI / MCP / serve / 浏览器标注器四类进程/端构成，权威数据是项目内 .cvn.yaml；
       CLI 与 MCP 是并列前端，都直接调用共享库层（不经 CLI 进程）；构建管线产出单文件 HTML（默认）
       与 dist/site 文件夹站点（第二模式）；写回走 patch 门禁 + write-ahead 审计。
-      查看器支持多小窗并存：悬停预览（移开 120ms 关闭）、点击固定、📌 钉住、8 色锚点与同色引导线；
+      查看器（内联）支持多小窗并存：悬停 120ms 预览、点击固定、📌 钉住、8 色 + 400ms 色忆防闪、
+      弧长锚点引导线、段级批注（target.segment）、侧栏文档分组、新增批注表单默认折叠。
       编辑态经 serve 写回，离线时导出 .patch.json / edits.json。
-      本图 12 条批注：7 resolved / 5 open（HTML 组织、审计是否基于 git、两条 AI 答复待用户确认、a.A224 交点疑问）。
+      本图 12 条批注已全部 resolved（2026-11-03）。
     budget_tokens: 1000
 
 elements:
@@ -81,7 +82,7 @@ elements:
     kind: container
     name: 浏览器查看器
     tech: 内联 TS + SVG
-    summary: 离线查看/标注：多小窗并存（悬停 120ms 预览 / 点击固定 / 📌 钉住）、8 色锚点与同色高亮/引导线 overlay、缩放平移、批注编辑删除撤销；编辑态经 serve 写回，离线导出补丁
+    summary: 离线查看/标注：多小窗三态（悬停 120ms 预览 / 点击固定 / 📌 钉住）、8 色 + 400ms 色忆防闪、弧长锚点引导线、段级批注（target.segment）、侧栏文档分组、新增表单折叠、缩放平移、批注编辑删除撤销；编辑态经 serve 写回，离线导出补丁
     tags: [edge]
 
   - id: e.serve
