@@ -1,0 +1,71 @@
+# Quickstart 最小契约：一个支付网关的容器片段（c4-container@1）
+covenant: "0.1"
+id: quickstart/mini
+profile: c4-container@1
+
+meta:
+  title: 支付网关（最小示例）
+  purpose: 5 分钟跑通 check → render → build → annotate → patch → apply。
+  non_goals:
+    - 完整的支付域建模
+  owners: [human:you]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.user
+    kind: person
+    name: 商户
+    summary: 发起支付
+  - id: e.gateway
+    kind: container
+    name: 支付网关
+    summary: 鉴权、限流、路由
+    tech: Ktor
+  - id: e.psp
+    kind: external-system
+    name: PSP
+    summary: 外部收单通道
+  - id: e.db
+    kind: datastore
+    name: 支付库
+    summary: 订单与流水
+    tech: PostgreSQL
+    props: { storage_kind: rdbms }
+
+relations:
+  - id: r.user-gateway
+    kind: calls
+    from: e.user
+    to: e.gateway
+    summary: 提交支付
+  - id: r.gateway-psp
+    kind: calls
+    from: e.gateway
+    to: e.psp
+    summary: 调用收单
+  - id: r.gateway-db
+    kind: writes
+    from: e.gateway
+    to: e.db
+    summary: 落订单
+
+views:
+  - id: v.main
+    title: 支付网关
+    include:
+      elements: [e.*]
+      relations: [r.*]
+
+annotations:
+  - id: a.01JQKSTART0001AAAA0001
+    target: { kind: element, id: e.gateway }
+    type: risk
+    severity: medium
+    title: 网关没有限流上限声明
+    body: quickstart 示例：这条批注用来演示标注与补丁闭环。
+    status: open
+    author: human:you
+    created: 2026-11-03T00:00:00+08:00
+    ai_hint: 修改前先读这条约束：任何改动都必须保持网关无状态。

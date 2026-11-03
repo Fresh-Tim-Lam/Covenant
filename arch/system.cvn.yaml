@@ -1,0 +1,265 @@
+# Covenant 自举契约：用 Covenant 描述 Covenant 仓库自身。
+# 这张图不是"示意"，它受 `covenant check` 与 CI 保护；改代码结构时应同步改这里。
+covenant: "0.1"
+id: covenant/self
+profile: c4-container@1
+
+meta:
+  title: Covenant 系统结构
+  purpose: 说明仓库自身的组件边界、依赖方向与已知缺口，作为人/AI 的共同基线。
+  non_goals:
+    - 运行时部署拓扑（本项目是本地工具，无服务端部署）
+    - 函数级调用细节（由代码与 FRAS 索引承载）
+  audience: [human, ai]
+  status: draft
+  rev: 2
+  owners: [human:team]
+  updated: 2026-11-03T00:00:00+08:00
+  ai:
+    summary: |
+      单文件 HTML 优先的契约式图示工具：.cvn.yaml 为唯一事实源，
+      渲染在构建期完成，浏览器端只做标注与导出补丁。
+      依赖方向 core ← validate/layout ← render/patch/diff ← cli。
+
+elements:
+  - id: e.human
+    kind: person
+    name: 人工架构师
+    summary: 在 HTML 图上标注问题、审批 breaking 变更
+
+  - id: e.agent
+    kind: person
+    name: AI Agent
+    summary: 读语义副本、提交补丁（受门禁约束）
+    tech: MCP / CLI
+
+  - id: e.cli
+    kind: container
+    name: covenant CLI
+    summary: 命令入口：check / render / build / apply / patch-check / diff / index
+    tech: TypeScript + tsx
+
+  - id: e.core
+    kind: container
+    name: core
+    summary: 类型、YAML 解析（CORE_SCHEMA）、finding 排序
+    tech: TypeScript
+
+  - id: e.validate
+    kind: container
+    name: validate
+    summary: L1 schema（ajv）/ L2 完整性 / L3 剖面一致性
+    tech: TypeScript + ajv
+
+  - id: e.layout
+    kind: container
+    name: layout
+    summary: 分层布局、barycenter 交叉最小化、长边通道、视图选择器
+    tech: TypeScript
+
+  - id: e.render
+    kind: container
+    name: render
+    summary: SVG 渲染 + 可标注自包含 HTML
+    tech: TypeScript
+
+  - id: e.patch
+    kind: container
+    name: patch
+    summary: 补丁门禁、状态流转、保留注释的文本块落盘
+    tech: TypeScript
+
+  - id: e.diff
+    kind: container
+    name: diff
+    summary: 语义 diff（cosmetic / material / breaking）
+    tech: TypeScript
+
+  - id: e.indexer
+    kind: container
+    name: indexer
+    summary: FRAS 索引生成与新鲜度校验（I1–I3）
+    tech: TypeScript
+
+  - id: e.docs
+    kind: datastore
+    name: .cvn.yaml 契约文件
+    summary: 唯一权威事实源（arch/ 与 examples/）
+    tech: YAML
+    props: { storage_kind: file }
+    tags: [critical]
+
+  - id: e.index
+    kind: datastore
+    name: FRAS 索引
+    summary: arch/index.yaml，记录源码文件的 F/R/A/S 与哈希
+    tech: YAML
+    props: { storage_kind: file }
+
+  - id: e.audit
+    kind: datastore
+    name: 审计日志
+    summary: .audit/*.jsonl，记录补丁 intent/commit
+    tech: JSONL
+    props: { storage_kind: file }
+
+  - id: e.html
+    kind: datastore
+    name: 自包含 HTML
+    summary: dist/covenant.html，构建期渲染的只读+标注产物
+    tech: HTML + inline SVG
+    props: { storage_kind: file }
+
+relations:
+  - id: r.human-cli
+    kind: calls
+    from: e.human
+    to: e.cli
+    summary: 运行命令、审批变更
+
+  - id: r.agent-cli
+    kind: calls
+    from: e.agent
+    to: e.cli
+    summary: 通过 CLI/MCP 提交补丁
+
+  - id: r.cli-core
+    kind: calls
+    from: e.cli
+    to: e.core
+    summary: 解析与类型
+  - id: r.cli-validate
+    kind: calls
+    from: e.cli
+    to: e.validate
+    summary: 校验
+  - id: r.cli-layout
+    kind: calls
+    from: e.cli
+    to: e.layout
+    summary: 布局
+  - id: r.cli-render
+    kind: calls
+    from: e.cli
+    to: e.render
+    summary: 渲染
+  - id: r.cli-patch
+    kind: calls
+    from: e.cli
+    to: e.patch
+    summary: 补丁门禁与应用
+  - id: r.cli-diff
+    kind: calls
+    from: e.cli
+    to: e.diff
+    summary: 语义 diff
+  - id: r.cli-indexer
+    kind: calls
+    from: e.cli
+    to: e.indexer
+    summary: 索引生成/校验
+
+  - id: r.validate-core
+    kind: calls
+    from: e.validate
+    to: e.core
+    summary: 复用解析与类型
+  - id: r.render-layout
+    kind: calls
+    from: e.render
+    to: e.layout
+    summary: 取布局结果
+  - id: r.patch-validate
+    kind: calls
+    from: e.patch
+    to: e.validate
+    summary: 落盘后复验
+  - id: r.diff-core
+    kind: calls
+    from: e.diff
+    to: e.core
+    summary: 复用文档模型
+
+  - id: r.cli-docs-read
+    kind: reads
+    from: e.cli
+    to: e.docs
+    summary: 读取契约文档
+  - id: r.cli-audit
+    kind: writes
+    from: e.cli
+    to: e.audit
+    summary: 写前审计（intent/commit）
+  - id: r.cli-html
+    kind: writes
+    from: e.cli
+    to: e.html
+    summary: 构建自包含 HTML
+  - id: r.indexer-index
+    kind: writes
+    from: e.indexer
+    to: e.index
+    summary: 更新 FRAS 条目与哈希
+  - id: r.cli-index-read
+    kind: reads
+    from: e.cli
+    to: e.index
+    summary: 索引校验时读取
+
+links:
+  - kind: adr
+    ref: "0001"
+  - kind: adr
+    ref: "0002"
+  - kind: adr
+    ref: "0003"
+  - kind: adr
+    ref: "0004"
+
+views:
+  - id: v.main
+    title: 系统结构
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 120, node: 44 }
+
+annotations:
+  - id: a.01JAYS3KV0001AAAA0001
+    target: { kind: element, id: e.render }
+    type: smell
+    severity: medium
+    title: 短边标签在密集图里仍会相邻
+    body: lane 只错开 12px；同一跨度多条平行边时标签仍可能挤压。
+    status: "resolved"
+    updated: "2026-11-03T07:15:24.205Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:24.205Z"}
+    author: human:team
+    created: 2026-11-03T00:00:00+08:00
+    ai_hint: 优化标签布局前先加一条黄金 SVG 测试，避免视觉回归。
+
+  - id: a.01JAYS3KV0002AAAA0002
+    target: { kind: element, id: e.layout }
+    type: question
+    severity: low
+    title: 交叉最小化是否覆盖跨层边
+    body: 当前只对相邻层的边做 barycenter；跨层边靠绕行规避，不参与交叉计数。
+    status: "resolved"
+    updated: "2026-11-03T07:15:24.205Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:24.205Z"}
+    author: human:team
+    created: 2026-11-03T00:00:00+08:00
+
+  - id: a.01JAYS3KV0003AAAA0003
+    target: { kind: element, id: e.html }
+    type: risk
+    severity: high
+    title: 真实浏览器尚未验收
+    body: 交互只在 jsdom 验证；CSS 布局与手感需要人工双击确认。
+    status: open
+    author: human:team
+    created: 2026-11-03T00:00:00+08:00
+    ai_hint: 不要基于未经浏览器验证的视觉结论做设计决策。

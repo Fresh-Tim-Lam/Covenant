@@ -1,0 +1,43 @@
+# ===== 依赖与构建（可再生，不入库）=====
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+coverage/
+
+# ===== 缓存（可再生）=====
+.cvn-cache/
+.cache/
+.vitest/
+.pnpm-store/
+
+# ===== 临时区与日志（全仓唯一临时区，见 docs/conventions/directory-organization.md）=====
+artifacts/
+logs/
+*.log
+
+# ===== 本机配置（真实配置不入库，样例在 config/）=====
+config/*.local.*
+
+# ===== 系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ===== 根级兜底：临时产物误落仓库根时不该被看见（应主动移入 artifacts/）=====
+/cdp-*.mjs
+/diag-*.json
+/shot-*.png
+/test-*.html
+/tmp-*.md
+# ===== 内部过程数据（不入公开库）=====
+.audit/
+team/dispatch-log.jsonl
+team/access-log.jsonl
+team/memory/
+team/trajectory/
+.vite/

@@ -1,0 +1,267 @@
+# 支付平台容器视图 —— C4-L2
+# 演示：元素定义与视图分离、关系矩阵、元素级约束、架构问题批注、文档级 fitness 规则
+covenant: "0.1"
+id: payments/containers
+profile: c4-container@1
+
+meta:
+  title: 支付平台容器视图
+  purpose: |
+    说明支付域的服务划分、数据归属与外部依赖，作为人机协作的架构契约基线。
+  non_goals:
+    - 部署拓扑细节（见 deployment 图）
+    - 单次支付的时序（见 sequence 图）
+  audience: [human, ai]
+  status: draft
+  rev: 3
+  owners: [human:lily]
+  updated: 2026-11-03T00:00:00+08:00
+  ai:
+    summary: |
+      支付编排由 payments 服务承担；账本独立存储；对账通过异步 outbox 完成；
+      历史存在跨库事务问题，已记录为高优批注并指向 ADR-0007。
+    budget_tokens: 1200
+
+elements:
+  - id: e.web
+    kind: container
+    name: 商户前端
+    tech: React / TS
+    summary: 商户发起支付、查询订单
+    tags: [edge]
+
+  - id: e.gateway
+    kind: container
+    name: API Gateway
+    tech: Nginx + Lua
+    summary: 鉴权、限流、路由
+    tags: [edge, critical]
+
+  - id: e.payments
+    kind: container
+    name: Payments Service
+    tech: Kotlin / Spring
+    summary: 支付授权、捕获、退款编排
+    tags: [critical, pii]
+    props: { scaling: horizontal, replicas: 3 }
+    constraints:
+      - id: c.auth-p99
+        text: 授权接口 p99 < 200ms
+        kind: metric
+        ref: dashboards/payments-auth
+      - id: c.idempotent
+        text: 所有写接口必须幂等
+        kind: test
+        ref: tests/payments/idempotency_test.kt
+    links:
+      - { kind: code, ref: "pay/*/PaymentService.kt#capture" }
+      - { kind: adr, ref: "../docs/design/adr/0007-outbox.md" }
+
+  - id: e.ledger
+    kind: datastore
+    name: Ledger
+    tech: PostgreSQL 16
+    summary: 记账账本，只追加
+    props: { storage_kind: rdbms }
+    tags: [critical, financial]
+    constraints:
+      - id: c.append-only
+        text: 账本表只允许 INSERT，禁止 UPDATE/DELETE
+        kind: test
+        ref: tests/db/ledger_immutability.sql
+
+  - id: e.outbox
+    kind: container
+    name: Outbox Relay
+    tech: Kotlin Worker
+    summary: 轮询 outbox 表，把领域事件投递到消息总线
+    tags: [critical]
+
+  - id: e.outbox-db
+    kind: datastore
+    name: Outbox Table
+    tech: PostgreSQL 16
+    summary: 事务性 outbox 表，与支付库同实例
+    props: { storage_kind: rdbms }
+    tags: [critical]
+
+  - id: e.bus
+    kind: queue
+    name: Event Bus
+    tech: Kafka
+    summary: 领域事件总线
+    tags: [critical]
+
+  - id: e.recon
+    kind: container
+    name: Reconciliation
+    tech: Python / Airflow
+    summary: 每日对账，产出差异报告
+    tags: [batch]
+
+  - id: e.psp
+    kind: external-system
+    name: PSP 支付通道
+    tech: HTTPS API
+    summary: 第三方收单机构
+    tags: [external, pii]
+
+relations:
+  - id: r.web-gw
+    kind: calls
+    from: e.web
+    to: e.gateway
+    summary: 下单/查询请求
+    props: { protocol: https, sync: true }
+
+  - id: r.gw-pay
+    kind: calls
+    from: e.gateway
+    to: e.payments
+    summary: 转发支付指令
+    props: { protocol: http, sync: true }
+
+  - id: r.pay-psp
+    kind: calls
+    from: e.payments
+    to: e.psp
+    summary: 调用收单接口
+    props: { protocol: https, sync: true, timeout_ms: 3000 }
+
+  - id: r.pay-ledger
+    kind: writes
+    from: e.payments
+    to: e.ledger
+    summary: 记账写入（当前为本地事务 + 补偿任务）
+    props: { protocol: jdbc, sync: true, retries: 5 }
+    constraints:
+      - id: c.no-2pc
+        text: 禁止两阶段提交
+        kind: manual
+
+  - id: r.pay-outbox
+    kind: writes
+    from: e.payments
+    to: e.outbox-db
+    summary: 同事务写入 outbox 表
+    props: { protocol: jdbc, sync: true }
+
+  - id: r.outbox-read
+    kind: reads
+    from: e.outbox
+    to: e.outbox-db
+    summary: 轮询未投递的 outbox 记录
+    props: { protocol: jdbc, sync: true, readonly: true }
+
+  - id: r.outbox-bus
+    kind: publishes
+    from: e.outbox
+    to: e.bus
+    summary: 投递支付领域事件
+    props: { protocol: kafka, sync: false, at_least_once: true }
+
+  - id: r.bus-recon
+    kind: subscribes
+    from: e.recon
+    to: e.bus
+    summary: 消费事件用于对账
+    props: { protocol: kafka, sync: false }
+
+  - id: r.recon-ledger
+    kind: reads
+    from: e.recon
+    to: e.ledger
+    summary: 读取账本生成差异报告
+    props: { protocol: jdbc, sync: true, readonly: true }
+
+views:
+  - id: v.main
+    title: 容器视图
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 110, node: 70 }
+    present:
+      notation: c4
+      theme: covenant-light
+      annotations: { status: [open], severity: [blocker, high, medium] }
+
+  - id: v.data
+    title: 数据归属视图
+    include:
+      elements: [e.payments, e.ledger, e.outbox, e.bus, e.recon]
+      relations: [r.pay-ledger, r.pay-outbox, r.outbox-bus, r.bus-recon, r.recon-ledger]
+    layout: { engine: elk, direction: DOWN }
+    present: { notation: c4, theme: covenant-light }
+
+annotations:
+  - id: a.01JAX9K3Q7P2
+    target: { kind: relation, id: r.pay-ledger }
+    type: risk
+    severity: high
+    title: 跨库事务隐患：补偿失败会丢对账数据
+    body: |
+      账本与支付库分属不同实例。当前实现依赖本地事务 + 补偿任务；
+      补偿任务失败时无重试死信，导致账本缺少记录且对账无法发现。
+    status: open
+    author: human:lily
+    created: 2026-11-03T10:12:00+08:00
+    links:
+      - { kind: adr, ref: "../docs/design/adr/0007-outbox.md" }
+      - { kind: code, ref: "pay/ledger/CompensationJob.kt#run" }
+    ai_hint: |
+      优先改为 outbox 模式；禁止引入两阶段提交；
+      任何改动必须保持记账接口幂等，且不改变 Ledger 只追加约束。
+    thread:
+      - author: ai:claude
+        at: 2026-11-03T10:20:00+08:00
+        text: 已核对 ADR-0007 的 outbox 方案；建议把 r.pay-ledger 从 sync 改为 async，并新增 e.outbox 作为中继。
+
+  - id: a.01JAXA1M8S4R
+    target: { kind: element, id: e.recon }
+    type: question
+    severity: medium
+    title: 对账窗口与退款日切是否一致？
+    body: |
+      退款跨日切时事件可能落在 T+1，当前对账按自然日聚合，存在漏账风险。
+    status: ack
+    author: human:mark
+    created: 2026-11-03T11:02:00+08:00
+    ai_hint: 在确认日切规则前，不要修改 r.recon-ledger 的聚合方式。
+
+  - id: a.01JAXB7T2K9D
+    target: { kind: region, view: v.data, rect: [120, 40, 420, 180] }
+    type: smell
+    severity: low
+    title: 批量链路与在线链路共享同一 Kafka topic
+    body: 对账消费会拉高在线 topic 的 lag 监控噪声，建议拆 topic。
+    status: open
+    author: human:lily
+    created: 2026-11-03T11:15:00+08:00
+    ai_hint: 拆 topic 属于部署/配置变更，需人工批准后执行。
+
+constraints:
+  - id: k.no-cycle
+    type: acyclic
+    on: { kind: relation, kinds: [writes, reads, calls] }
+    severity: error
+
+  - id: k.write-target-kind
+    type: implication
+    if: { kind: relation, kind_is: writes }
+    then: { target_element_kind_in: [datastore, queue] }
+    severity: error
+
+  - id: k.external-only-via-gateway
+    type: layer-order
+    layers: [[e.web], [e.gateway], [e.payments], [e.ledger, e.outbox, e.bus]]
+    forbid_backward: true
+    severity: error
+
+  - id: k.ledger-immutable
+    type: code-binding-resolves
+    on: { element: e.ledger }
+    severity: warning

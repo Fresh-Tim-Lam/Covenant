@@ -1,0 +1,71 @@
+# 团队试点起始契约：容器级系统图（复制后改 id / 元素 / 关系）
+covenant: "0.1"
+id: starter/system
+profile: c4-container@1
+
+meta:
+  title: 系统容器图（起始模板）
+  purpose: 用 Covenant 表达团队系统的容器边界、关键数据流与已知风险。
+  non_goals:
+    - 完整的部署拓扑
+  owners: [human:you]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+views:
+  - id: v.main
+    title: 系统总览
+    layout:
+      direction: RIGHT
+
+elements:
+  - id: e.user
+    kind: person
+    name: 使用者
+    summary: 触发核心流程的人
+  - id: e.app
+    kind: container
+    name: 应用服务
+    summary: 承载业务逻辑与 API
+    tech: Node.js
+  - id: e.db
+    kind: datastore
+    name: 主数据库
+    summary: 持久化核心数据
+    tech: PostgreSQL
+    props: { storage_kind: rdbms }
+  - id: e.ext
+    kind: external-system
+    name: 外部系统
+    summary: 第三方依赖
+
+relations:
+  - id: r.user-app
+    kind: calls
+    from: e.user
+    to: e.app
+    summary: 发起请求
+  - id: r.app-db
+    kind: writes
+    from: e.app
+    to: e.db
+    summary: 读写核心数据
+  - id: r.app-ext
+    kind: calls
+    from: e.app
+    to: e.ext
+    summary: 调用外部 API
+
+annotations:
+  - id: a.01JAY000000000000000000000
+    target: { kind: relation, id: r.app-db }
+    type: risk
+    severity: medium
+    title: 示例：数据库写入缺少幂等键
+    body: |
+      把这里换成团队真实的架构问题；正文写证据与影响。
+    status: open
+    author: human:team
+    created: 2026-11-03T00:00:00+08:00
+    ai_hint: 先补充幂等设计，再改表结构。

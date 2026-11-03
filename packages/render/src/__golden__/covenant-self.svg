@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1534" height="610" viewBox="0 0 1534 610" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">Covenant 运行架构</title>
+<desc id="cvn-desc">用 Covenant 描述 Covenant 的运行架构，验证格式表达力，并把发现的缺口作为批注记录。
+</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="1534" height="610" fill="#ffffff"/>
+<g class="edge" data-id="r.human-viewer"><path d="M242 233 L262 233 L288 233 L288 433 L342 433 L362 433" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 233 L262 233 L288 233 L288 433 L342 433 L362 433" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-mcp"><path d="M242 81 L262 81 L302 81 L302 161 L342 161 L362 161" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 81 L262 81 L302 81 L302 161 L342 161 L362 161" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-llm"><path d="M242 97 L262 97 L295 97 Q302 111 309 97 L316 97 L316 154 Q302 161 316 168 L316 305 L342 305 L362 305" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 97 L262 97 L295 97 Q302 111 309 97 L316 97 L316 154 Q302 161 316 168 L316 305 L342 305 L362 305" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.mcp-cli"><path d="M552 161 L572 161 L598 161 L598 305 L652 305 L672 305" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M552 161 L572 161 L598 161 L598 305 L652 305 L672 305" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-validate"><path d="M862 297 L882 297 L908 297 L908 233 L962 233 L982 233" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M862 297 L882 297 L908 297 L908 233 L962 233 L982 233" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-diff"><path d="M862 313 L882 313 L922 313 L922 377 L962 377 L982 377" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M862 313 L882 313 L922 313 L922 377 L962 377 L982 377" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-arch"><path d="M767 268 L767 8 L1395 8 L1395 196" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M767 268 L767 8 L1395 8 L1395 196" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.diff-arch"><path d="M1172 369 L1192 369 L1218 369 L1218 241 L1272 241 L1292 241" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1172 369 L1192 369 L1218 369 L1218 241 L1272 241 L1292 241" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.validate-arch"><path d="M1172 233 L1192 233 L1232 233 L1232 225 L1272 225 L1292 225" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1172 233 L1192 233 L1232 233 L1232 225 L1272 225 L1292 225" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.builder-arch"><path d="M147 340 L147 16 L760 16 Q767 30 774 16 L1379 16 L1379 196" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M147 340 L147 16 L760 16 Q767 30 774 16 L1379 16 L1379 196" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.builder-viewer"><path d="M242 377 L262 377 L288 377 L288 449 L342 449 L362 449" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 377 L262 377 L288 377 L288 449 L342 449 L362 449" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.serve-viewer"><path d="M242 521 L262 521 L302 521 L302 465 L342 465 L362 465" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 521 L262 521 L302 521 L302 465 L342 465 L362 465" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.diff-audit"><path d="M1172 385 L1192 385 L1246 385 L1246 377 L1272 377 L1292 377" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1172 385 L1192 385 L1246 385 L1246 377 L1272 377 L1292 377" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="262.56" y="222" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="233" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="262.56" y="70" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="81" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="262.56" y="86" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="97" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="572.56" y="150" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="592" y="161" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="882.56" y="286" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="902" y="297" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="882.56" y="302" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="902" y="313" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1061.56" y="11" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1081" y="22" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="1189.68" y="358" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1212" y="369" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="1192.56" y="222" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1212" y="233" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="743.56" y="19" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="763" y="30" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="262.56" y="366" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="377" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="262.56" y="510" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="521" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="1189.68" y="374" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1212" y="385" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<g class="badge"><circle cx="1237.33" cy="361" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="1237.33" y="364.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="node kind-person" data-id="e.human">
+<rect x="52" y="196" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="220" font-size="13" font-weight="650" fill="#0f172a">人工架构师</text>
+<text x="64" y="256" font-size="10.5" fill="#94a3b8">画图、批注、评审、批准变更</text>
+</g>
+<g class="node kind-person" data-id="e.agent">
+<rect x="52" y="52" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="76" font-size="13" font-weight="650" fill="#0f172a">AI Agent</text>
+<text x="64" y="112" font-size="10.5" fill="#94a3b8">读 digest、按 ai_hint 行动、…</text>
+</g>
+<g class="node kind-container" data-id="e.cli">
+<rect x="672" y="268" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="684" y="292" font-size="13" font-weight="650" fill="#0f172a">covenant CLI</text>
+<text x="684" y="310" font-size="11" fill="#64748b">Node / TypeScript</text>
+<text x="684" y="328" font-size="10.5" fill="#94a3b8">check/render/build/apply/di…</text>
+</g>
+<g class="node kind-container" data-id="e.mcp">
+<rect x="362" y="124" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="374" y="148" font-size="13" font-weight="650" fill="#0f172a">MCP Server</text>
+<text x="374" y="166" font-size="11" fill="#64748b">Node / TypeScript</text>
+<text x="374" y="184" font-size="10.5" fill="#94a3b8">把 CLI 能力以 MCP 工具暴露给 …</text>
+</g>
+<g class="node kind-container" data-id="e.validate">
+<rect x="982" y="196" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="994" y="220" font-size="13" font-weight="650" fill="#0f172a">Validator</text>
+<text x="994" y="238" font-size="11" fill="#64748b">TypeScript</text>
+<text x="994" y="256" font-size="10.5" fill="#94a3b8">L0–L6 校验器，产出稳定排序的 …</text>
+</g>
+<g class="node kind-container" data-id="e.diff">
+<rect x="982" y="340" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="994" y="364" font-size="13" font-weight="650" fill="#0f172a">Semantic Diff / Patch</text>
+<text x="994" y="382" font-size="11" fill="#64748b">TypeScript</text>
+<text x="994" y="400" font-size="10.5" fill="#94a3b8">语义 diff 分类 + 补丁应用 + …</text>
+</g>
+<g class="node kind-container" data-id="e.builder">
+<rect x="52" y="340" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="364" font-size="13" font-weight="650" fill="#0f172a">HTML Builder</text>
+<text x="64" y="382" font-size="11" fill="#64748b">TypeScript + esbuild</text>
+<text x="64" y="400" font-size="10.5" fill="#94a3b8">把 .cvn 项目编译成自包含单文…</text>
+</g>
+<g class="badge"><circle cx="230" cy="352" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="230" y="355.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="node kind-container" data-id="e.viewer">
+<rect x="362" y="412" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="374" y="436" font-size="13" font-weight="650" fill="#0f172a">浏览器标注器</text>
+<text x="374" y="454" font-size="11" fill="#64748b">TS bundle + SVG</text>
+<text x="374" y="472" font-size="10.5" fill="#94a3b8">离线渲染、元素级标注、导出补丁</text>
+</g>
+<g class="node kind-container" data-id="e.serve">
+<rect x="52" y="484" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="508" font-size="13" font-weight="650" fill="#0f172a">covenant serve</text>
+<text x="64" y="526" font-size="11" fill="#64748b">Node / HTTP</text>
+<text x="64" y="544" font-size="10.5" fill="#94a3b8">本地服务：直写磁盘 + 与 MCP …</text>
+</g>
+<g class="node kind-datastore" data-id="e.arch">
+<rect x="1292" y="196" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1304" y="220" font-size="13" font-weight="650" fill="#0f172a">.cvn 项目文件</text>
+<text x="1304" y="238" font-size="11" fill="#64748b">文件系统</text>
+<text x="1304" y="256" font-size="10.5" fill="#94a3b8">唯一权威事实源（arch/ 目录）</text>
+</g>
+<g class="node kind-datastore" data-id="e.audit">
+<rect x="1292" y="340" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1304" y="364" font-size="13" font-weight="650" fill="#0f172a">审计日志</text>
+<text x="1304" y="382" font-size="11" fill="#64748b">JSONL 追加文件</text>
+<text x="1304" y="400" font-size="10.5" fill="#94a3b8">谁在何时批准了什么</text>
+</g>
+<g class="node kind-external-system" data-id="e.llm">
+<rect x="362" y="268" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="374" y="292" font-size="13" font-weight="650" fill="#0f172a">大模型服务</text>
+<text x="374" y="328" font-size="10.5" fill="#94a3b8">外部推理服务，非本地默认</text>
+</g>
+<g class="badge"><circle cx="540" cy="280" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="540" y="283.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+</svg>

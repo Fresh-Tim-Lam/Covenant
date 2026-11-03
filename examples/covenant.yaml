@@ -1,0 +1,11 @@
+covenant: 0.1
+
+# 项目清单：一个项目 = 多张契约图 + 共享元素定义 + ADR
+project: payments-platform
+roots:
+  code: ../repos/payments
+profiles: [c4-context@1, c4-container@1, dfd@1, er@1, sequence@1, deployment@1]
+documents:
+  - payments-arch.cvn.yaml
+  - order-dfd.cvn.yaml
+adr_dir: ../docs/design/adr

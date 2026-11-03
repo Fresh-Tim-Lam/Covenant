@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="806" height="390" viewBox="0 0 806 390" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">拓扑</title>
+<desc id="cvn-desc">演示 node_style=junction、交叉跳线弧、边标签胶囊。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="806" height="390" fill="#ffffff"/>
+<g class="edge" data-id="r.af"><path d="M163 105 L683 325" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M163 105 L683 325" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.bd"><path d="M423 105 L341.68 173.81 Q327.29 167.65 330.99 182.85 L163 325" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M423 105 L341.68 173.81 Q327.29 167.65 330.99 182.85 L163 325" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.ce"><path d="M683 105 L515.01 247.15 Q500.62 240.98 504.32 256.19 L423 325" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M683 105 L515.01 247.15 Q500.62 240.98 504.32 256.19 L423 325" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.be"><path d="M423 105 L423 208 Q409 215 423 222 L423 325" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M423 105 L423 208 Q409 215 423 222 L423 325" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="391.27" y="215.05" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="418.32" y="226.05" text-anchor="middle" font-size="10.5" fill="#64748b">A→F 跨层</text>
+<rect class="edge-label-bg" x="258.2" y="194.84" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="285.25" y="205.84" text-anchor="middle" font-size="10.5" fill="#64748b">B→D 反向</text>
+<rect class="edge-label-bg" x="518.2" y="194.84" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="545.25" y="205.84" text-anchor="middle" font-size="10.5" fill="#64748b">C→E 旁路</text>
+<rect class="edge-label-bg" x="383.95" y="184" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="411" y="195" text-anchor="middle" font-size="10.5" fill="#64748b">B→E 直连</text>
+<g class="node kind-module" data-id="e.a">
+<circle cx="163" cy="105" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="163" y="127" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">A</text>
+</g>
+<g class="node kind-module" data-id="e.b">
+<circle cx="423" cy="105" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="423" y="127" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">B</text>
+</g>
+<g class="node kind-module" data-id="e.c">
+<circle cx="683" cy="105" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="683" y="127" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">C</text>
+</g>
+<g class="node kind-module" data-id="e.d">
+<circle cx="163" cy="325" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="163" y="347" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">D</text>
+</g>
+<g class="node kind-module" data-id="e.e">
+<circle cx="423" cy="325" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="423" y="347" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">E</text>
+</g>
+<g class="node kind-module" data-id="e.f">
+<circle cx="683" cy="325" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
+<text x="683" y="347" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">F</text>
+</g>
+</svg>

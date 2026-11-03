@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://covenant.dev/schema/kernel-0.1.json",
+  "title": "Covenant kernel document (v0.1)",
+  "description": "Tier-2 文档的 L1 结构约束（语法/类型/必填/未知字段）。剖面词表与关系矩阵属于 L3，由校验器按 profiles-catalog 数据驱动执行，不在本文件内。",
+  "type": "object",
+  "required": ["covenant", "id", "profile"],
+  "additionalProperties": false,
+  "patternProperties": { "^x-": true },
+  "properties": {
+    "covenant": { "const": "0.1" },
+    "id": { "$ref": "#/$defs/docId" },
+    "profile": { "$ref": "#/$defs/profileRef" },
+    "notation": { "type": "string", "minLength": 1 },
+    "meta": { "$ref": "#/$defs/meta" },
+    "imports": { "type": "array", "items": { "$ref": "#/$defs/importRef" } },
+    "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } },
+    "relations": { "type": "array", "items": { "$ref": "#/$defs/relation" } },
+    "frames": { "type": "array", "items": { "$ref": "#/$defs/frame" } },
+    "views": { "type": "array", "items": { "$ref": "#/$defs/view" } },
+    "annotations": { "type": "array", "items": { "$ref": "#/$defs/annotation" } },
+    "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+    "constraints": { "type": "array", "items": { "$ref": "#/$defs/docConstraint" } }
+  },
+  "$defs": {
+    "docId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(/[a-z][a-z0-9-]*)*$",
+      "description": "命名空间路径，如 payments/containers"
+    },
+    "profileRef": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*@[0-9]+$",
+      "description": "剖面名@主版本，如 c4-container@1"
+    },
+    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$" },
+    "ulid": {
+      "type": "string",
+      "pattern": "^a\\.[0-9A-HJKMNP-TV-Z]{12,26}$",
+      "description": "工具新建批注必须生成 26 位 ULID（Crockford Base32，时间有序）；读取接受 12–26 位以兼容手写示例与历史数据，L1 对不足 26 位的 id 给 info 级提示。"
+    },
+    "isoDateTime": { "type": "string", "format": "date-time" },
+    "author": { "type": "string", "pattern": "^(human|ai):[A-Za-z0-9._-]+$" },
+    "link": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "kind": { "enum": ["code", "adr", "issue", "doc", "url", "metric"] },
+        "ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "elementConstraint": {
+      "type": "object",
+      "required": ["id", "text"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^c\\.[a-z][a-z0-9-]{0,62}$" },
+        "text": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["metric", "manual", "test"] },
+        "ref": { "type": "string" }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["title", "purpose", "non_goals"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "non_goals": { "type": "array", "items": { "type": "string" } },
+        "audience": { "type": "array", "items": { "enum": ["human", "ai"] } },
+        "status": { "enum": ["draft", "review", "frozen", "deprecated"] },
+        "rev": { "type": "integer", "minimum": 1 },
+        "owners": { "type": "array", "items": { "$ref": "#/$defs/author" } },
+        "updated": { "$ref": "#/$defs/isoDateTime" },
+        "ai": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "summary": { "type": "string" },
+            "budget_tokens": { "type": "integer", "minimum": 100 }
+          }
+        }
+      }
+    },
+    "importRef": {
+      "type": "object",
+      "required": ["from"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "select": { "type": "array", "items": { "enum": ["elements", "frames"] } }
+      }
+    },
+    "port": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" }
+      }
+    },
+    "element": {
+      "type": "object",
+      "required": ["id", "kind", "name", "summary"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^e\\.[a-z][a-z0-9-]{0,62}$" },
+        "kind": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "tech": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "props": { "type": "object", "additionalProperties": true },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/elementConstraint" } },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "parent": { "type": "string", "minLength": 1 },
+        "ports": { "type": "array", "items": { "$ref": "#/$defs/port" } }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": ["id", "kind", "from", "to", "summary"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^r\\.[a-z][a-z0-9-]{0,62}$" },
+        "kind": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "props": { "type": "object", "additionalProperties": true },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/elementConstraint" } },
+        "routing": { "enum": ["orthogonal", "bezier", "straight"] },
+        "waypoints": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "required": ["id", "kind", "name", "members"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^f\\.[a-z][a-z0-9-]{0,62}$" },
+        "kind": {
+          "enum": ["trust-boundary", "system-boundary", "swimlane", "deployment-zone", "region"]
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "members": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "elements": { "type": "array", "items": { "type": "string" } },
+        "relations": { "type": "array", "items": { "type": "string" } },
+        "frames": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "engine": { "enum": ["elk", "dagre", "sequencer", "none"] },
+        "direction": { "enum": ["RIGHT", "LEFT", "DOWN", "UP"] },
+        "spacing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rank": { "type": "number", "minimum": 0 },
+            "node": { "type": "number", "minimum": 0 }
+          }
+        },
+        "pins": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "present": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "notation": { "type": "string" },
+        "theme": { "type": "string" },
+        "show_frame_labels": { "type": "boolean" },
+        "node_style": { "enum": ["box", "junction"] },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "array",
+              "items": { "enum": ["open", "ack", "resolved", "wontfix", "superseded"] }
+            },
+            "severity": {
+              "type": "array",
+              "items": { "enum": ["blocker", "high", "medium", "low"] }
+            }
+          }
+        }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "zoom": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "ink": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "embeds": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "view": {
+      "type": "object",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^v\\.[a-z][a-z0-9-]{0,62}$" },
+        "title": { "type": "string", "minLength": 1 },
+        "profile": { "$ref": "#/$defs/profileRef" },
+        "include": { "$ref": "#/$defs/selector" },
+        "exclude": { "$ref": "#/$defs/selector" },
+        "layout": { "$ref": "#/$defs/layout" },
+        "present": { "$ref": "#/$defs/present" },
+        "canvas": { "$ref": "#/$defs/canvas" }
+      }
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "id"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["element", "relation", "frame", "view", "document"] },
+            "id": { "type": "string", "minLength": 1 },
+            "aspect": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "view", "rect"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "region" },
+            "view": { "type": "string", "minLength": 1 },
+            "rect": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        }
+      ]
+    },
+    "threadItem": {
+      "type": "object",
+      "required": ["author", "at", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "author": { "$ref": "#/$defs/author" },
+        "at": { "$ref": "#/$defs/isoDateTime" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "required": ["by", "at"],
+      "additionalProperties": false,
+      "properties": {
+        "by": { "$ref": "#/$defs/author" },
+        "at": { "$ref": "#/$defs/isoDateTime" },
+        "ref": { "type": "string" }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "required": ["id", "target", "type", "severity", "title", "status", "author", "created"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "$ref": "#/$defs/ulid" },
+        "target": { "$ref": "#/$defs/target" },
+        "type": { "enum": ["risk", "question", "decision", "todo", "defect", "smell"] },
+        "severity": { "enum": ["blocker", "high", "medium", "low"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "body": { "type": "string", "maxLength": 8192 },
+        "status": { "enum": ["open", "ack", "resolved", "wontfix", "superseded"] },
+        "author": { "$ref": "#/$defs/author" },
+        "created": { "$ref": "#/$defs/isoDateTime" },
+        "updated": { "$ref": "#/$defs/isoDateTime" },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "ai_hint": { "type": "string", "maxLength": 2048 },
+        "thread": { "type": "array", "items": { "$ref": "#/$defs/threadItem" } },
+        "resolution": { "$ref": "#/$defs/resolution" }
+      }
+    },
+    "docConstraint": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "id": { "type": "string", "pattern": "^k\\.[a-z][a-z0-9-]{0,62}$" },
+        "type": {
+          "enum": [
+            "acyclic",
+            "no-direct-relation",
+            "implication",
+            "layer-order",
+            "exactly-one-of-kind",
+            "reachable-from",
+            "required-prop",
+            "required-parent",
+            "no-outgoing",
+            "no-incoming",
+            "data-store-reachable",
+            "code-binding-resolves"
+          ]
+        },
+        "severity": { "enum": ["error", "warning", "info"] },
+        "on": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string" },
+            "kinds": { "type": "array", "items": { "type": "string" } },
+            "from_kind": { "type": "string" },
+            "to_kind": { "type": "string" },
+            "relation_kind": { "type": "string" },
+            "kind_is": { "type": "string" },
+            "element": { "type": "string" }
+          }
+        },
+        "if": { "type": "object", "additionalProperties": true },
+        "then": { "type": "object", "additionalProperties": true },
+        "layers": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "string" } }
+        },
+        "forbid_backward": { "type": "boolean" },
+        "props": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="1278" viewBox="0 0 496 1278" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">下单主流程</title>
+<desc id="cvn-desc">说明下单从校验到支付完成的分支与失败路径，作为流程实现的契约。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="496" height="1278" fill="#ffffff"/>
+<g class="edge" data-id="r.start-check"><path d="M248 102 L248 122 L248 133 L248 172 L248 192" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M248 102 L248 122 L248 133 L248 172 L248 192" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.check-reserve"><path d="M240 266 L240 286 L240 297 L123 297 L123 336 L123 356" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M240 266 L240 286 L240 297 L123 297 L123 336 L123 356" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.check-reject"><path d="M256 266 L256 286 L256 311 L373 311 L373 336 L373 356" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M256 266 L256 286 L256 311 L373 311 L373 336 L373 356" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.reserve-create"><path d="M123 430 L123 450 L123 461 L248 461 L248 500 L248 520" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M123 430 L123 450 L123 461 L248 461 L248 500 L248 520" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.create-pay"><path d="M248 594 L248 614 L248 625 L248 664 L248 684" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M248 594 L248 614 L248 625 L248 664 L248 684" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-paid"><path d="M248 758 L248 778 L248 789 L248 828 L248 848" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M248 758 L248 778 L248 789 L248 828 L248 848" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.paid-done"><path d="M256 922 L256 942 L256 953 L373 953 L373 992 L373 1012" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M256 922 L256 942 L256 953 L373 953 L373 992 L373 1012" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.paid-retry"><path d="M240 922 L240 942 L240 967 L123 967 L123 992 L123 1012" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M240 922 L240 942 L240 967 L123 967 L123 992 L123 1012" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.retry-fail"><path d="M123 1086 L123 1106 L123 1117 L248 1117 L248 1156 L248 1176" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M123 1086 L123 1106 L123 1117 L248 1117 L248 1156 L248 1176" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="231.45" y="111" width="33.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="248" y="122" text-anchor="middle" font-size="10.5" fill="#64748b">flow</text>
+<rect class="edge-label-bg" x="229.75" y="275" width="20.5" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="240" y="286" text-anchor="middle" font-size="10.5" fill="#64748b">是</text>
+<rect class="edge-label-bg" x="245.75" y="275" width="20.5" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="256" y="286" text-anchor="middle" font-size="10.5" fill="#64748b">否</text>
+<rect class="edge-label-bg" x="106.45" y="439" width="33.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="123" y="450" text-anchor="middle" font-size="10.5" fill="#64748b">flow</text>
+<rect class="edge-label-bg" x="231.45" y="603" width="33.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="248" y="614" text-anchor="middle" font-size="10.5" fill="#64748b">flow</text>
+<rect class="edge-label-bg" x="231.45" y="767" width="33.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="248" y="778" text-anchor="middle" font-size="10.5" fill="#64748b">flow</text>
+<rect class="edge-label-bg" x="245.75" y="931" width="20.5" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="256" y="942" text-anchor="middle" font-size="10.5" fill="#64748b">是</text>
+<rect class="edge-label-bg" x="229.75" y="931" width="20.5" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="240" y="942" text-anchor="middle" font-size="10.5" fill="#64748b">否</text>
+<rect class="edge-label-bg" x="106.45" y="1095" width="33.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="123" y="1106" text-anchor="middle" font-size="10.5" fill="#64748b">flow</text>
+<g class="node kind-start" data-id="e.start">
+<rect x="153" y="28" width="190" height="74" rx="37" fill="#ecfdf5" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="248" y="69.5" text-anchor="middle" font-size="13" font-weight="650" fill="#0f172a">收到下单请求</text>
+</g>
+<g class="node kind-decision" data-id="e.check-stock">
+<polygon points="248,192 343,229 248,266 153,229" fill="#fffbeb" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="248" y="227" text-anchor="middle" font-size="12.5" font-weight="650" fill="#0f172a">库存充足？</text>
+<text x="248" y="243" text-anchor="middle" font-size="10" fill="#94a3b8">查询可售库存</text>
+</g>
+<g class="node kind-process" data-id="e.reserve">
+<rect x="28" y="356" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="380" font-size="13" font-weight="650" fill="#0f172a">锁定库存</text>
+<text x="40" y="416" font-size="10.5" fill="#94a3b8">预占库存</text>
+</g>
+<g class="node kind-io" data-id="e.reject">
+<polygon points="296,356 468,356 450,430 278,430" fill="#f5f3ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="308" y="382" font-size="13" font-weight="650" fill="#0f172a">返回缺货</text>
+<text x="308" y="416" font-size="10.5" fill="#94a3b8">终止本次下单</text>
+</g>
+<g class="node kind-process" data-id="e.create">
+<rect x="153" y="520" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="165" y="544" font-size="13" font-weight="650" fill="#0f172a">创建订单</text>
+<text x="165" y="580" font-size="10.5" fill="#94a3b8">落订单主表</text>
+</g>
+<g class="node kind-process" data-id="e.pay">
+<rect x="153" y="684" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="165" y="708" font-size="13" font-weight="650" fill="#0f172a">发起支付</text>
+<text x="165" y="744" font-size="10.5" fill="#94a3b8">调起收银台</text>
+</g>
+<g class="node kind-decision" data-id="e.paid">
+<polygon points="248,848 343,885 248,922 153,885" fill="#fffbeb" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="248" y="883" text-anchor="middle" font-size="12.5" font-weight="650" fill="#0f172a">支付成功？</text>
+<text x="248" y="899" text-anchor="middle" font-size="10" fill="#94a3b8">等待支付回调</text>
+</g>
+<g class="node kind-process" data-id="e.retry">
+<rect x="28" y="1012" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="1036" font-size="13" font-weight="650" fill="#0f172a">进入补偿队列</text>
+<text x="40" y="1072" font-size="10.5" fill="#94a3b8">异步重试/退款</text>
+</g>
+<g class="node kind-io" data-id="e.fail">
+<polygon points="171,1176 343,1176 325,1250 153,1250" fill="#f5f3ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="183" y="1202" font-size="13" font-weight="650" fill="#0f172a">返回支付失败</text>
+<text x="183" y="1236" font-size="10.5" fill="#94a3b8">告知用户</text>
+</g>
+<g class="node kind-end" data-id="e.done">
+<rect x="278" y="1012" width="190" height="74" rx="37" fill="#fef2f2" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="373" y="1053.5" text-anchor="middle" font-size="13" font-weight="650" fill="#0f172a">订单完成</text>
+</g>
+</svg>

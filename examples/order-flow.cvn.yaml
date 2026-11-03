@@ -1,0 +1,121 @@
+# 流程图示例：下单主流程（flowchart@1 / ISO 5807）
+covenant: "0.1"
+id: order/flow
+profile: flowchart@1
+
+meta:
+  title: 下单主流程
+  purpose: 说明下单从校验到支付完成的分支与失败路径，作为流程实现的契约。
+  non_goals:
+    - 每个服务的内部实现
+    - 时序与并发细节
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.start
+    kind: start
+    name: 收到下单请求
+    summary: 入口
+  - id: e.check-stock
+    kind: decision
+    name: 库存充足？
+    summary: 查询可售库存
+    props: { question: 库存是否充足 }
+  - id: e.reserve
+    kind: process
+    name: 锁定库存
+    summary: 预占库存
+  - id: e.reject
+    kind: io
+    name: 返回缺货
+    summary: 终止本次下单
+  - id: e.create
+    kind: process
+    name: 创建订单
+    summary: 落订单主表
+  - id: e.pay
+    kind: process
+    name: 发起支付
+    summary: 调起收银台
+  - id: e.paid
+    kind: decision
+    name: 支付成功？
+    summary: 等待支付回调
+    props: { question: 支付是否成功 }
+  - id: e.retry
+    kind: process
+    name: 进入补偿队列
+    summary: 异步重试/退款
+  - id: e.fail
+    kind: io
+    name: 返回支付失败
+    summary: 告知用户
+  - id: e.done
+    kind: end
+    name: 订单完成
+    summary: 终态
+
+relations:
+  - id: r.start-check
+    kind: flow
+    from: e.start
+    to: e.check-stock
+    summary: 发起
+  - id: r.check-reserve
+    kind: flow
+    from: e.check-stock
+    to: e.reserve
+    summary: 有货
+    props: { label: 是 }
+  - id: r.check-reject
+    kind: flow
+    from: e.check-stock
+    to: e.reject
+    summary: 缺货
+    props: { label: 否 }
+  - id: r.reserve-create
+    kind: flow
+    from: e.reserve
+    to: e.create
+    summary: 继续
+  - id: r.create-pay
+    kind: flow
+    from: e.create
+    to: e.pay
+    summary: 继续
+  - id: r.pay-paid
+    kind: flow
+    from: e.pay
+    to: e.paid
+    summary: 等待结果
+  - id: r.paid-done
+    kind: flow
+    from: e.paid
+    to: e.done
+    summary: 成功
+    props: { label: 是 }
+  - id: r.paid-retry
+    kind: flow
+    from: e.paid
+    to: e.retry
+    summary: 失败
+    props: { label: 否 }
+  - id: r.retry-fail
+    kind: flow
+    from: e.retry
+    to: e.fail
+    summary: 通知用户
+
+views:
+  - id: v.main
+    title: 下单主流程
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: DOWN
+      spacing: { rank: 90, node: 60 }

@@ -1,0 +1,20 @@
+{
+  "name": "@covenant/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "covenant-mcp": "./src/server.ts"
+  },
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@covenant/ai": "workspace:*",
+    "@covenant/core": "workspace:*",
+    "@covenant/diff": "workspace:*",
+    "@covenant/indexer": "workspace:*",
+    "@covenant/layout": "workspace:*",
+    "@covenant/patch": "workspace:*",
+    "@covenant/render": "workspace:*",
+    "@covenant/validate": "workspace:*"
+  }
+}

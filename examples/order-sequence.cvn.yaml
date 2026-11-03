@@ -1,0 +1,87 @@
+# 序列图示例：下单支付交互（sequence@1）
+covenant: "0.1"
+id: order/sequence
+profile: sequence@1
+
+meta:
+  title: 下单支付交互
+  purpose: 说明一次支付从商户到 PSP 的同步调用链与异步回调，作为接口契约。
+  non_goals:
+    - 内部实现细节
+    - 消息体字段
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.merchant
+    kind: actor
+    name: 商户
+    summary: 发起下单
+  - id: e.gateway
+    kind: participant
+    name: 支付网关
+    summary: 鉴权与路由
+    tech: Ktor
+  - id: e.orchestrator
+    kind: participant
+    name: 支付编排
+    summary: 授权/捕获编排
+    tech: Kotlin
+  - id: e.psp
+    kind: participant
+    name: PSP 收单
+    summary: 外部通道
+    tech: HTTPS
+
+relations:
+  - id: r.submit
+    kind: message
+    from: e.merchant
+    to: e.gateway
+    summary: 提交订单
+    props: { label: 提交订单, kind: sync }
+  - id: r.create
+    kind: message
+    from: e.gateway
+    to: e.orchestrator
+    summary: 创建支付
+    props: { label: 创建支付, kind: sync }
+  - id: r.auth
+    kind: message
+    from: e.orchestrator
+    to: e.psp
+    summary: 授权
+    props: { label: 授权, kind: sync }
+  - id: r.auth-result
+    kind: return
+    from: e.psp
+    to: e.orchestrator
+    summary: 授权结果
+    props: { label: 授权成功, reply_to: r.auth }
+  - id: r.create-result
+    kind: return
+    from: e.orchestrator
+    to: e.gateway
+    summary: 支付结果
+    props: { label: 支付结果, reply_to: r.create }
+  - id: r.submit-result
+    kind: return
+    from: e.gateway
+    to: e.merchant
+    summary: 响应
+    props: { label: 响应, reply_to: r.submit }
+  - id: r.notify
+    kind: message
+    from: e.psp
+    to: e.orchestrator
+    summary: 异步回调
+    props: { label: 异步回调, kind: async }
+
+views:
+  - id: v.main
+    title: 下单支付交互
+    include:
+      elements: [e.*]
+      relations: [r.*]

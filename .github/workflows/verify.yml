@@ -1,0 +1,42 @@
+# 本地 CI 的云端等价物：与 `pnpm verify` 同一条链路。
+# 注意：仓库尚未 `git init`，本文件目前是"就绪但未运行"状态。
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Contract + index gates
+        run: pnpm verify
+
+      - name: Build kit (deliverable package)
+        run: node scripts/build-kit.mjs
+
+      - name: Upload kit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: covenant-kit
+          path: dist/covenant-kit-*

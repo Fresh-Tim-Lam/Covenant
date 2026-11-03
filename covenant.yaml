@@ -1,0 +1,11 @@
+covenant: "0.1"
+
+# 项目清单：本项目 = 契约图 + FRAS 索引 + ADR
+project: covenant
+roots:
+  code: packages
+profiles: [c4-container@1, dfd@1]
+documents:
+  - arch/system.cvn.yaml
+index: arch/index.yaml
+adr_dir: docs/design/adr

@@ -1,0 +1,174 @@
+# 订单处理数据流图 —— DFD（Yourdon-DeMarco）
+# 演示：剖面锁定记法变体、信任边界 frame、数据存储可达性规则、批注锚定到 frame
+covenant: "0.1"
+id: orders/dfd
+profile: dfd@1
+
+meta:
+  title: 订单处理数据流图（信任边界版）
+  purpose: |
+    说明订单从下单到履约的数据流动路径，并标出信任边界与数据存储归属。
+  non_goals: [服务内部实现, 部署节点]
+  audience: [human, ai]
+  status: draft
+  rev: 1
+  owners: [human:lily]
+  updated: 2026-11-03T00:00:00+08:00
+  ai:
+    summary: |
+      外网商户经网关进入可信区；订单服务写订单库并发出履约事件；
+      库存校验在最内层可信区，与外部支付通道的交互不可信。
+    budget_tokens: 900
+
+# 记法变体必须显式声明：demarco | gane-sarson，避免符号混用歧义
+notation: demarco
+
+elements:
+  - id: e.merchant
+    kind: external-entity
+    name: 商户
+    summary: 发起下单请求的外部系统
+
+  - id: e.gateway
+    kind: process
+    name: 1 接入鉴权
+    summary: 校验签名、限流、协议转换
+    props: { number: "1" }
+
+  - id: e.order-svc
+    kind: process
+    name: 2 订单处理
+    summary: 创建订单、计算金额、生成履约事件
+    props: { number: "2" }
+
+  - id: e.stock-svc
+    kind: process
+    name: 3 库存校验
+    summary: 校验并预占库存
+    props: { number: "3" }
+
+  - id: e.order-db
+    kind: data-store
+    name: D1 订单库
+    summary: 订单主表与状态
+    props: { storage_kind: rdbms }
+
+  - id: e.stock-db
+    kind: data-store
+    name: D2 库存库
+    summary: SKU 可用量与预占记录
+    props: { storage_kind: rdbms }
+
+  - id: e.psp
+    kind: external-entity
+    name: 支付通道
+    summary: 第三方收单，不可信网络
+
+relations:
+  - id: r.merchant-gw
+    kind: flow
+    from: e.merchant
+    to: e.gateway
+    summary: 下单请求（HTTPS + 签名）
+    props: { payload: OrderRequest }
+
+  - id: r.gw-order
+    kind: flow
+    from: e.gateway
+    to: e.order-svc
+    summary: 规范化后的订单指令
+    props: { payload: NormalizedOrder }
+
+  - id: r.order-stock
+    kind: flow
+    from: e.order-svc
+    to: e.stock-svc
+    summary: 预占请求
+    props: { payload: ReservationRequest }
+
+  - id: r.order-db
+    kind: flow
+    from: e.order-svc
+    to: e.order-db
+    summary: 写订单记录
+    props: { payload: OrderRow }
+
+  - id: r.stock-db
+    kind: flow
+    from: e.stock-svc
+    to: e.stock-db
+    summary: 写预占记录
+    props: { payload: ReservationRow }
+
+  - id: r.order-psp
+    kind: bidir-flow
+    from: e.order-svc
+    to: e.psp
+    summary: 授权请求/响应
+    props: { payload: AuthRequest, network: untrusted }
+
+# frame：信任边界（threat 剖面复用同一机制）
+frames:
+  - id: f.trusted
+    kind: trust-boundary
+    name: 可信区
+    members: [e.gateway, e.order-svc, e.stock-svc, e.order-db, e.stock-db]
+
+views:
+  - id: v.main
+    title: 数据流图
+    include:
+      elements: [e.*]
+      relations: [r.*]
+      frames: [f.trusted]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 100, node: 60 }
+    present:
+      notation: demarco
+      theme: covenant-light
+      show_frame_labels: true
+
+annotations:
+  - id: a.01JAXC4W6N1V
+    target: { kind: frame, id: f.trusted }
+    type: risk
+    severity: blocker
+    title: 支付通道位于可信区外，但订单库直写未做脱敏
+    body: |
+      r.order-psp 跨越信任边界，但 OrderRow 含完整卡号末四位 + 手机号；
+      一旦 PSP 侧回包被记录到订单库，将违反数据分级要求。
+    status: open
+    author: human:lily
+    created: 2026-11-03T11:30:00+08:00
+    links:
+      - { kind: doc, ref: "../docs/reference/data-classification.md" }
+    ai_hint: |
+      在信任边界上新增脱敏处理；不得让 PSP 原始报文进入 D1；
+      修改后必须更新本图并补一条 flow 到脱敏处理节点。
+
+  - id: a.01JAXC9B1Q0Z
+    target: { kind: element, id: e.stock-db }
+    type: question
+    severity: medium
+    title: D2 由谁负责一致性？订单超时后预占如何释放
+    body: 订单取消/超时路径未在图中体现，预占可能永久泄漏。
+    status: open
+    author: human:mark
+    created: 2026-11-03T11:38:00+08:00
+    ai_hint: 需要补一条超时释放的 process 与 flow；不要直接删除 D2 记录。
+
+constraints:
+  - id: k.no-process-direct
+    type: no-direct-relation
+    on: { relation_kind: flow, from_kind: process, to_kind: process }
+    severity: warning
+
+  - id: k.store-reachable
+    type: data-store-reachable
+    on: { kind: data-store }
+    severity: error
+
+# 信任边界穿越检查（如"跨 f.trusted 的 flow 必须标注 network: untrusted"）
+# 属于 v1 能力：需要表达式谓词，暂不在 12 个规则类型闭集内（见 profiles-catalog §12）

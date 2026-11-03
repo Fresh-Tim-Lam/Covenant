@@ -1,0 +1,103 @@
+# 依赖图示例：Covenant 包依赖（graph@1）
+covenant: "0.1"
+id: covenant/package-graph
+profile: graph@1
+
+meta:
+  title: Covenant 包依赖
+  purpose: 展示包级依赖方向与影响面，约束"底层不依赖上层"。
+  non_goals:
+    - 文件级 import 明细
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.core
+    kind: module
+    name: "@covenant/core"
+    summary: 类型 / 解析 / 工具
+    props: { path: packages/core/src }
+  - id: e.validate
+    kind: module
+    name: "@covenant/validate"
+    summary: L1–L3 校验
+    props: { path: packages/validate/src }
+  - id: e.layout
+    kind: module
+    name: "@covenant/layout"
+    summary: 分层布局
+    props: { path: packages/layout/src }
+  - id: e.render
+    kind: module
+    name: "@covenant/render"
+    summary: SVG / HTML 渲染
+    props: { path: packages/render/src }
+  - id: e.cli
+    kind: module
+    name: "@covenant/cli"
+    summary: 命令入口
+    props: { path: packages/cli/src }
+  - id: e.nodefs
+    kind: external
+    name: node:fs
+    summary: 文件系统
+
+relations:
+  - id: r.validate-core
+    kind: imports
+    from: e.validate
+    to: e.core
+    summary: 复用类型与解析
+  - id: r.layout-core
+    kind: imports
+    from: e.layout
+    to: e.core
+    summary: 复用类型
+  - id: r.render-layout
+    kind: imports
+    from: e.render
+    to: e.layout
+    summary: 取布局结果
+  - id: r.render-core
+    kind: imports
+    from: e.render
+    to: e.core
+    summary: 复用类型
+  - id: r.cli-core
+    kind: imports
+    from: e.cli
+    to: e.core
+    summary: 复用类型
+  - id: r.cli-validate
+    kind: imports
+    from: e.cli
+    to: e.validate
+    summary: 调用校验
+  - id: r.cli-layout
+    kind: imports
+    from: e.cli
+    to: e.layout
+    summary: 调用布局
+  - id: r.cli-render
+    kind: imports
+    from: e.cli
+    to: e.render
+    summary: 调用渲染
+  - id: r.core-fs
+    kind: imports
+    from: e.core
+    to: e.nodefs
+    summary: 读文件
+
+views:
+  - id: v.main
+    title: 包依赖
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 140, node: 52 }

@@ -1,0 +1,57 @@
+name: 需求 / Requirement
+description: 提交对 Covenant 的需求、缺口或改进建议（公开仓库入口）
+title: "[req] "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本地内网团队请改用 `todo/inbox/<team>/` 收件箱；GitHub 公开仓库以本 Issue 为唯一需求入口。
+  - type: textarea
+    id: original
+    attributes:
+      label: 原话 / 原文
+      description: 逐字粘贴，不要润色；多人转述请注明来源。
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 场景
+      description: 哪个项目/哪张图/哪一步；相关 .cvn.yaml 或页面路径。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望（可验收）
+      description: 做到什么程度算完成。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 现状证据
+      description: path:line、命令输出摘要、截图链接；不要贴大段日志。
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 类型
+      options:
+        - requirement
+        - bug
+        - question
+        - idea
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 影响
+      options:
+        - blocker
+        - high
+        - medium
+        - low
+    validations:
+      required: true

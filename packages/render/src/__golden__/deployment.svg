@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="966" height="478" viewBox="0 0 966 478" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">部署视图</title>
+<desc id="cvn-desc">说明制品落在哪些节点、节点间链路与跨环境边界。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="966" height="478" fill="#ffffff"/>
+<g class="edge" data-id="r.prod-stage"><path d="M268 65 L248 65 L229 65 L229 239 L238 239 L218 239" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M268 65 L248 65 L229 65 L229 239 L238 239 L218 239" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.api-worker"><path d="M458 239 L478 239 L469 239 L488 239 L508 239" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M458 239 L478 239 L469 239 L488 239 L508 239" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="191.24" y="54" width="73.52" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="228" y="65" text-anchor="middle" font-size="10.5" fill="#64748b">https · vpc</text>
+<rect class="edge-label-bg" x="438.56" y="180" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="458" y="191" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<g class="node kind-node" data-id="e.node-prod">
+<rect x="268" y="28" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="280" y="52" font-size="13" font-weight="650" fill="#0f172a">生产集群</text>
+<text x="280" y="88" font-size="10.5" fill="#94a3b8">生产 Kubernetes 集群</text>
+</g>
+<g class="node kind-node" data-id="e.node-stage">
+<rect x="28" y="202" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="226" font-size="13" font-weight="650" fill="#0f172a">预发集群</text>
+<text x="40" y="262" font-size="10.5" fill="#94a3b8">预发环境</text>
+</g>
+<g class="node kind-artifact" data-id="e.api">
+<rect x="268" y="202" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="280" y="226" font-size="13" font-weight="650" fill="#0f172a">payments-api</text>
+<text x="280" y="244" font-size="11" fill="#64748b">@生产集群</text>
+<text x="280" y="262" font-size="10.5" fill="#94a3b8">支付服务制品</text>
+</g>
+<g class="node kind-artifact" data-id="e.worker">
+<rect x="508" y="202" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="520" y="226" font-size="13" font-weight="650" fill="#0f172a">outbox-relay</text>
+<text x="520" y="244" font-size="11" fill="#64748b">@生产集群</text>
+<text x="520" y="262" font-size="10.5" fill="#94a3b8">事件投递工作负载</text>
+</g>
+<g class="node kind-datastore" data-id="e.pg">
+<rect x="748" y="202" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="760" y="226" font-size="13" font-weight="650" fill="#0f172a">payments-pg</text>
+<text x="760" y="244" font-size="11" fill="#64748b">@生产集群</text>
+<text x="760" y="262" font-size="10.5" fill="#94a3b8">支付主库</text>
+</g>
+<g class="node kind-artifact" data-id="e.web">
+<rect x="388" y="376" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="400" y="400" font-size="13" font-weight="650" fill="#0f172a">merchant-web</text>
+<text x="400" y="418" font-size="11" fill="#64748b">@预发集群</text>
+<text x="400" y="436" font-size="10.5" fill="#94a3b8">商户前端静态站</text>
+</g>
+<g class="node kind-external-system" data-id="e.psp">
+<rect x="508" y="28" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="520" y="52" font-size="13" font-weight="650" fill="#0f172a">PSP 收单机构</text>
+<text x="520" y="88" font-size="10.5" fill="#94a3b8">外部通道</text>
+</g>
+</svg>

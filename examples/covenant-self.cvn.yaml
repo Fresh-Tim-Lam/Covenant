@@ -1,0 +1,338 @@
+# Covenant 自举：用自己的格式描述自己
+# 目的：1) 验证 c4-container 剖面能表达真实架构 2) 把自举过程中发现的格式缺口直接记成批注
+covenant: "0.1"
+id: covenant/self-architecture
+profile: c4-container@1
+
+meta:
+  title: Covenant 自身架构（Dogfooding）
+  purpose: |
+    用 Covenant 描述 Covenant 的运行架构，验证格式表达力，并把发现的缺口作为批注记录。
+  non_goals: [代码模块内部结构, 部署拓扑]
+  audience: [human, ai]
+  status: draft
+  rev: 4
+  owners: [human:lily]
+  updated: 2026-11-03T00:00:00+08:00
+  ai:
+    summary: |
+      Covenant 由 CLI/MCP/构建器/浏览器标注器四类进程构成，权威数据是 .cvn 项目文件；
+      AI 通过 MCP 读 digest 并提交补丁，校验器与语义 diff 是写入门禁。
+      本图的 6 条批注是自举发现的真实设计缺口（其中 a.01JAY0S3KV04 已关闭），其余需在 M1/M2 处理。
+    budget_tokens: 1000
+
+elements:
+  - id: e.human
+    kind: person
+    name: 人工架构师
+    summary: 画图、批注、评审、批准变更
+
+  - id: e.agent
+    kind: person
+    name: AI Agent
+    summary: 读 digest、按 ai_hint 行动、提交补丁
+
+  - id: e.cli
+    kind: container
+    name: covenant CLI
+    tech: Node / TypeScript
+    summary: check/render/build/apply/diff/approve 等命令入口
+    tags: [critical]
+
+  - id: e.mcp
+    kind: container
+    name: MCP Server
+    tech: Node / TypeScript
+    summary: 把 CLI 能力以 MCP 工具暴露给 Agent
+    tags: [critical]
+
+  - id: e.validate
+    kind: container
+    name: Validator
+    tech: TypeScript
+    summary: L0–L6 校验器，产出稳定排序的 findings
+    tags: [critical]
+
+  - id: e.diff
+    kind: container
+    name: Semantic Diff / Patch
+    tech: TypeScript
+    summary: 语义 diff 分类 + 补丁应用 + 乐观锁
+    tags: [critical]
+
+  - id: e.builder
+    kind: container
+    name: HTML Builder
+    tech: TypeScript + esbuild
+    summary: 把 .cvn 项目编译成自包含单文件 HTML
+    tags: [critical]
+
+  - id: e.viewer
+    kind: container
+    name: 浏览器标注器
+    tech: TS bundle + SVG
+    summary: 离线渲染、元素级标注、导出补丁
+    tags: [edge]
+
+  - id: e.serve
+    kind: container
+    name: covenant serve
+    tech: Node / HTTP
+    summary: 本地服务：直写磁盘 + 与 MCP 同进程
+    tags: [optional]
+
+  - id: e.arch
+    kind: datastore
+    name: .cvn 项目文件
+    tech: 文件系统
+    props: { storage_kind: file }
+    summary: 唯一权威事实源（arch/ 目录）
+
+  - id: e.audit
+    kind: datastore
+    name: 审计日志
+    tech: JSONL 追加文件
+    props: { storage_kind: file }
+    summary: 谁在何时批准了什么
+
+  - id: e.llm
+    kind: external-system
+    name: 大模型服务
+    summary: 外部推理服务，非本地默认
+
+relations:
+  - id: r.human-viewer
+    kind: calls
+    from: e.human
+    to: e.viewer
+    summary: 双击 HTML 后标注
+
+  - id: r.agent-mcp
+    kind: calls
+    from: e.agent
+    to: e.mcp
+    summary: MCP 工具调用（list/digest/patch）
+
+  - id: r.agent-llm
+    kind: calls
+    from: e.agent
+    to: e.llm
+    summary: 需要推理时调用外部模型
+
+  - id: r.mcp-cli
+    kind: calls
+    from: e.mcp
+    to: e.cli
+    summary: 薄壳转调 CLI 库
+
+  - id: r.cli-validate
+    kind: calls
+    from: e.cli
+    to: e.validate
+    summary: 写前校验
+
+  - id: r.cli-diff
+    kind: calls
+    from: e.cli
+    to: e.diff
+    summary: 补丁应用与语义 diff
+
+  - id: r.cli-arch
+    kind: reads
+    from: e.cli
+    to: e.arch
+    summary: 读取项目文档
+
+  - id: r.diff-arch
+    kind: writes
+    from: e.diff
+    to: e.arch
+    summary: 批准后原子写入
+
+  - id: r.validate-arch
+    kind: reads
+    from: e.validate
+    to: e.arch
+    summary: 读文档做校验
+
+  - id: r.builder-arch
+    kind: reads
+    from: e.builder
+    to: e.arch
+    summary: 编译前读取
+
+  - id: r.builder-viewer
+    kind: calls
+    from: e.builder
+    to: e.viewer
+    summary: 产出内联 doc 与渲染 bundle
+
+  - id: r.serve-viewer
+    kind: calls
+    from: e.serve
+    to: e.viewer
+    summary: 提供直写与热更新
+
+  - id: r.diff-audit
+    kind: writes
+    from: e.diff
+    to: e.audit
+    summary: 记录 patch hash 与批准人
+
+views:
+  - id: v.main
+    title: Covenant 运行架构
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 120, node: 70 }
+    present:
+      notation: c4
+      theme: covenant-light
+      annotations: { status: [open], severity: [blocker, high, medium] }
+
+annotations:
+  - id: a.01JAY0S3KV01
+    target: { kind: element, id: e.builder }
+    type: risk
+    severity: high
+    title: 单文件 HTML 体积预算可能被 ELK 打爆
+    body: |
+      elkjs 压缩后通常 600KB–1MB，加上渲染器与样式，单文件很可能超过 500KB 目标。
+      若超标，"双击本地 HTML"的首屏体验会退化（尤其机械硬盘/低端机）。
+    status: "resolved"
+    updated: "2026-11-03T07:15:18.119Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:18.119Z"}
+    author: human:lily
+    created: 2026-11-03T13:10:00+08:00
+    ai_hint: |
+      M1 先实测 elkjs 打进 bundle 的真实体积；若 >500KB，评估三种方案：
+      (1) 构建期算好布局，HTML 只带坐标（推荐）；(2) 剪枝 ELK 算法包；(3) 放宽预算到 1MB。
+      不要默认接受"打包整个 ELK"。
+
+  - id: a.01JAY0S3KV02
+    target: { kind: element, id: e.viewer }
+    type: smell
+    severity: medium
+    title: region 批注的坐标在布局变化后会失准
+    body: |
+      region 批注锚定的是"视图坐标矩形"。一旦元素增删导致重新布局，
+      矩形圈中的内容就变了，批注语义漂移——这是格式层的真实缺口。
+    status: "resolved"
+    updated: "2026-11-03T07:19:28.894Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:19:28.894Z"}
+    author: human:lily
+    created: 2026-11-03T13:14:00+08:00
+    ai_hint: |
+      评估把 region 批注改为"选中元素集合 + 可选矩形提示"（members: [id...]），
+      坐标只作视觉提示、不参与语义；若改，需同步更新 format-spec §8 与 golden path Step2。
+
+  - id: a.01JAY0S3KV03
+    target: { kind: element, id: e.arch }
+    type: question
+    severity: medium
+    title: YAML 的 Norway 问题（no → false）如何处理
+    body: |
+      架构图元素名里出现 `no`、`on`、`yes` 等会被 YAML 1.1 解析成布尔。
+      我们的 formatter 需要决定：强制加引号？还是收紧为 YAML 1.2 core schema？
+    status: "resolved"
+    updated: "2026-11-03T07:15:18.119Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:18.119Z"}
+    author: human:mark
+    created: 2026-11-03T13:18:00+08:00
+    ai_hint: |
+      M1 决定：解析器统一用 YAML 1.2 core schema（`no` 保持字符串），
+      并在 `covenant fmt` 对所有歧义标量加引号；写测试用例覆盖 no/on/yes/12:30/1e3。
+
+  - id: a.01JAY0S3KV04
+    target: { kind: element, id: e.validate }
+    type: todo
+    severity: high
+    title: 规则引擎需要"可修复建议"才配得上 AI 闭环
+    body: |
+      golden path Step6 依赖 fix_hint 让 AI 自动纠正。若规则只报错不给修法，
+      AI 只能猜，闭环退化。规则类型表需要逐条标注 fix_hint 模板。
+    status: resolved
+    author: human:lily
+    created: 2026-11-03T13:22:00+08:00
+    updated: 2026-11-03T14:05:00+08:00
+    resolution:
+      by: human:lily
+      at: 2026-11-03T14:05:00+08:00
+      ref: "docs/design/profiles-catalog-v0.md#121-fix_hint-模板gap-04-关闭"
+    ai_hint: |
+      已关闭：profiles-catalog §12.1 为 12 个规则类型逐条给出 fix_hint 模板与 auto_fixable 判定。
+      实现时照表填模板；默认 auto_fixable=false，仅明确安全的（补必填/删失效链接）才置 true。
+
+  - id: a.01JAY0S3KV05
+    target: { kind: relation, id: r.diff-arch }
+    type: risk
+    severity: blocker
+    title: 原子替换 + 审计同事务：崩溃点在哪
+    body: |
+      写入分三步（写临时文件 → 校验 → 替换），若在"替换成功、审计未写"之间崩溃，
+      会出现"改了但没记录"，破坏可追溯性。
+    status: "resolved"
+    updated: "2026-11-03T07:15:18.119Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:18.119Z"}
+    author: human:lily
+    created: 2026-11-03T13:26:00+08:00
+    ai_hint: |
+      采用 write-ahead 审计：先写审计 intent（含 patch hash 与目标 rev），
+      再落盘，最后写审计 commit。崩溃恢复时按 intent 回放或回滚。不要省这一步。
+
+  - id: a.01JAY0S3KV06
+    target: { kind: element, id: e.llm }
+    type: decision
+    severity: low
+    title: 默认不联网是产品承诺，不是待办
+    body: 渲染、校验、digest 全部本地；只有显式 `serve --ai` 才允许外发。
+    status: "resolved"
+    updated: "2026-11-03T07:15:18.119Z"
+    resolution: {"by":"human:you","at":"2026-11-03T07:15:18.119Z"}
+    author: human:lily
+    created: 2026-11-03T13:30:00+08:00
+    links:
+      - { kind: doc, ref: "../docs/design/ai-trust-boundary.md" }
+    ai_hint: 任何新增功能不得引入隐式网络请求（含字体、图标、遥测）。
+  - id: "a.BBXNVV8125C9B232TK8JRZY9FC"
+    target: {"kind":"element","id":"e.builder"}
+    type: "question"
+    severity: "medium"
+    title: "html的组织"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-03T14:40:02+08:00"
+    ai_hint: "我认为架构图们不是用单个html文件全部装起来的，得用一个文件夹，把整一套打包好，请你完善设计"
+  - id: "a.V0N1534KDQHD1SKVC56C9ATDEF"
+    target: {"kind":"element","id":"e.llm"}
+    type: "question"
+    severity: "high"
+    title: "什么叫大模型服务"
+    body: "这个大模型服务设计在这里的目的是什么"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-03T14:43:48+08:00"
+  - id: "a.0JCN0VFAMFCPXYECX82JQR0STZ"
+    target: {"kind":"relation","id":"r.diff-arch"}
+    type: "question"
+    severity: "medium"
+    title: "我想问问你的审计是基于git写的还是手搓"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-03T14:44:47+08:00"
+
+constraints:
+  - id: k.no-cycle
+    type: acyclic
+    on: { kind: relation, kinds: [calls, reads, writes] }
+    severity: error
+
+  - id: k.write-target-kind
+    type: implication
+    if: { kind: relation, kind_is: writes }
+    then: { target_element_kind_in: [datastore, queue] }
+    severity: error

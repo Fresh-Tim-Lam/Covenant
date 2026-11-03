@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1194" height="466" viewBox="0 0 1194 466" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">容器视图</title>
+<desc id="cvn-desc">说明支付域的服务划分、数据归属与外部依赖，作为人机协作的架构契约基线。
+</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="1194" height="466" fill="#ffffff"/>
+<g class="edge" data-id="r.web-gw"><path d="M242 89 L262 89 L283 89 L283 161 L332 161 L352 161" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 89 L262 89 L283 89 L283 161 L332 161 L352 161" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.gw-pay"><path d="M542 161 L562 161 L583 161 L583 233 L632 233 L652 233" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M542 161 L562 161 L583 161 L583 233 L632 233 L652 233" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-psp"><path d="M842 249 L862 249 L883 249 L883 377 L932 377 L952 377" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M842 249 L862 249 L883 249 L883 377 L932 377 L952 377" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-ledger"><path d="M842 217 L862 217 L897 217 L897 89 L932 89 L952 89" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M842 217 L862 217 L897 217 L897 89 L932 89 L952 89" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-outbox"><path d="M842 233 L862 233 L911 233 L932 233 L952 233" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M842 233 L862 233 L911 233 L932 233 L952 233" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.outbox-read"><path d="M147 196 L147 8 L1047 8 L1047 196" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M147 196 L147 8 L1047 8 L1047 196" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.outbox-bus"><path d="M242 233 L262 233 L297 233 L297 297 L332 297 L352 297" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 233 L262 233 L297 233 L297 297 L332 297 L352 297" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.bus-recon"><path d="M242 377 L262 377 L311 377 L311 313 L332 313 L352 313" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M242 377 L262 377 L311 377 L311 313 L332 313 L352 313" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.recon-ledger"><path d="M147 340 L147 16 L1047 16 L1047 52" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M147 340 L147 16 L1047 16 L1047 52" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="262.56" y="78" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="89" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="562.56" y="150" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="582" y="161" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="862.56" y="238" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="882" y="249" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="859.68" y="206" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="882" y="217" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="859.68" y="222" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="882" y="233" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<rect class="edge-label-bg" x="577.56" y="11" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="597" y="22" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<rect class="edge-label-bg" x="251.01" y="222" width="61.97" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="233" text-anchor="middle" font-size="10.5" fill="#64748b">publishes</text>
+<rect class="edge-label-bg" x="248.13" y="366" width="67.75" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="282" y="377" text-anchor="middle" font-size="10.5" fill="#64748b">subscribes</text>
+<rect class="edge-label-bg" x="577.56" y="33" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="597" y="44" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
+<g class="badge"><circle cx="907.33" cy="209" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="907.33" y="212.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="node kind-container" data-id="e.web">
+<rect x="52" y="52" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="76" font-size="13" font-weight="650" fill="#0f172a">商户前端</text>
+<text x="64" y="94" font-size="11" fill="#64748b">React / TS</text>
+<text x="64" y="112" font-size="10.5" fill="#94a3b8">商户发起支付、查询订单</text>
+</g>
+<g class="node kind-container" data-id="e.gateway">
+<rect x="352" y="124" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="364" y="148" font-size="13" font-weight="650" fill="#0f172a">API Gateway</text>
+<text x="364" y="166" font-size="11" fill="#64748b">Nginx + Lua</text>
+<text x="364" y="184" font-size="10.5" fill="#94a3b8">鉴权、限流、路由</text>
+</g>
+<g class="node kind-container" data-id="e.payments">
+<rect x="652" y="196" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="664" y="220" font-size="13" font-weight="650" fill="#0f172a">Payments Service</text>
+<text x="664" y="238" font-size="11" fill="#64748b">Kotlin / Spring</text>
+<text x="664" y="256" font-size="10.5" fill="#94a3b8">支付授权、捕获、退款编排</text>
+</g>
+<g class="node kind-datastore" data-id="e.ledger">
+<rect x="952" y="52" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="964" y="76" font-size="13" font-weight="650" fill="#0f172a">Ledger</text>
+<text x="964" y="94" font-size="11" fill="#64748b">PostgreSQL 16</text>
+<text x="964" y="112" font-size="10.5" fill="#94a3b8">记账账本，只追加</text>
+</g>
+<g class="node kind-container" data-id="e.outbox">
+<rect x="52" y="196" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="220" font-size="13" font-weight="650" fill="#0f172a">Outbox Relay</text>
+<text x="64" y="238" font-size="11" fill="#64748b">Kotlin Worker</text>
+<text x="64" y="256" font-size="10.5" fill="#94a3b8">轮询 outbox 表，把领域事件投…</text>
+</g>
+<g class="node kind-datastore" data-id="e.outbox-db">
+<rect x="952" y="196" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="964" y="220" font-size="13" font-weight="650" fill="#0f172a">Outbox Table</text>
+<text x="964" y="238" font-size="11" fill="#64748b">PostgreSQL 16</text>
+<text x="964" y="256" font-size="10.5" fill="#94a3b8">事务性 outbox 表，与支付库同…</text>
+</g>
+<g class="node kind-queue" data-id="e.bus">
+<rect x="352" y="268" width="190" height="74" rx="8" fill="#fdf4ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="364" y="292" font-size="13" font-weight="650" fill="#0f172a">Event Bus</text>
+<text x="364" y="310" font-size="11" fill="#64748b">Kafka</text>
+<text x="364" y="328" font-size="10.5" fill="#94a3b8">领域事件总线</text>
+</g>
+<g class="node kind-container" data-id="e.recon">
+<rect x="52" y="340" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="64" y="364" font-size="13" font-weight="650" fill="#0f172a">Reconciliation</text>
+<text x="64" y="382" font-size="11" fill="#64748b">Python / Airflow</text>
+<text x="64" y="400" font-size="10.5" fill="#94a3b8">每日对账，产出差异报告</text>
+</g>
+<g class="badge"><circle cx="230" cy="352" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="230" y="355.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="node kind-external-system" data-id="e.psp">
+<rect x="952" y="340" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="964" y="364" font-size="13" font-weight="650" fill="#0f172a">PSP 支付通道</text>
+<text x="964" y="382" font-size="11" fill="#64748b">HTTPS API</text>
+<text x="964" y="400" font-size="10.5" fill="#94a3b8">第三方收单机构</text>
+</g>
+</svg>

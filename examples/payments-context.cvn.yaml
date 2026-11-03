@@ -1,0 +1,72 @@
+# C4 上下文图示例：支付平台（c4-context@1）
+covenant: "0.1"
+id: payments/context
+profile: c4-context@1
+
+meta:
+  title: 支付平台上下文
+  purpose: 说明支付平台的系统边界、外部参与方与依赖关系。
+  non_goals:
+    - 内部服务划分（见容器视图）
+    - 技术栈（上下文图不标技术）
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.merchant
+    kind: person
+    name: 商户
+    summary: 发起支付、查询订单
+  - id: e.ops
+    kind: person
+    name: 运营
+    summary: 查看对账与处理差异
+  - id: e.payment-platform
+    kind: software-system
+    name: 支付平台
+    summary: 本系统，负责支付编排与记账
+    props: { scope: in }
+  - id: e.psp
+    kind: external-system
+    name: PSP 收单机构
+    summary: 提供银行卡收单能力
+  - id: e.bank
+    kind: external-system
+    name: 银行
+    summary: 清算与对账数据来源
+
+relations:
+  - id: r.merchant-pp
+    kind: uses
+    from: e.merchant
+    to: e.payment-platform
+    summary: 下单与查询
+  - id: r.ops-pp
+    kind: uses
+    from: e.ops
+    to: e.payment-platform
+    summary: 对账运维
+  - id: r.pp-psp
+    kind: uses
+    from: e.payment-platform
+    to: e.psp
+    summary: 调用收单接口
+  - id: r.psp-pp
+    kind: uses
+    from: e.psp
+    to: e.payment-platform
+    summary: 支付结果回调
+  - id: r.pp-bank
+    kind: uses
+    from: e.payment-platform
+    to: e.bank
+    summary: 拉取清算文件
+
+views:
+  - id: v.main
+    title: 系统上下文
+    include:
+      elements: [e.*]
+      relations: [r.*]

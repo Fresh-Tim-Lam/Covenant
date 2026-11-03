@@ -1,0 +1,82 @@
+# 部署图示例：支付平台（deployment@1）
+covenant: "0.1"
+id: payments/deployment
+profile: deployment@1
+
+meta:
+  title: 支付平台部署
+  purpose: 说明制品落在哪些节点、节点间链路与跨环境边界。
+  non_goals:
+    - 具体机器规格
+    - 容器编排细节
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.node-prod
+    kind: node
+    name: 生产集群
+    summary: 生产 Kubernetes 集群
+    props: { env: prod, os: Linux }
+  - id: e.node-stage
+    kind: node
+    name: 预发集群
+    summary: 预发环境
+    props: { env: stage, os: Linux }
+
+  - id: e.api
+    kind: artifact
+    name: payments-api
+    summary: 支付服务制品
+    parent: e.node-prod
+    props: { tech: Kotlin / Ktor }
+  - id: e.worker
+    kind: artifact
+    name: outbox-relay
+    summary: 事件投递工作负载
+    parent: e.node-prod
+    props: { tech: Node }
+  - id: e.pg
+    kind: datastore
+    name: payments-pg
+    summary: 支付主库
+    parent: e.node-prod
+    props: { storage_kind: rdbms }
+  - id: e.web
+    kind: artifact
+    name: merchant-web
+    summary: 商户前端静态站
+    parent: e.node-stage
+    props: { tech: Nginx }
+
+  - id: e.psp
+    kind: external-system
+    name: PSP 收单机构
+    summary: 外部通道
+
+relations:
+  - id: r.prod-stage
+    kind: communicates
+    from: e.node-prod
+    to: e.node-stage
+    summary: 灰度链路
+    props: { protocol: https, network: vpc }
+  - id: r.api-worker
+    kind: calls
+    from: e.api
+    to: e.worker
+    summary: 同节点内调用
+    props: { protocol: http }
+
+views:
+  - id: v.main
+    title: 部署视图
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: DOWN
+      spacing: { rank: 100, node: 50 }

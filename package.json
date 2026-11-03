@@ -1,0 +1,45 @@
+{
+  "name": "covenant",
+  "license": "MIT",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "covenant": "tsx packages/cli/src/index.ts",
+    "check": "tsx packages/cli/src/index.ts check",
+    "render": "tsx packages/cli/src/index.ts render",
+    "package:kit": "node scripts/build-kit.mjs",
+    "build:bundle": "tsx packages/cli/src/index.ts bundle examples -o dist/site",
+    "build:html": "tsx packages/cli/src/index.ts build",
+    "apply": "tsx packages/cli/src/index.ts apply",
+    "patch-check": "tsx packages/cli/src/index.ts patch-check",
+    "diff": "tsx packages/cli/src/index.ts diff",
+    "index": "tsx packages/cli/src/index.ts index",
+    "index:check": "tsx packages/cli/src/index.ts index",
+    "mcp": "tsx packages/mcp/src/server.ts",
+    "golden": "node scripts/update-golden.mjs",
+    "modules": "node scripts/check-module-docs.mjs",
+    "cleanroom": "node scripts/clean-room-verify.mjs",
+    "serve": "tsx packages/cli/src/index.ts serve",
+    "edit:serve": "tsx packages/cli/src/index.ts serve dist --edit --open",
+    "ai": "tsx packages/cli/src/index.ts ai",
+    "adr": "tsx packages/cli/src/index.ts adr",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "pnpm check arch examples && pnpm index && pnpm adr && pnpm modules && pnpm test"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^22.10.0",
+    "jsdom": "^30.1.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

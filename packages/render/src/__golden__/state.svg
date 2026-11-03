@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1558" height="296" viewBox="0 0 1558 296" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">订单生命周期</title>
+<desc id="cvn-desc">说明订单状态、触发事件与非法迁移约束，作为状态机实现契约。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="1558" height="296" fill="#ffffff"/>
+<g class="edge" data-id="r.t1"><path d="M234 148 L254 148 L285 148 L344 148 L364 148" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M234 148 L254 148 L285 148 L344 148 L364 148" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.t2"><path d="M554 148 L574 148 L605 148 L664 148 L684 148" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M554 148 L574 148 L605 148 L664 148 L684 148" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.t3"><path d="M874 140 L894 140 L925 140 L925 81 L984 81 L1004 81" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M874 140 L894 140 L925 140 L925 81 L984 81 L1004 81" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.t4"><path d="M874 156 L894 156 L939 156 L939 215 L984 215 L1004 215" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M874 156 L894 156 L939 156 L939 215 L984 215 L1004 215" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.t5"><path d="M459 111 L459 8 L1099 8 L1099 178" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M459 111 L459 8 L1099 8 L1099 178" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.t6"><path d="M1194 81 L1214 81 L1245 81 L1245 148 L1304 148 L1324 148" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1194 81 L1214 81 L1245 81 L1245 148 L1304 148 L1324 148" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="258.5" y="137" width="31" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="274" y="148" text-anchor="middle" font-size="10.5" fill="#64748b">下单</text>
+<rect class="edge-label-bg" x="578.5" y="137" width="31" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="594" y="148" text-anchor="middle" font-size="10.5" fill="#64748b">支付</text>
+<rect class="edge-label-bg" x="818.34" y="93" width="111.33" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="874" y="104" text-anchor="middle" font-size="10.5" fill="#64748b">授权成功 [金额一致]</text>
+<rect class="edge-label-bg" x="898.5" y="145" width="31" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="914" y="156" text-anchor="middle" font-size="10.5" fill="#64748b">超时</text>
+<rect class="edge-label-bg" x="763.5" y="11" width="31" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="779" y="22" text-anchor="middle" font-size="10.5" fill="#64748b">取消</text>
+<rect class="edge-label-bg" x="1208" y="70" width="52" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1234" y="81" text-anchor="middle" font-size="10.5" fill="#64748b">履约完成</text>
+<g class="node kind-initial" data-id="e.initial">
+<rect x="44" y="111" width="190" height="74" rx="37" fill="#dcfce7" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="139" y="152.5" text-anchor="middle" font-size="13" font-weight="650" fill="#0f172a">新建</text>
+</g>
+<g class="node kind-state" data-id="e.created">
+<rect x="364" y="111" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="376" y="135" font-size="13" font-weight="650" fill="#0f172a">已创建</text>
+<text x="376" y="171" font-size="10.5" fill="#94a3b8">订单已落库</text>
+</g>
+<g class="node kind-state" data-id="e.paying">
+<rect x="684" y="111" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="696" y="135" font-size="13" font-weight="650" fill="#0f172a">支付中</text>
+<text x="696" y="171" font-size="10.5" fill="#94a3b8">等待支付结果</text>
+</g>
+<g class="node kind-state" data-id="e.paid">
+<rect x="1004" y="44" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1016" y="68" font-size="13" font-weight="650" fill="#0f172a">已支付</text>
+<text x="1016" y="104" font-size="10.5" fill="#94a3b8">支付成功待履约</text>
+</g>
+<g class="node kind-final" data-id="e.cancelled">
+<rect x="1004" y="178" width="190" height="74" rx="37" fill="#fee2e2" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1099" y="219.5" text-anchor="middle" font-size="13" font-weight="650" fill="#0f172a">已取消</text>
+</g>
+<g class="node kind-final" data-id="e.done">
+<rect x="1324" y="111" width="190" height="74" rx="37" fill="#fee2e2" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1419" y="152.5" text-anchor="middle" font-size="13" font-weight="650" fill="#0f172a">已完成</text>
+</g>
+</svg>

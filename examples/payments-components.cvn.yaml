@@ -1,0 +1,84 @@
+# C4 组件图示例：payments-api 内部（c4-component@1）
+covenant: "0.1"
+id: payments/components
+profile: c4-component@1
+
+meta:
+  title: payments-api 组件
+  purpose: 说明单个容器内部的组件边界、接口与依赖方向。
+  non_goals:
+    - 容器间调用（见上下文/容器图）
+    - 部署落位（见部署图）
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.gateway
+    kind: component
+    name: 接入层
+    summary: 鉴权、限流、路由
+    props: { parent: payments-api, tech: Ktor }
+  - id: e.orchestrator
+    kind: component
+    name: 支付编排
+    summary: 授权/捕获/退款编排
+    props: { parent: payments-api, tech: Kotlin }
+  - id: e.repository
+    kind: component
+    name: 仓储
+    summary: 持久化与查询
+    props: { parent: payments-api, tech: Exposed }
+  - id: e.outbox
+    kind: component
+    name: Outbox 投递
+    summary: 事务外事件投递
+    props: { parent: payments-api, tech: Kotlin }
+  - id: e.iface-pay
+    kind: interface
+    name: PaymentPort
+    summary: 对 PSP 的端口
+  - id: e.ref-psp
+    kind: container-ref
+    name: psp-client
+    summary: 外部 PSP 适配容器
+    props: { ref: psp-client }
+
+relations:
+  - id: r.gateway-orch
+    kind: calls
+    from: e.gateway
+    to: e.orchestrator
+    summary: 转发支付请求
+  - id: r.orch-repo
+    kind: calls
+    from: e.orchestrator
+    to: e.repository
+    summary: 读写订单
+  - id: r.orch-outbox
+    kind: calls
+    from: e.orchestrator
+    to: e.outbox
+    summary: 记录领域事件
+  - id: r.orch-port
+    kind: implements
+    from: e.orchestrator
+    to: e.iface-pay
+    summary: 实现支付端口
+  - id: r.repo-ref
+    kind: depends-on
+    from: e.repository
+    to: e.ref-psp
+    summary: 复用其查询协议（弱依赖）
+
+views:
+  - id: v.main
+    title: payments-api 组件
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 130, node: 56 }

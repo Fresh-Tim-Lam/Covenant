@@ -1,0 +1,66 @@
+# 多视图示例：同一份契约文档，两个视图用不同的 include/exclude
+covenant: "0.1"
+id: example/multi-view
+profile: c4-container@1
+
+meta:
+  title: 多视图示例
+  purpose: 演示视图选择器（include/exclude/tag）
+  non_goals: []
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.web
+    kind: container
+    name: Web
+    summary: 浏览器端
+    tech: React
+    tags: [edge]
+  - id: e.api
+    kind: container
+    name: API
+    summary: 业务服务
+    tech: Go
+    tags: [core]
+  - id: e.db
+    kind: datastore
+    name: DB
+    summary: 主库
+    tech: PostgreSQL
+    tags: [core]
+    props: { storage_kind: rdbms }
+  - id: e.psp
+    kind: external-system
+    name: PSP
+    summary: 外部支付
+    tech: HTTPS
+    tags: [external]
+
+relations:
+  - id: r.w-a
+    kind: calls
+    from: e.web
+    to: e.api
+    summary: 调用
+  - id: r.a-d
+    kind: writes
+    from: e.api
+    to: e.db
+    summary: 写入
+  - id: r.a-p
+    kind: calls
+    from: e.api
+    to: e.psp
+    summary: 调用
+
+views:
+  - id: v.core
+    title: 核心视图
+    include:
+      elements: ["tag:core", "e.web"]
+      relations: [r.w-a, r.a-d]
+  - id: v.public
+    title: 对外视图
+    exclude:
+      elements: [e.db]

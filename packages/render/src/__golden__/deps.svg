@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1646" height="336" viewBox="0 0 1646 336" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">包依赖</title>
+<desc id="cvn-desc">展示包级依赖方向与影响面，约束&quot;底层不依赖上层&quot;。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="1646" height="336" fill="#ffffff"/>
+<g class="edge" data-id="r.validate-core"><path d="M493 68 L493 8 L1169 8 L1169 131" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M493 68 L493 8 L1169 8 L1169 131" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.layout-core"><path d="M918 168 L938 168 L974 168 L1038 168 L1058 168" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M918 168 L938 168 L974 168 L1038 168 L1058 168" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.render-layout"><path d="M588 231 L608 231 L644 231 L644 168 L708 168 L728 168" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M588 231 L608 231 L644 231 L644 168 L708 168 L728 168" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.render-core"><path d="M493 194 L493 16 L1153 16 L1153 131" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M493 194 L493 16 L1153 16 L1153 131" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-core"><path d="M171 131 L171 24 L486 24 Q493 38 500 24 L1137 24 L1137 131" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M171 131 L171 24 L486 24 Q493 38 500 24 L1137 24 L1137 131" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-validate"><path d="M258 160 L278 160 L314 160 L314 105 L378 105 L398 105" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M258 160 L278 160 L314 160 L314 105 L378 105 L398 105" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-layout"><path d="M155 131 L155 32 L164 32 Q171 46 178 32 L486 32 Q493 46 500 32 L823 32 L823 131" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M155 131 L155 32 L164 32 Q171 46 178 32 L486 32 Q493 46 500 32 L823 32 L823 131" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-render"><path d="M258 176 L278 176 L328 176 L328 231 L378 231 L398 231" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M258 176 L278 176 L328 176 L328 231 L378 231 L398 231" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.core-fs"><path d="M1248 168 L1268 168 L1304 168 L1368 168 L1388 168" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1248 168 L1268 168 L1304 168 L1368 168 L1388 168" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="805.79" y="11" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="831" y="22" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="932.79" y="157" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="958" y="168" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="602.79" y="220" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="628" y="231" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="797.79" y="33" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="823" y="44" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="628.79" y="27" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="654" y="38" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="272.79" y="149" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="298" y="160" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="463.79" y="35" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="489" y="46" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="272.79" y="165" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="298" y="176" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<rect class="edge-label-bg" x="1262.79" y="157" width="50.43" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="1288" y="168" text-anchor="middle" font-size="10.5" fill="#64748b">imports</text>
+<g class="node kind-module" data-id="e.core">
+<rect x="1058" y="131" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="1070" y="155" font-size="13" font-weight="650" fill="#0f172a">@covenant/core</text>
+<text x="1070" y="191" font-size="10.5" fill="#94a3b8">类型 / 解析 / 工具</text>
+</g>
+<g class="node kind-module" data-id="e.validate">
+<rect x="398" y="68" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="410" y="92" font-size="13" font-weight="650" fill="#0f172a">@covenant/validate</text>
+<text x="410" y="128" font-size="10.5" fill="#94a3b8">L1–L3 校验</text>
+</g>
+<g class="node kind-module" data-id="e.layout">
+<rect x="728" y="131" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="740" y="155" font-size="13" font-weight="650" fill="#0f172a">@covenant/layout</text>
+<text x="740" y="191" font-size="10.5" fill="#94a3b8">分层布局</text>
+</g>
+<g class="node kind-module" data-id="e.render">
+<rect x="398" y="194" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="410" y="218" font-size="13" font-weight="650" fill="#0f172a">@covenant/render</text>
+<text x="410" y="254" font-size="10.5" fill="#94a3b8">SVG / HTML 渲染</text>
+</g>
+<g class="node kind-module" data-id="e.cli">
+<rect x="68" y="131" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="80" y="155" font-size="13" font-weight="650" fill="#0f172a">@covenant/cli</text>
+<text x="80" y="191" font-size="10.5" fill="#94a3b8">命令入口</text>
+</g>
+<g class="node kind-external" data-id="e.nodefs">
+<rect x="1388" y="131" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1400" y="155" font-size="13" font-weight="650" fill="#0f172a">node:fs</text>
+<text x="1400" y="191" font-size="10.5" fill="#94a3b8">文件系统</text>
+</g>
+</svg>

@@ -1,0 +1,306 @@
+# FRAS 索引：机器只维护 source_sha256；F/R/A/S 由人或 Agent 撰写
+entries:
+  - file: packages/core/src/types.ts
+    f: 领域类型：CovenantDoc / Finding / 元素与批注模型
+    r: []
+    a:
+      - packages/core/src/index.ts
+    s:
+      - 批注 ai_hint 是人给 AI 的指令，AI 不得写
+    source_sha256: 8b567017458c1165e3f58d0d26ee04657544703e506b8f23195694c075e89046
+  - file: packages/core/src/parse.ts
+    f: YAML 解析（CORE_SCHEMA）与锚点禁令
+    r:
+      - packages/core/src/types.ts
+    a:
+      - packages/core/src/index.ts
+    s:
+      - 用 CORE_SCHEMA；DEFAULT_SCHEMA 会把时间戳解析成 Date
+    source_sha256: 3274391d8b31dd453b0160c32491dbf2fbaf2b10f22d4a409a1dfc8100339fbc
+  - file: packages/core/src/index.ts
+    f: 统一导出 + 仓库根定位 + finding 稳定排序
+    r:
+      - packages/core/src/types.ts
+      - packages/core/src/parse.ts
+    a:
+      - 其他所有包
+    s:
+      - finding 排序保证输出可比对
+    source_sha256: 5cd2d4c5823b0e477373a738474c7e426a3bf51d59655817776252b73e4c980d
+  - file: packages/profile/src/index.ts
+    f: 剖面注册表：c4-container@1 / dfd@1 的词表与关系矩阵
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/validate/src/index.ts
+    s:
+      - 关系矩阵只允许词表内的源/目标 kind
+    source_sha256: 5ff3ebff1982f586c459ea3d6351ae83554cbeb610d8c20eb53981b901dcf863
+  - file: packages/validate/src/index.ts
+    f: L1 schema / L2 完整性 / L3 剖面一致性校验
+    r:
+      - packages/core/src/index.ts
+      - packages/profile/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+      - packages/patch/src/index.ts
+    s:
+      - 'L2 通配与 tag: 选择器不做精确 id 校验'
+    source_sha256: 60aa2332f1b7dccaf06331110d3de1d4733f9c7b299e3d276bd10f6b482a2952
+  - file: packages/layout/src/index.ts
+    f: 分层布局、barycenter 交叉最小化、长边通道、视图选择器
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/render/src/index.ts
+      - packages/cli/src/index.ts
+    s:
+      - 显式 undefined 参数会覆盖默认值导致 NaN，必须逐字段兜底
+    source_sha256: ac4a91498ddd8bb26e3c8acaa4daa4f7c89d346ebc46c99c05fa4fb486f13ef9
+  - file: packages/render/src/index.ts
+    f: SVG 渲染：节点/边/标签/frame/批注角标
+    r:
+      - packages/core/src/index.ts
+      - packages/layout/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 渲染必须确定性：同输入逐字节一致
+    source_sha256: 1a198e2b00417d243873f5cedb85d1e2f9e5755a91a4bdd33c30aa80ee7c7221
+  - file: packages/render/src/html.ts
+    f: 可标注自包含 HTML：内联 SVG + 内嵌语义 JSON + 状态流转
+    r:
+      - packages/core/src/index.ts
+      - packages/layout/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 内联 JSON 必须转义 <，否则 </script> 提前闭合
+      - 无外部请求：禁止 CDN/字体/图片
+    source_sha256: 26969abf9343100b45897ea88c0cd68bff3a1a7b272688bf3bd261ef99688a52
+  - file: packages/patch/src/index.ts
+    f: 补丁门禁、状态流转、保留注释的文本块落盘与审计
+    r:
+      - packages/core/src/index.ts
+      - packages/validate/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 只做文本块插入，不重排 YAML（为了保留注释）
+      - AI 不得改状态、不得写 ai_hint
+    source_sha256: ee95dd7a642bcde0379894e2e2f4973ebea97660c5344949242d66bd9847f100
+  - file: packages/diff/src/index.ts
+    f: 语义 diff：cosmetic / material / breaking 三分类
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 删元素/关系/改 kind/改端点 = breaking，需人工批准
+    source_sha256: 4a8338834451bdb10af11ed2d022cdcd61f9ed235b82bda41b282d294097d4de
+  - file: packages/indexer/src/index.ts
+    f: FRAS 索引生成与 I1–I3 校验（覆盖/新鲜度/可读性）
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 机器只更新哈希，不编造 F/R/A/S 语义
+    source_sha256: b38ada0fb03f59488f84ad6b1debb75f374a975086b1593dea2917a4c30c7714
+  - file: packages/cli/src/index.ts
+    f: 命令入口：check/render/build/apply/diff/index 等子命令
+    r:
+      - packages/core/src/index.ts
+      - packages/validate/src/index.ts
+      - packages/layout/src/index.ts
+      - packages/render/src/index.ts
+      - packages/patch/src/index.ts
+      - packages/diff/src/index.ts
+      - packages/indexer/src/index.ts
+    a: []
+    s:
+      - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
+    source_sha256: c36e35bb70c2aee409483edbd78f55e82235a551f2018e5ec81224a91583ed14
+  - file: scripts/svg-to-png.mjs
+    f: 开发期视觉核对：SVG→PNG
+    r: []
+    a: []
+    source_sha256: 42055f309fe6df22c08b40f74050bf149de36fb742e783b3f347f8249620f6d1
+  - file: scripts/e2e-html-patch.mjs
+    f: 端到端演练：jsdom 操作 HTML 并导出补丁
+    r: []
+    a: []
+    source_sha256: da92489e335481afd0d4d7d636d278c2a46cf4b58213b9afc667a6dca1608198
+  - file: packages/mcp/src/index.ts
+    f: MCP stdio server：8 个工具，让陌生 Agent 无需读文档即可使用
+    r:
+      - packages/core/src/index.ts
+      - packages/validate/src/index.ts
+      - packages/layout/src/index.ts
+      - packages/render/src/index.ts
+      - packages/patch/src/index.ts
+      - packages/diff/src/index.ts
+      - packages/indexer/src/index.ts
+    a:
+      - scripts/mcp-smoke.mjs
+    s:
+      - AI 补丁必须走 patch-check；AI 不得写 ai_hint 或改状态
+    source_sha256: a51f6e7cd4d9f8309f092ec03fa9bf5076e636cf4448c1fd42804ada83b2a29d
+  - file: packages/mcp/src/server.ts
+    f: stdio 入口：逐行读 JSON-RPC，stdout 只输出协议
+    r:
+      - packages/mcp/src/index.ts
+    a: []
+    s:
+      - 日志必须走 stderr，stdout 会被客户端当协议解析
+    source_sha256: f3ecc6a2eb4717fc88c7cee4326938cf3d8f5f2df067769a944d54d83cb5385c
+  - file: scripts/mcp-smoke.mjs
+    f: 冒烟测试：真实拉起 MCP server，走 initialize/tools-list/tools-call
+    r: []
+    a: []
+    source_sha256: 8aeb4bb5b914f069831154f92e4ab098b1e2a7999599e97366ed80e41b3c74f3
+  - file: scripts/update-golden.mjs
+    f: 置 GOLDEN_UPDATE=1 重新生成黄金 SVG
+    r: []
+    a: []
+    s:
+      - 更新黄金前必须先人工看 diff，禁止盲目覆盖
+    source_sha256: 5d0ce8d72f14965f9abe4bf8675754dde2609b071febd5a86dc15142b9915081
+  - file: packages/ai/src/index.ts
+    f: 评审简报与 AI 批注补丁构造（author=ai:*，禁止 ai_hint）
+    r:
+      - packages/core/src/index.ts
+      - packages/patch/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+      - packages/mcp/src/index.ts
+    s:
+      - AI 只能新增批注；本包不提供改状态/改语义入口
+    source_sha256: e93c2f643b108e808973db350808f9cbe154e92d784882c8087aa039ac11db48
+  - file: packages/layout/src/sequence.ts
+    f: 序列图专用布局：参与者列 + 消息行
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/render/src/index.ts
+    s:
+      - x=参与者顺序，y=消息顺序；不经过 ELK
+    source_sha256: 2d11689ee279837f09361bb5845bb52a9f79abb5ea76154c1a890d2622760311
+  - file: packages/adr/src/index.ts
+    f: ADR front-matter 解析与校验（编号/状态/日期/supersedes）
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - accepted 必须被文档 links.kind=adr 引用尚未实现（格式暂无 links）
+    source_sha256: 6b6bdb16170b9b4fa63cdc8b3ca99540a55485442784748de663aea742e81b2f
+  - file: scripts/clean-room-verify.mjs
+    f: 干净环境复现：复制仓库排除产物，重装依赖并跑 verify
+    r: []
+    a: []
+    s:
+      - 失败即代表别人 clone 后跑不起来，不能靠本机缓存掩盖
+    source_sha256: eb1dbdd89e24064018ad1478589d1311e12e31c56affc08f0c687a51111d3db8
+  - file: packages/cli/src/serve.ts
+    f: 只读静态托管（本地 HTTP），用于真实浏览器验收
+    r: []
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 只读：不做浏览器直写；防目录穿越；默认入口探测 covenant.html
+    source_sha256: 15b2841d22562ed17ff2f3b7a9edab26839c06ed158013b8d240d2a72ff7fbe1
+  - file: packages/cli/src/doctor.ts
+    f: 环境自检：Node/pnpm/锁文件/schema/BOM/索引/ADR/git/产物
+    r:
+      - packages/cli/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - doctor 不能依赖网络；检查项失败要给出 fix 命令
+    source_sha256: 7c04576cc27043fd9fcfe0cf89110bb4b53d79d41785caf8071b02d11169f35f
+  - file: packages/editor/src/index.ts
+    f: 受控语义编辑：set 属性/pins + YAML 序列化 + 统一 diff
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 只生成待审查新文件；不直接写原文件；不做增删/改 kind
+    source_sha256: c86d56e4458bd006a333341e750df2c58ef702df527bb1392ff44064269ff0f0
+  - file: scripts/check-module-docs.mjs
+    f: 模块元语料门禁：校验 packages/* 的 README 五段
+    r: []
+    a:
+      - package.json
+    s:
+      - 门禁只读；缺 README/段落即失败；与 ADR-0003 绑定
+    source_sha256: d6b16e1a08a13b14f198508a6244708f3f60c92b995c6ee16719645c9ab98405
+  - file: packages/cli/src/edit-flow.ts
+    f: 编辑落盘共享流程：预览写新文件+diff / accept 备份+审计
+    r:
+      - packages/editor/src/index.ts
+      - packages/validate/src/index.ts
+    a:
+      - packages/cli/src/index.ts
+      - packages/cli/src/serve.ts
+    s:
+      - human-only；写前 checkDocument；accept 前备份；CLI 与编辑态服务共用同一门禁
+    source_sha256: 3a4534fac61118db0bf8e7c0941889cc8678bf7fd9af0d95f1ca92c2bfa2d7dc
+  - file: packages/patch/src/text.ts
+    f: 补丁文本级编辑：追加批注块/状态流转/删除块/rev+1，保留注释且不读写文件
+    r:
+      - packages/patch/src/parse.ts
+    a:
+      - packages/patch/src/apply.ts
+      - packages/patch/src/index.ts
+    s:
+      - 只动目标行/块、不重排 YAML（保注释）
+      - '删空时规范化为 annotations: []'
+      - 本文件不判断合法性（门禁/复验在 gate/apply）
+    source_sha256: 7eec00904094f54a59c38fb4081dc51c268e59241b8714a3da85aca01b1cce5c
+  - file: packages/patch/src/parse.ts
+    f: 补丁文件解析与结构校验
+    r:
+      - packages/core/src/index.ts
+    a:
+      - packages/patch/src/index.ts
+    s:
+      - 只解析不写盘；路径必须是受支持的 annotations 操作
+    source_sha256: 6a6275fbc316d030ce05d7cdd6b583e5546f93decfd1e977f1c2c823d84191ee
+  - file: packages/patch/src/gate.ts
+    f: 补丁门禁：AI 信任边界（作者/状态/ai_hint/base_rev）
+    r:
+      - packages/patch/src/parse.ts
+    a:
+      - packages/patch/src/index.ts
+      - packages/cli/src/index.ts
+    s:
+      - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
+    source_sha256: 13b2a8c97cc8f2546153f8078616d53d2c3cd360e17787cd37345220c3d6f8b0
+  - file: packages/patch/src/apply.ts
+    f: 应用补丁：保留注释的文本插入/替换 + rev+1
+    r:
+      - packages/patch/src/gate.ts
+    a:
+      - packages/patch/src/index.ts
+    s:
+      - 文本级编辑保注释；幂等性由 base_rev 与调用方校验
+    source_sha256: 22b41c896c545f9aefb90f058f191a6d343f7082f2f88c09cc489cafe098e60a
+  - file: packages/patch/src/audit.ts
+    f: 写前审计（intent → rename → commit）
+    r: []
+    a:
+      - packages/patch/src/apply.ts
+    s:
+      - 审计是留痕不是防篡改；目录 .audit/
+    source_sha256: 4cfff9f4e088b703287ceb56226f7210b77dbe3d970b32881356fda95a042503
+  - file: scripts/build-kit.mjs
+    f: 可交付包构建（esbuild 打包单文件 CLI + 模板/示例/文档/schema + 预构建查看器）
+    r: []
+    a:
+      - package.json
+      - .github/workflows/verify.yml
+    s:
+      - kit 必须自带 schema/ 作为仓库根锚点，否则脱离仓库后 check 失败
+    source_sha256: d6c7078b1257c7a50c631a74b0372d1b21d3efface5c53bf0cc2b6bef9813c4f

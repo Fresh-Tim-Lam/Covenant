@@ -1,0 +1,116 @@
+# ER 示例：订单/支付/客户的数据模型（er@1）
+covenant: "0.1"
+id: order/er
+profile: er@1
+notation: crowfoot
+
+meta:
+  title: 订单数据模型
+  purpose: 说明订单、支付、客户三类实体的主键与基数关系，作为存储设计的契约。
+  non_goals:
+    - 索引与分表策略
+    - 字段级类型细节（只记关键类型）
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.order
+    kind: entity
+    name: Order
+    summary: 订单主表
+    props: { pk: [order_id] }
+  - id: e.payment
+    kind: entity
+    name: Payment
+    summary: 支付记录
+    props: { pk: [payment_id] }
+  - id: e.customer
+    kind: entity
+    name: Customer
+    summary: 客户
+    props: { pk: [customer_id] }
+
+  - id: e.order-id
+    kind: attribute
+    name: order_id
+    summary: 订单主键
+    props: { parent: e.order, type: bigint }
+  - id: e.order-amount
+    kind: attribute
+    name: amount
+    summary: 金额（分）
+    props: { parent: e.order, type: bigint }
+  - id: e.order-status
+    kind: attribute
+    name: status
+    summary: 订单状态
+    props: { parent: e.order, type: varchar }
+  - id: e.payment-id
+    kind: attribute
+    name: payment_id
+    summary: 支付主键
+    props: { parent: e.payment, type: bigint }
+  - id: e.payment-order-id
+    kind: attribute
+    name: order_id
+    summary: 关联订单
+    props: { parent: e.payment, type: bigint }
+  - id: e.customer-id
+    kind: attribute
+    name: customer_id
+    summary: 客户主键
+    props: { parent: e.customer, type: bigint }
+
+relations:
+  - id: r.order-id
+    kind: has-attr
+    from: e.order
+    to: e.order-id
+    summary: 主键
+  - id: r.order-amount
+    kind: has-attr
+    from: e.order
+    to: e.order-amount
+    summary: 金额
+  - id: r.order-status
+    kind: has-attr
+    from: e.order
+    to: e.order-status
+    summary: 状态
+  - id: r.payment-id
+    kind: has-attr
+    from: e.payment
+    to: e.payment-id
+    summary: 主键
+  - id: r.payment-order
+    kind: has-attr
+    from: e.payment
+    to: e.payment-order-id
+    summary: 关联订单
+  - id: r.customer-id
+    kind: has-attr
+    from: e.customer
+    to: e.customer-id
+    summary: 主键
+
+  - id: r.payment-order-rel
+    kind: relates
+    from: e.payment
+    to: e.order
+    summary: 支付属于订单
+    props: { cardinality: { from: "1", to: "N" }, optional: false }
+  - id: r.order-customer-rel
+    kind: relates
+    from: e.order
+    to: e.customer
+    summary: 订单归属客户
+    props: { cardinality: { from: "N", to: "1" }, optional: false }
+
+views:
+  - id: v.main
+    title: 数据模型
+    include:
+      elements: [e.*]
+      relations: [r.*]

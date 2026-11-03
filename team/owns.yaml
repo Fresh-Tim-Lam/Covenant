@@ -1,0 +1,48 @@
+# 机器可读团队编制（schema: covenant-team/v0）
+# 共享文件只有 lead 可写；owner 写域互不重叠。
+version: 0
+updated: "2026-11-03"
+shared_files:
+  - arch/index.yaml
+  - package.json
+  - covenant.yaml
+  - "docs/**"
+  - "team/**"
+groups:
+  core-semantics:
+    domain: core
+    owner: core-owner
+    packages: [packages/core, packages/profile, packages/validate]
+  visualization:
+    domain: viewer
+    owner: viz-owner
+    packages: [packages/layout, packages/render]
+  authoring:
+    domain: authoring
+    owner: tools-owner
+    packages: [packages/patch, packages/diff, packages/indexer, packages/ai, packages/adr, packages/editor]
+  interfaces:
+    domain: interface
+    owner: iface-owner
+    packages: [packages/cli, packages/mcp]
+  governance:
+    domain: architecture
+    owner: arch-guard
+    packages: []
+    write_scope: docs/audits
+  interaction:
+    domain: interaction
+    owner: interaction-owner
+    packages: []
+    write_scope: docs/audits
+  planning:
+    domain: planning
+    owner: todo-scribe
+    packages: []
+    write_scope: todo
+rules:
+  single_owner_per_package: true
+  split_threshold_lines: 300
+  barrel_max_lines: 80
+  owner_budget_lines: [1500, 3000]
+  index_write: lead_after_merge

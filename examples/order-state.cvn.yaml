@@ -1,0 +1,90 @@
+# 状态机示例：订单生命周期（state@1）
+covenant: "0.1"
+id: order/state
+profile: state@1
+
+meta:
+  title: 订单生命周期
+  purpose: 说明订单状态、触发事件与非法迁移约束，作为状态机实现契约。
+  non_goals:
+    - 每个状态的内部字段
+    - 定时任务细节
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+elements:
+  - id: e.initial
+    kind: initial
+    name: 新建
+    summary: 入口
+  - id: e.created
+    kind: state
+    name: 已创建
+    summary: 订单已落库
+  - id: e.paying
+    kind: state
+    name: 支付中
+    summary: 等待支付结果
+  - id: e.paid
+    kind: state
+    name: 已支付
+    summary: 支付成功待履约
+  - id: e.cancelled
+    kind: final
+    name: 已取消
+    summary: 终态
+  - id: e.done
+    kind: final
+    name: 已完成
+    summary: 终态
+
+relations:
+  - id: r.t1
+    kind: transition
+    from: e.initial
+    to: e.created
+    summary: 下单
+    props: { trigger: 下单, action: 写订单表 }
+  - id: r.t2
+    kind: transition
+    from: e.created
+    to: e.paying
+    summary: 发起支付
+    props: { trigger: 支付 }
+  - id: r.t3
+    kind: transition
+    from: e.paying
+    to: e.paid
+    summary: 授权成功
+    props: { trigger: 授权成功, guard: 金额一致 }
+  - id: r.t4
+    kind: transition
+    from: e.paying
+    to: e.cancelled
+    summary: 支付超时
+    props: { trigger: 超时, action: 释放库存 }
+  - id: r.t5
+    kind: transition
+    from: e.created
+    to: e.cancelled
+    summary: 用户取消
+    props: { trigger: 取消 }
+  - id: r.t6
+    kind: transition
+    from: e.paid
+    to: e.done
+    summary: 履约完成
+    props: { trigger: 履约完成 }
+
+views:
+  - id: v.main
+    title: 订单生命周期
+    include:
+      elements: [e.*]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 130, node: 60 }

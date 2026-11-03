@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="846" height="130" viewBox="0 0 846 130" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">核心视图</title>
+<desc id="cvn-desc">演示视图选择器（include/exclude/tag）</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="846" height="130" fill="#ffffff"/>
+<g class="edge" data-id="r.w-a"><path d="M218 65 L238 65 L259 65 L308 65 L328 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 65 L238 65 L259 65 L308 65 L328 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.a-d"><path d="M518 65 L538 65 L559 65 L608 65 L628 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M518 65 L538 65 L559 65 L608 65 L628 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<rect class="edge-label-bg" x="238.56" y="54" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="258" y="65" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<rect class="edge-label-bg" x="535.67" y="54" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+<text class="edge-label" x="558" y="65" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<g class="node kind-container" data-id="e.web">
+<rect x="28" y="28" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="52" font-size="13" font-weight="650" fill="#0f172a">Web</text>
+<text x="40" y="70" font-size="11" fill="#64748b">React</text>
+<text x="40" y="88" font-size="10.5" fill="#94a3b8">浏览器端</text>
+</g>
+<g class="node kind-container" data-id="e.api">
+<rect x="328" y="28" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="340" y="52" font-size="13" font-weight="650" fill="#0f172a">API</text>
+<text x="340" y="70" font-size="11" fill="#64748b">Go</text>
+<text x="340" y="88" font-size="10.5" fill="#94a3b8">业务服务</text>
+</g>
+<g class="node kind-datastore" data-id="e.db">
+<rect x="628" y="28" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="640" y="52" font-size="13" font-weight="650" fill="#0f172a">DB</text>
+<text x="640" y="70" font-size="11" fill="#64748b">PostgreSQL</text>
+<text x="640" y="88" font-size="10.5" fill="#94a3b8">主库</text>
+</g>
+</svg>

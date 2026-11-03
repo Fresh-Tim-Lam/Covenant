@@ -1,0 +1,86 @@
+# 接线点拓扑示例：节点=真实交点（不是框），交叉处用跳线弧表示"不相交"，边标签用胶囊
+covenant: "0.1"
+id: topology/junction
+profile: graph@1
+
+meta:
+  title: 接线点拓扑（junction）
+  purpose: 演示 node_style=junction、交叉跳线弧、边标签胶囊。
+  non_goals:
+    - 真实网络拓扑
+  owners: [human:team]
+  status: draft
+  rev: 1
+  updated: 2026-11-03T00:00:00+08:00
+
+views:
+  - id: v.main
+    title: 拓扑
+    present:
+      node_style: junction
+    layout:
+      pins:
+        e.a: [40, 40]
+        e.b: [300, 40]
+        e.c: [560, 40]
+        e.d: [40, 260]
+        e.e: [300, 260]
+        e.f: [560, 260]
+
+elements:
+  - id: e.a
+    kind: module
+    name: A
+    summary: 入口
+    props: { path: packages/a }
+  - id: e.b
+    kind: module
+    name: B
+    summary: 中间
+    props: { path: packages/b }
+  - id: e.c
+    kind: module
+    name: C
+    summary: 旁路
+    props: { path: packages/c }
+  - id: e.d
+    kind: module
+    name: D
+    summary: 左端
+    props: { path: packages/d }
+  - id: e.e
+    kind: module
+    name: E
+    summary: 汇聚
+    props: { path: packages/e }
+  - id: e.f
+    kind: module
+    name: F
+    summary: 出口
+    props: { path: packages/f }
+
+relations:
+  - id: r.af
+    kind: imports
+    from: e.a
+    to: e.f
+    summary: 跨层
+    props: { label: A→F 跨层 }
+  - id: r.bd
+    kind: imports
+    from: e.b
+    to: e.d
+    summary: 反向
+    props: { label: B→D 反向 }
+  - id: r.ce
+    kind: imports
+    from: e.c
+    to: e.e
+    summary: 旁路
+    props: { label: C→E 旁路 }
+  - id: r.be
+    kind: imports
+    from: e.b
+    to: e.e
+    summary: 直连
+    props: { label: B→E 直连 }
