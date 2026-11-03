@@ -11,7 +11,7 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 7
+  rev: 8
   owners: [human:lily]
   updated: 2026-11-03T20:20:00+08:00
   ai:
@@ -416,7 +416,9 @@ annotations:
     type: "question"
     severity: "medium"
     title: "html的组织"
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T12:21:55.051Z"
+    resolution: {"by":"human:you","at":"2026-11-03T12:21:55.051Z"}
     author: "human:you"
     created: "2026-11-03T14:40:02+08:00"
     ai_hint: "我认为架构图们不是用单个html文件全部装起来的，得用一个文件夹，把整一套打包好，请你完善设计"
@@ -436,7 +438,9 @@ annotations:
     type: "question"
     severity: "medium"
     title: "我想问问你的审计是基于git写的还是手搓"
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T12:21:55.051Z"
+    resolution: {"by":"human:you","at":"2026-11-03T12:21:55.051Z"}
     author: "human:you"
     created: "2026-11-03T14:44:47+08:00"
   - id: "a.01K8QZ3M9V7B4X2C6D5F1G0HNP"
@@ -449,7 +453,9 @@ annotations:
       dist/site/index.html（直接复用主查看器）+ manifest.json（version 3, entries）+ views/*.svg + annotations.json；
       dist/covenant.html 单文件仍是默认主路径。两者共用同一 layout+render 管线，零外部请求。
       详见 docs/design/html-output-bundle-proposal.md。
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T12:21:55.051Z"
+    resolution: {"by":"human:you","at":"2026-11-03T12:21:55.051Z"}
     author: "ai:arch-owner"
     created: "2026-11-03T18:45:00+08:00"
     links:
@@ -464,7 +470,9 @@ annotations:
       patch/apply.ts 先写 intent → 临时文件复验 → rename → commit（.audit/*.jsonl）；
       edit --accept 另写备份 + edit-*.jsonl。git 仅在编辑 diff 展示中可选使用（git diff --no-index），
       不参与审计与追溯。详见 docs/design/ai-trust-boundary.md §9 与 packages/patch/src/apply.ts。
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T12:21:55.051Z"
+    resolution: {"by":"human:you","at":"2026-11-03T12:21:55.051Z"}
     author: "ai:arch-owner"
     created: "2026-11-03T18:45:00+08:00"
     links:
@@ -474,7 +482,9 @@ annotations:
     type: "risk"
     severity: "high"
     title: "为什么这个不连MCP但是线上却和AIAGENt的线有“实心圆”的交点"
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T12:21:55.051Z"
+    resolution: {"by":"human:you","at":"2026-11-03T12:21:55.051Z"}
     author: "human:you"
     created: "2026-11-03T19:39:06+08:00"
     ai_hint: "检查"
