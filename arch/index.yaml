@@ -66,7 +66,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 渲染必须确定性：同输入逐字节一致
-    source_sha256: 42e0f98cccf12d9ed957564a64b4174bcf514986858066ec611595b64e43ff8d
+    source_sha256: af36881e4976377a36a2b463a1b0bf1ca0ef4dad215d8e4aeca40f52b43ef07f
   - file: packages/render/src/html.ts
     f: 可标注自包含 HTML：内联 SVG + 内嵌语义 JSON + 状态流转
     r:

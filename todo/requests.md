@@ -605,7 +605,7 @@
 
 - **整理**（引用外，todo-scribe 归纳，非用户原话）：
   1. 用户期望 Covenant 是**可交付物 Package**，能**派给别的团队**（对方拿到即可用，不依赖本仓库/dev 环境）。
-  - lead 已落盘：新增 `scripts/build-kit.mjs`（esbuild 打包**单文件 CLI** + 模板/示例/docs/schema + 预构建 viewer），产出 `dist/covenant-kit-0.1.0/`；`Compress-Archive` 得 `dist/covenant-kit-0.1.0.zip`（191,383 B）+ `.sha256`；**可移植性实测**：复制到干净临时目录、仅用 `node bin/covenant.mjs` 跑通 `check`/`build`/`bundle`（无需 pnpm/网络）；修复点：kit 必须自带 `schema/` 作为仓库根锚点。
+  - lead 已落盘：新增 `scripts/build-kit.mjs`（esbuild 打包**单文件 CLI** + 模板/示例/docs/schema + 预构建 viewer），产出 `dist/covenant-kit-0.1.0/`；`Compress-Archive` 得 `dist/covenant-kit-0.1.0.zip` + `.sha256`（**zip 口径见下方更正：本地早期 191,383 B / 重建 191,667 B / GitHub Release 194,425 B，不跨环境钉一个 sha**）；**可移植性实测**：复制到干净临时目录、仅用 `node bin/covenant.mjs` 跑通 `check`/`build`/`bundle`（无需 pnpm/网络）；修复点：kit 必须自带 `schema/` 作为仓库根锚点。
   - 对应任务：T40（已完成）、T42（待办：首发 Release，依赖 git init/LICENSE/包名）；对应决策：D-049。
 
 ## R-032 两套分发范式：本地可信 vs GitHub 公开
@@ -623,7 +623,7 @@
   - 对应任务：T41（已完成）、T42（待办：首发 v0.1.0 Release）；对应决策：D-049；对应问题：todo/Q15（git init / LICENSE / 包名）。
 - **现状核对**（2026-11-03 17:17 +08:00，只读静态检查，**未运行 pnpm**）：
   - `scripts/build-kit.mjs` 5,571 B @16:52:06；kit 产物 `dist/covenant-kit-0.1.0/`：`bin/covenant.mjs` **670,266 B**、`bin/covenant.cmd` 40 B、`viewer/covenant.html` 60,707 B、`schema/kernel.schema.json` 14,334 B、`schema/README.md` 2,919 B、`templates/team-starter/{covenant.yaml,arch/system.cvn.yaml}`、`examples/{payments-arch,topology-junction,quickstart/mini}.cvn.yaml`、`docs/{format-spec,module-ownership,edit-and-deploy}.md`、`inbox-template/{README,_TEMPLATE}.md`、`README.md` 1,926 B、`VERSION` 6 B；
-  - `dist/covenant-kit-0.1.0.zip` **191,383 B** @16:52:07；`dist/covenant-kit-0.1.0.zip.sha256` 89 B，内容 `680dc0ac7073e159b99332f476d4be0db760778cc1ffd41e9ebf193d7ec6bde0  covenant-kit-0.1.0.zip`；
+  - `dist/covenant-kit-0.1.0.zip` **191,383 B** @16:52:07；`dist/covenant-kit-0.1.0.zip.sha256` 89 B，内容 `680dc0ac7073e159b99332f476d4be0db760778cc1ffd41e9ebf193d7ec6bde0  covenant-kit-0.1.0.zip`（**更正：该构建已被 17:25 重建覆盖，见下**）；
   - `docs/guides/distribution-paradigm.md` 4,169 B @17:15:17（两模式对比表 L5-17、共享不变量 L19-25、本地模式 L27+）；`.github/ISSUE_TEMPLATE/requirement.yml` 1,464 B、`bug.yml` 1,221 B、`.github/PULL_REQUEST_TEMPLATE.md` 815 B @17:15:17-43；`.github/workflows/verify.yml` L35-42（Build kit + Upload artifact `covenant-kit` → `dist/covenant-kit-*`）；`CONTRIBUTING.md` L77-80 分发章节；`package.json` L4 `private: true`、L14 `package:kit`；`arch/index.yaml` L298 `- file: scripts/build-kit.mjs`（全索引 **33** 条）；
   - 全仓 **268 tests**、verify 全绿（index 33 / adr 4 / modules 13）**均为 lead 实测**；todo-scribe 未复跑（静态核对产物/文件存在）。
 
@@ -647,8 +647,78 @@
   - `LICENSE` 首行 `MIT License`、`Copyright (c) 2026 ALLELab`；`package.json` L3 `"license": "MIT"`、L5 `"private": true`；
   - `docs/releases/v0.1.0.md` **2,352 B** @17:21:01；`.github/workflows/release.yml` **1,024 B** @17:22:35（`on.push.tags: v*`、permissions contents:write、verify → build kit → zip+sha256sum → softprops/action-gh-release@v2，附 zip + sha256，`body_path: docs/releases/${ref_name}.md`）；
   - `.gitignore` L38-43：`.audit/`、`team/dispatch-log.jsonl`、`team/access-log.jsonl`、`team/memory/`、`team/trajectory/`、`.vite/`（另有 `.vitest/` L11）；
-  - 发布资产**实测（17:25:22 重建）**：`dist/covenant-kit-0.1.0.zip` **191,667 B**、`.sha256` = `89627c2dca3c719baa7b0b54d5ad2a7529dd16009c7b605ed11eae3e23c5d0ef`；**与 lead 报告（191,383 B / `a6fe6836…`）不一致**——差异应为 16:52 与 17:25 两次构建之间文件变更（如 docs/LICENSE 等），**以当前磁盘实测为准，口径待对**；
+  - 发布资产（**三口径，2026-11-03 19:15 lead 口径更正**）：①本地**最新** `dist/covenant-kit-0.1.0.zip` **191,667 B**、`.sha256` = `89627c2dca3c719baa7b0b54d5ad2a7529dd16009c7b605ed11eae3e23c5d0ef`（@17:25:22，磁盘实测）；②更早本地构建 **191,383 B** / `a6fe6836…`（@16:52，**已被覆盖**）；③**GitHub Release 资产 `194,425 B`**（CI 重新构建，zip 内时间戳不同 → sha 不同；Release 自带 CI 生成的 `.sha256`）。**结论：不要跨环境钉一个 zip sha**；发布以 Release 附件的 `.sha256` 为准，本地 zip 仅供内网分发；
   - FRAS **33** 条；全仓 **268 tests**、verify 全绿（index 33 / adr 4 / modules 13）**均为 lead 实测**；todo-scribe 未复跑。
+
+## R-034 交点表示改为空心/实心圆点（取消跳线弧）
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 19:11 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 不用半圆表示不相交交点了，现在用空心原点表示，   实心远点表示相交交点
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. **取消跳线弧**（半圆）；**几何交叉 = 空心圆**（`crossing-hollow`）；**T 型汇入/共享折点 = 实心圆**（`crossing-solid`）。用户原话中"原点/远点"为"圆点"的输入笔误（按原样保留引用）。
+  - 实现（由 lead 实测）：`layout` 输出 `hollow`/`solid` 交点标记；`render` 画 `circle.crossing`（solid r=3 填充 / hollow r=3.2 白底描边）；测试断言空心/实心数量。
+  - 对应任务：T43（已完成）；对应决策：D-051。
+- **现状核对**（2026-11-03 19:11 +08:00，只读静态检查，**未运行 pnpm**）：`packages/layout/src/index.ts` L197 `kind: "hollow" | "solid"`、L212-213 去重（4px 内不重复 hollow）；`packages/render/src/index.ts` L560-572 `hollowCrossings`、L632-636 `crossing-solid`/`crossing-hollow`（r=3/3.2）；测试 `render.test.ts:253`（对角线交叉→hollow）、`:304-305`（T型/共享→solid + 纯交叉→hollow）、`:307-308`（数量断言）。
+
+## R-035 车道间距按胶囊宽度预留
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 19:11 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 线之间间隔还是不够，导致胶囊挡住别的线，得按照胶囊宽度考虑
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. 车道间距要**按胶囊尺寸预留**：通道 **25px**；水平车道 = **最大胶囊宽 + 10**；间隙不足则**扩画布**（不压回旧的 14/18）。
+  - 实现（由 lead 实测）：`CHANNEL_STEP=25`；垂直车道 ≥ 胶囊高 17+8；水平车道按最大胶囊宽 +10；画布随之变宽（system 4447×1483）。
+  - 对应任务：T43（已完成）；对应决策：D-051。
+- **现状核对**（19:11 静态）：`packages/layout/src/index.ts` L430 `const CHANNEL_STEP = 25;`；L441 注释"垂直布局车道沿 y 偏移 → ≥ 胶囊高 17 + 8。间隙不够就加大 rankGap（不压回小间距）"；L423-425 长边通道/lane 注释；`dist/arch.html` viewBox `0 0 4447 1483`（system）。
+
+## R-036 线路规划不能穿过别的框，得绕过
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 19:11 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 线路规划有问题，不能穿过别的框，得绕过
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. 长边**不能穿过别的框**，必须**绕过**；长边改为「侧边 stub → 间隙 lane → 通道 → 目标 lane → stub」，**竖/横段只走间隙**；`clearPath` 扩展到**全部线段/端口**。
+  - 实现（由 lead 实测）：14 快照 P0/P1 全 0（system 38→0、self 31→0、payments 4→0）；15 黄金更新（Q 残留 0）；281→**282 tests** 全绿；viewer jsdom 49/49；顺带修「导出补丁 JSON `doc is not defined`」。
+  - 对应任务：T43（已完成）；对应决策：D-051。
+- **现状核对**（19:11 静态）：`packages/layout/src/index.ts` L423-425 注释明确"长边（跨层 > 1）走'通道 + 侧边走廊'：先从框侧引出短 stub，再进列/行间隙里的独立 lane，上行/左行到通道，横/竖走到目标侧 lane，最后 stub 进目标框；竖/横段全部落在间隙与通道带里，因此不会穿过任何中间层节点；lane 互异，平行长边不贴合"。
+
+### T43 收尾记录（2026-11-03 19:11，lead 实测）
+
+- **diagram-owner**：14 快照 P0/P1 **全 0**（system 38→0、self 31→0、payments 4→0）；15 黄金更新（Q 残留 0）；**282 tests** 全绿；viewer jsdom **49/49**；修复「导出补丁 JSON doc is not defined」。
+- **arch-owner**：task-7 完成；`arch/system.cvn.yaml` **rev 3**（v.main + v.delivery）；`examples/covenant-self.cvn.yaml` **rev 5**（修 3 条错误方向、新增 2 条 AI 批注）。
+- **Lead**：`pnpm index --write` + verify 全绿；重建 `dist/covenant.html`、`dist/arch.html`、`dist/site`（16 views）；提交 **9e0ca14** 并推送 GitHub，CI verify **success**；远端 `origin` 已配置（`ssh://git@ssh.github.com:443/Fresh-Tim-Lam/Covenant.git`）。
+- **静态实测补充（2026-11-03 19:15 口径更正，lead 确认）**：产物以**字节**为准（`build:html` 打印的是 `html.length/1024` 即 UTF-16 字符数，中文 1 字符 3 字节 → 打印值偏小）：`dist/covenant.html` **249,956 B（≈244.1 KiB，构建打印 231.2 KB）**、`dist/arch.html` **161,574 B（≈157.8 KiB，构建打印 151.5 KB）**、`dist/site/index.html` **249,956 B**（与主查看器同字节数）；`dist/arch.html` viewBox `0 0 4447 1483`。**交点圆点数按文件分别记**：`dist/covenant.html`（16 个 examples 文档）hollow **218** / solid **11**；`dist/arch.html`（system v.main+v.delivery，41 边）hollow **269** / solid **5**——两个统计都对，只是范围不同，**不要合成一个数**。
+- **待用户**：①3 条批注结案确认（`a.V0N15…`、`a.BBXNVV…`、`a.0JCN…`，均在 `covenant-self.cvn.yaml`，现 `status: open`，human-only 状态流转需用户确认）；②真实浏览器验收 `a.01JAYS3KV0003`（system）。
+
+## R-037 已看更新后的架构图；接受画布变宽
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 19:40 +08:00）
+- **来源**：用户消息（lead 逐字转引）
+- **原话**：
+
+> 看我架构图更新的；画布变宽完全能接受
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. 用户已**查看更新后的自身架构图**；对 **画布变宽完全能接受**（这是 layout 按胶囊留距/绕框的代价，**不要求压缩**）。
+  - lead 复核（渲染 PNG 实测）：`dist/review/system.png` / `covenant-self.png`（SVG 同目录）；system **4447×1483、20 节点/41 边、无穿框**，顶部通道大量并行长边（"calls" 成梯子）主图偏密；covenant-self **3431×860、15 节点/27 边、无穿框**，可读性尚可、红点批注角标可见、顶部仍有并行长边带。
+  - 结论：**布局正确性达标**；可读性上 system 建议后续拆 `v.libs`（包依赖）第三视图，主图保留 actor/入口/存储/产物/交付。
+  - 对应任务：T44（已完成）；对应决策：D-052；对应问题：todo/Q16（v.libs 是否拆）。
+- **现状核对**（2026-11-03 19:40 +08:00，只读静态检查，**未运行 pnpm**）：
+  - `dist/review/system.svg` 72,504 B / `system.png` 152,971 B @19:40:08-11；`dist/review/covenant-self.svg` 53,733 B / `.png` 146,688 B @19:40:09-13；
+  - review SVG viewBox：system `0 0 4447 1483`、covenant-self `0 0 3431 860`（与 lead 报一致）；`dist/arch.html` viewBox `0 0 4447 1483`；
+  - `examples/covenant-self.cvn.yaml` 内元素/关系：静态计数 **15 节点 / 27 关系**（与 lead 一致）；
+  - `arch/system.cvn.yaml`：静态**唯一元素 id 24、唯一关系 id 15（文件内 46 处关系引用，含 v.main/v.delivery 两视图重复）**；lead 报"20 节点/41 边"应为**渲染视图口径**，与文件口径不同，此处只记录差异、不裁决；
+  - **v.libs 拆分仅为建议，未实施**（静态无 `v.libs` 视图定义）；待用户决定是否拆（todo/Q16）。
 
 ---
 
@@ -684,3 +754,6 @@
 | 2026-11-03 16:36 +08:00 | R-030 转引 | 未拿到原始消息，以 lead 转引为准；原话中 `""D:\AAA_Work\ALLELab"`（双引号叠用/半角）与"规范  设计"（双空格）均按原样保留 |
 | 2026-11-03 17:17 +08:00 | R-031 / R-032 转引 | 未拿到原始消息，以 lead 转引为准；R-031"Covenant打包成可交付物Package"（无空格）与 R-032"发到github"（小写）均按原样保留 |
 | 2026-11-03 17:25 +08:00 | R-033 转引 | 未拿到原始消息，以 lead 转引为准；原话"批准  许可选过了   发release"**空格按原样保留**（"批准"后 2 空格、"选过了"后 3 空格、release 小写）；另：zip/sha 与 lead 报告值不一致（见 R-033 现状核对，口径待对） |
+| 2026-11-03 19:11 +08:00 | R-034 ~ R-036 转引 | 未拿到原始消息，以 lead 转引为准；R-034"空心原点/实心远点"（"圆点"笔误）与双空格、R-035"得按照胶囊宽度考虑"、R-036"得绕过"均按原样保留 |
+| 2026-11-03 19:15 +08:00 | 产物口径更正（`231.2 KB`/`151.5 KB`、`hollow 218+solid 11`、`kit 191,383+a6fe`） | **以 lead 口径核对结果为准**：①KB→字节（covenant.html 249,956 B≈244.1 KiB，打印 231.2 KB；arch.html 161,574 B≈157.8 KiB，打印 151.5 KB；site/index.html 249,956 B）；②圆点数按文件分开（covenant.html 218/11；arch.html 269/5）；③kit zip 三口径（本地最新 191,667/`89627c2d…`；早期本地 191,383/`a6fe6836…` 被覆盖；GitHub Release 194,425 B，附 CI `.sha256`）——**不跨环境钉 zip sha**；以上已改入 R-031/R-033/T43 记录，旧数保留在"早期构建/打印值"备注中 |
+| 2026-11-03 19:40 +08:00 | R-037 转引 | 未拿到原始消息，以 lead 转引为准；"看我架构图更新的；画布变宽完全能接受"按原样保留（"的"为口语语气词） |

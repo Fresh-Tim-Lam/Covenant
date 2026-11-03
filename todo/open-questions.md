@@ -1,8 +1,8 @@
 # 待确认问题（open-questions）
 
 > **规则**：问题一旦提出不删除；用户回答后补"结论 + 日期"，并把结论同步到 [decisions.md](decisions.md) 与 [plan.md](plan.md)。
-> **编号命名空间**：本文件的 `Q1 ~ Q15` 属于 **todo 区问题编号**，与 `docs/design/open-questions.md` 里的项目决策 `Q5–Q10` **不是同一套编号**。对外引用请写 `todo/Q1`。
-> **状态**：15 个问题中 **Q1、Q2、Q5、Q11、Q12 已解决**；**Q3 已收窄**（剩余"是否批准 `git init` + 何时加 C"）；**Q13**（bundle 是否写回）、**Q14**（ALLELab 试点三问）、**Q15**（发布三问：git init/LICENSE/npm 包名）待确认；仍待用户确认：Q4、Q6–Q10、Q13、Q14、Q15。
+> **编号命名空间**：本文件的 `Q1 ~ Q16` 属于 **todo 区问题编号**，与 `docs/design/open-questions.md` 里的项目决策 `Q5–Q10` **不是同一套编号**。对外引用请写 `todo/Q1`。
+> **状态**：16 个问题中 **Q1、Q2、Q5、Q11、Q12 已解决**；**Q3 已收窄**（剩余"是否批准 `git init` + 何时加 C"）；**Q13**（bundle 是否写回）、**Q14**（ALLELab 试点三问）、**Q16**（system 是否拆 v.libs）待确认；**Q15 部分关闭**（git init ✅、LICENSE=MIT ✅、npm 暂缓）；仍待用户确认：Q4、Q6–Q10、Q13、Q14、Q16（及 Q15 剩余"包名/是否发 npm"）。
 
 ## 一句话汇总（给 lead 汇报用）
 
@@ -15,7 +15,8 @@
 7. **Q12（已解决）**：region 批注坐标漂移经用户确认已解决（批注 open→resolved，covenant-self rev 2→3）；不再作为格式缺口跟踪；若重现再按 `element/frame id` 锚点方案处理。
 8. **Q13 bundle 是否做编辑/批注写回**：bundle 已复用主查看器（R-029，UI 同款），但仍以静态文件分发，**写回 `.cvn.yaml` 仍走 `edit:serve`**；是否让 bundle 自带写回待定。
 9. **Q14 ALLELab 试点三问**：①试点子目录（默认 `coursepack-omp-main`）？②首批 2–3 名需求作者？③跨工作区落盘方式（直接写 Covenant inbox vs `docs/team-handoff` 由 Lead 搬入）？
-10. **Q15 发布三问**：①是否批准 **`git init`**？②**LICENSE** 选哪个（公开发布必需）？③只发 **Release zip** 还是同时发 **npm 包**（需定包名、去 `private: true`）？
+10. **Q15 发布三问（部分关闭）**：①`git init` ✅ 已批准（commit `86136c9` + tag `v0.1.0` + 远端推送 9e0ca14）；②LICENSE ✅ 已定 **MIT**；③npm **暂缓**（Release-only，`private: true` 保持）——仅剩包名/是否发 npm 的决策。
+11. **Q16 system 主图是否拆 `v.libs` 第三视图**：system 4447×1483 主图偏密（顶部并行长边成梯子）；是否拆出包依赖 `v.libs` 视图，主图保留 actor/入口/存储/产物/交付？（用户已接受画布变宽 R-037，拆分非必须）
 
 ---
 
@@ -171,15 +172,22 @@
 - **关联**：T38（已完成）、T39（待办）、D-048、`todo/inbox/ALLELab/*`。
 - **状态**：待用户/团队确认（2026-11-03 提出）。
 
-## Q15 发布三问：`git init` / LICENSE / npm 包
+## Q15 发布三问：`git init` / LICENSE / npm 包（部分关闭）
 
-- **背景**：可交付 kit 与 GitHub 分发骨架已就绪（T40/T41、D-049），但**首发 v0.1.0 Release（T42）被三件事阻塞**。
-- **三问**：
-  1. **`git init` 批准**？——仓库当前**未初始化**（静态无 `.git`；与 Q3/Q9b 同一决策）。
-  2. **LICENSE 选哪个**？——公开发布必需（如 MIT / Apache-2.0 / 其他）；未定前不发布。
-  3. **只发 Release zip，还是同时发 npm 包**？——根 `package.json` 仍 `private: true`；若发 npm 需定**包名**、去 private、发布策略（`npx` 体验 vs 只发资产）。
-- **为什么问**：三项都是**一次性公开承诺**（不可逆/对外可见），不能由内部 agent 代为决定。
-- **关联**：T42（首发 Release）、T40（kit）、T41（GitHub 骨架）、D-049；另见 Q3/Q9b（git init）。
+- **背景**：可交付 kit 与 GitHub 分发骨架已就绪（T40/T41、D-049）；用户已答复 R-033（"批准  许可选过了   发release"）→ **前两问关闭**。
+- **三问与结论**：
+  1. **`git init` 批准**？→ **已关闭（2026-11-03，用户批准 R-033）**：已 `git init -b main` + commit `86136c9` + annotated tag `v0.1.0`；远端已配置并推送成功（9e0ca14，CI verify success）。
+  2. **LICENSE 选哪个**？→ **已关闭（2026-11-03，用户"许可选过了"）**：落 **MIT**（Copyright 2026 ALLELab），`package.json` `"license": "MIT"`（保持 `private: true`）。
+  3. **只发 Release zip，还是同时发 npm 包**？→ **暂缓（Release-only，暂不发 npm）**：仅剩**包名/是否发 npm** 的决策（当前 `private: true`，不阻塞 Release；见 D-050）。
+- **关联**：T42（首发 Release，进行中）、T40、T41、D-049、D-050；另见 Q3/Q9b（git init 已由 R-033 关闭）。
+- **状态**：**部分关闭（2026-11-03）**——git init ✅、LICENSE=MIT ✅、npm 发布暂缓（只留包名决策）。
+
+## Q16 system 主图是否拆 `v.libs` 第三视图
+
+- **背景**：用户已接受画布变宽（R-037、D-052）；lead 渲染复核指出 system 主图（4447×1483、20 节点/41 边）**顶部通道并行长边多**、整体偏密。
+- **建议**：拆 `v.libs`（包依赖）第三视图，主图保留 actor / 入口 / 存储 / 产物 / 交付；主图更疏朗，包依赖另图可展开。
+- **取舍**：拆分=多一张图要维护、视图导航多一项；不拆=主图继续偏密（已可用、无穿框）。**非必须**，由用户决定。
+- **关联**：T44（已完成）、D-052、`arch/system.cvn.yaml`（rev3）、`dist/review/system.png`。
 - **状态**：待用户确认（2026-11-03 提出）。
 
 ---
@@ -202,4 +210,5 @@
 | Q12 | region 批注稳定锚点方案（格式缺口） | 中 | 2026-11-03 | **已解决（用户确认坐标漂移已解决；批注 open→resolved，不再跟踪）** | 2026-11-03 / 用户确认（R-024；D-040 更新） |
 | Q13 | bundle 是否做编辑/批注写回 | 中 | 2026-11-03 | 待用户确认（bundle 已复用主查看器 UI，但仍静态分发；编辑/写回仍走主查看器 + edit:serve） | — （T35/D-044 备注） |
 | Q14 | ALLELab 试点：子目录 / 需求作者 / 跨工作区落盘方式 | 中 | 2026-11-03 | 待用户/团队确认（默认 coursepack-omp-main；作者 2–3 名；落盘二选一） | — （T38/T39、D-048） |
-| Q15 | 发布三问：`git init` / LICENSE / 是否发 npm 包 | 高 | 2026-11-03 | 待用户确认（三问可分别回答；三项都阻塞 T42 首发 Release） | — （T42、D-049） |
+| Q15 | 发布三问：`git init` / LICENSE / 是否发 npm 包 | 高 | 2026-11-03 | **部分关闭（git init ✅、LICENSE=MIT ✅、npm 暂缓）**；仅剩包名/是否发 npm 决策 | 2026-11-03 / 用户 R-033；D-050 |
+| Q16 | system 主图是否拆 `v.libs` 第三视图 | 中 | 2026-11-03 | 待用户确认（拆分非必须；不拆则主图偏密但已可用、无穿框） | — （T44/D-052） |

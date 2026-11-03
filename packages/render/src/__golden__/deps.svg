@@ -12,7 +12,6 @@
 <g class="edge" data-id="r.cli-layout"><path d="M218 246 L298.43 246 L298.43 85 L661.28 85 L661.28 228 L874.55 228" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 246 L298.43 246 L298.43 85 L661.28 85 L661.28 228 L874.55 228" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
 <g class="edge" data-id="r.cli-render"><path d="M218 264 L238 264 L358.85 264 L358.85 300 L431.28 300 L451.28 300" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 264 L238 264 L358.85 264 L358.85 300 L431.28 300 L451.28 300" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
 <g class="edge" data-id="r.core-fs"><path d="M1487.82 237 L1507.82 237 L1607.82 237 L1627.82 237" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1487.82 237 L1507.82 237 L1607.82 237 L1627.82 237" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<circle class="crossing crossing-solid" cx="238" cy="210" r="3" fill="#94a3b8" stroke="none" pointer-events="none"/>
 <circle class="crossing crossing-hollow" cx="721.7" cy="174" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
 <circle class="crossing crossing-hollow" cx="842.55" cy="35" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
 <circle class="crossing crossing-hollow" cx="1205.4" cy="246" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>

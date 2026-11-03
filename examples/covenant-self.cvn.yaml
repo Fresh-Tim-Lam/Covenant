@@ -11,7 +11,7 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 5
+  rev: 6
   owners: [human:lily]
   updated: 2026-11-03T18:45:00+08:00
   ai:
@@ -403,7 +403,9 @@ annotations:
     severity: "high"
     title: "什么叫大模型服务"
     body: "这个大模型服务设计在这里的目的是什么"
-    status: "open"
+    status: "resolved"
+    updated: "2026-11-03T11:47:15.824Z"
+    resolution: {"by":"human:you","at":"2026-11-03T11:47:15.824Z"}
     author: "human:you"
     created: "2026-11-03T14:43:48+08:00"
   - id: "a.0JCN0VFAMFCPXYECX82JQR0STZ"
@@ -444,6 +446,15 @@ annotations:
     created: "2026-11-03T18:45:00+08:00"
     links:
       - { kind: doc, ref: "../docs/design/ai-trust-boundary.md" }
+  - id: "a.A224K8DX2PQ90FZ6Q9BMZGFK38"
+    target: {"kind":"relation","id":"r.human-viewer"}
+    type: "risk"
+    severity: "high"
+    title: "为什么这个不连MCP但是线上却和AIAGENt的线有“实心圆”的交点"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-03T19:39:06+08:00"
+    ai_hint: "检查"
 
 constraints:
   - id: k.no-cycle

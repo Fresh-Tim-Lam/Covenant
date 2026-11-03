@@ -301,11 +301,12 @@ describe("交点圆点（空心=几何交叉 / 实心=真实连接）", () => {
       ranks: {},
     };
     const svg = renderSvg(d, fabricated);
-    expect(svg).toContain("crossing-solid"); // T 型 + 共享折点
+    expect(svg).toContain("crossing-solid"); // T 型汇入
     expect(svg).toContain("crossing-hollow"); // 纯几何交叉
     // 纯几何交叉只应有一个空心点（T 型点不算空心）
     expect((svg.match(/crossing-hollow/g) ?? []).length).toBe(1);
-    expect((svg.match(/crossing-solid/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    // 只有 T 型汇入算实心；共享内部折点（并道/走廊）不算连接、不再画实心
+    expect((svg.match(/crossing-solid/g) ?? []).length).toBe(1);
     expect(svg.match(/ Q[-0-9]/g) ?? []).toHaveLength(0);
   });
 });

@@ -138,7 +138,7 @@
 
 - [ ] 决定后把 `open-questions.md` 中 Q5–Q9 迁入 `docs/conventions/` 并关闭
 - [ ] 格式 v0 冻结后写迁移说明（v0 → v1）
-| **接线点拓扑 + 跳线弧 + 标签胶囊** | `present.node_style: junction`（点节点/点间直线/交叉跳线弧）；所有边标签加胶囊底；示例 `examples/topology-junction.cvn.yaml` + 黄金图；236 tests |
+| **接线点拓扑 + 交点圆点 + 标签胶囊** | `present.node_style: junction`（点节点/点间直线/交点圆点：空心=几何交叉、实心=真实连接）；所有边标签加胶囊底；示例 `examples/topology-junction.cvn.yaml` + 黄金图 |
 | **编辑态拖拽位置** | 编辑模式拖动节点 → 暂存 pins 并回填 X/Y；jsdom 回归测试；修掉 pointer capture 吞 click 的悬浮窗回归 |
 | **悬浮窗钉住/拖拽** | 检查器窗头可拖动；左上角 📌 钉住 → 点背景/Esc 不关闭；jsdom 测试（钉住/关闭/拖窗） |
 | **边-框端口分配** | 每条边独立接入点（同侧排序、16px 最小间距）；端口不足按维度扩框；layout 测试 + 黄金 15 张更新；247 tests |

@@ -163,16 +163,17 @@ function distPointSegment(p: Point, a: Point, b: Point): number {
 }
 
 /**
- * 真实连接点（实心圆）：某条边的折点落在另一条边的线段上（T 型汇入、共享折点、合并走廊）。
+ * 真实连接点（实心圆）：一条边的**端点**落在另一条边的线段上（T 型汇入）。
+ * 仅内部折点重合不算连接——两条边并道/共享走廊会产生折点重合，
+ * 那是路由副作用，不是语义连接（此前会被误标成实心圆）。
  * 排除节点内部与端口附近（那里由节点/箭头表达）；同点去重。
  */
-function solidJoinPoints(edges: Point[][], nodes: Rect[]): Point[] {
+export function solidJoinPoints(edges: Point[][], nodes: Rect[]): Point[] {
   const out: Point[] = [];
   for (let i = 0; i < edges.length; i++) {
     const verts = edges[i]!;
-    // 端点也算：T 型汇入可能是"一条边的端点落在另一条边内部"；
-    // 落在节点边界附近的端口由节点/箭头表达，nearNode 会排除。
-    for (let vi = 0; vi < verts.length; vi++) {
+    // 只取首尾端点（端口/T 型汇入）；内部折点重合是并道副作用，忽略。
+    for (const vi of [0, verts.length - 1]) {
       const p = verts[vi]!;
       if (nearNode(p, nodes)) continue;
       let hit = false;
