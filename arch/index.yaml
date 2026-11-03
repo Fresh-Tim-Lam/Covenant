@@ -303,4 +303,4 @@ entries:
       - .github/workflows/verify.yml
     s:
       - kit 必须自带 schema/ 作为仓库根锚点，否则脱离仓库后 check 失败
-    source_sha256: d6c7078b1257c7a50c631a74b0372d1b21d3efface5c53bf0cc2b6bef9813c4f
+    source_sha256: 654d7a285c130f676178b51f4d5fdb4a3199b388e7ccb814aaa21d805150c3a0
