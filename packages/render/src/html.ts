@@ -6,7 +6,7 @@
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
 import type { CovenantDoc } from "@covenant/core";
-import type { LayoutResult, Rect } from "@covenant/layout";
+import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
 export interface DocView {
   doc: CovenantDoc;
@@ -50,8 +50,38 @@ function anchors(layout: LayoutResult) {
 }
 
 /**
- * 引导线锚点：元素取矩形中心，关系取折线中点（与 badge 锚点不同，badge 偏右上角）。
- * 多小窗的引导线需要"连到元素/边本体"，所以单独投影一份。
+ * 折线按弧长取 t=0.5 的点：保证"连到边的中间"而不是端口/箭头附近。
+ * 不能简单取 points 数组下标中位点——紧凑布局的边通常是 6 点路径
+ * （端口 → 侧边 stub → 竖向 jog → 通道横段 → … → 端口），数组中间点会落在拐角/stub 上。
+ */
+function polylineMidpoint(points: Point[]): Point {
+  if (points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1) return { ...points[0]! };
+  const segs: { a: Point; b: Point; len: number }[] = [];
+  let total = 0;
+  for (let i = 0; i + 1 < points.length; i++) {
+    const a = points[i]!;
+    const b = points[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    segs.push({ a, b, len });
+    total += len;
+  }
+  if (total === 0) return { ...points[0]! };
+  const target = total / 2;
+  let acc = 0;
+  for (const s of segs) {
+    if (acc + s.len >= target) {
+      const t = s.len === 0 ? 0 : (target - acc) / s.len;
+      return { x: s.a.x + (s.b.x - s.a.x) * t, y: s.a.y + (s.b.y - s.a.y) * t };
+    }
+    acc += s.len;
+  }
+  return { ...points[points.length - 1]! };
+}
+
+/**
+ * 引导线锚点：元素取矩形中心，关系取折线按弧长的中点（与 badge 锚点不同，badge 偏右上角）。
+ * 多小窗的引导线需要"连到元素/边本体"的中间位置，所以单独投影一份。
  */
 function centers(layout: LayoutResult) {
   const elements: Record<string, [number, number]> = {};
@@ -60,11 +90,7 @@ function centers(layout: LayoutResult) {
   }
   const relations: Record<string, [number, number]> = {};
   for (const e of layout.edges) {
-    const p = e.points;
-    const mid =
-      p.length === 4
-        ? { x: (p[1]!.x + p[2]!.x) / 2, y: (p[1]!.y + p[2]!.y) / 2 }
-        : (p[0] ?? { x: 0, y: 0 });
+    const mid = polylineMidpoint(e.points);
     relations[e.id] = [mid.x, mid.y] as [number, number];
   }
   return { elements, relations };

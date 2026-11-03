@@ -33,9 +33,32 @@ function doc(): CovenantDoc {
 }
 
 function html(): string {
-  const d = doc();
+  return htmlOf(doc());
+}
+
+function htmlOf(d: CovenantDoc): string {
   const l = layout(d);
   return renderHtml([{ doc: d, svg: renderSvg(d, l, { showBadges: false }), layout: l }]);
+}
+
+/** 三节点回调图：c→a 是跨两层的长边，紧凑布局下为 6 点路径（含通道段）。 */
+function docLongEdge(): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id: "t/long-edge",
+    profile: "c4-container@1",
+    meta: { title: "长边", purpose: "p", non_goals: [] },
+    elements: [
+      { id: "e.a", kind: "container", name: "A", summary: "a", tech: "ts" },
+      { id: "e.b", kind: "container", name: "B", summary: "b", tech: "ts" },
+      { id: "e.c", kind: "datastore", name: "C", summary: "c", tech: "pg", props: { storage_kind: "rdbms" } },
+    ],
+    relations: [
+      { id: "r.ab", kind: "calls", from: "e.a", to: "e.b", summary: "ab" },
+      { id: "r.bc", kind: "writes", from: "e.b", to: "e.c", summary: "bc" },
+      { id: "r.ca", kind: "reads", from: "e.c", to: "e.a", summary: "ca" },
+    ],
+  };
 }
 
 describe("自包含 HTML 的交互（jsdom 无头）", () => {
@@ -688,6 +711,71 @@ function guideLines(d: Document): SVGLineElement[] {
   return Array.from(d.querySelectorAll<SVGLineElement>("#insp-guides line"));
 }
 
+/* ---- 折线弧长几何（独立实现，用来独立校验 viewer 的"边中点"锚点） ---- */
+
+function polylineLength(points: { x: number; y: number }[]): number {
+  let total = 0;
+  for (let i = 0; i + 1 < points.length; i++) {
+    total += Math.hypot(points[i + 1]!.x - points[i]!.x, points[i + 1]!.y - points[i]!.y);
+  }
+  return total;
+}
+
+/** 沿折线弧长取 t=0.5 的点（与实现无关的期望值）。 */
+function arcMidpoint(points: { x: number; y: number }[]): { x: number; y: number } {
+  const total = polylineLength(points);
+  if (!points.length) return { x: 0, y: 0 };
+  let acc = 0;
+  for (let i = 0; i + 1 < points.length; i++) {
+    const a = points[i]!;
+    const b = points[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (acc + len >= total / 2) {
+      const t = len === 0 ? 0 : (total / 2 - acc) / len;
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+    acc += len;
+  }
+  return { ...points[points.length - 1]! };
+}
+
+/** 折线上离 p 最近的点对应的"自起点的弧长距离"（用于断言离两端端口的距离占比）。 */
+function arcDistanceFromStart(points: { x: number; y: number }[], p: { x: number; y: number }): number {
+  let acc = 0;
+  let best = Number.POSITIVE_INFINITY;
+  let bestArc = 0;
+  for (let i = 0; i + 1 < points.length; i++) {
+    const a = points[i]!;
+    const b = points[i + 1]!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+    const q = { x: a.x + dx * t, y: a.y + dy * t };
+    const dist = Math.hypot(p.x - q.x, p.y - q.y);
+    if (dist < best) {
+      best = dist;
+      bestArc = acc + Math.hypot(q.x - a.x, q.y - a.y);
+    }
+    acc += Math.hypot(dx, dy);
+  }
+  return bestArc;
+}
+
+function round1(v: number): number {
+  return Math.round(v * 10) / 10;
+}
+
+/** 把引导线锚点（屏幕坐标 x2/y2）换回 SVG 用户坐标。 */
+function anchorInSvg(d: Document): { x: number; y: number } {
+  const line = guideLines(d)[0]!;
+  const t = stageTransform(d);
+  return {
+    x: (Number(line.getAttribute("x2")) - t.tx) / t.scale,
+    y: (Number(line.getAttribute("y2")) - t.ty) / t.scale,
+  };
+}
+
 describe("「新增批注」表单默认折叠", () => {
   it("默认收起；点击标题行展开；再点收起", () => {
     const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
@@ -915,7 +1003,7 @@ describe("窗口拖拽与同色引导线", () => {
     expect(line.getAttribute("y2")).toBe(before.y2);
   });
 
-  it("引导线连到元素中心 / 边中点，且颜色=窗口色", () => {
+  it("引导线连到元素中心 / 边的弧长中点，且颜色=窗口色", () => {
     // 元素锚点
     const domA = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
     const wa = domA.window;
@@ -929,16 +1017,52 @@ describe("窗口拖拽与同色引导线", () => {
     const winA = visibleWins(da)[0]!;
     expect(lineA.getAttribute("stroke")).toBe(winA.getAttribute("data-color"));
 
-    // 边锚点（关系中点）
+    // 边锚点：路径弧长 t=0.5 的中点（不是端点/箭头）
     const domB = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
     const wb = domB.window;
     const db = wb.document;
     db.querySelector("svg .edge")!.dispatchEvent(new wb.MouseEvent("click", { bubbles: true }));
     const lineB = guideLines(db)[0]!;
     const tB = stageTransform(db);
-    const centerB = embeddedCenters(db).relations["r.ab"]!;
-    expect(Number(lineB.getAttribute("x2"))).toBeCloseTo(tB.tx + centerB[0] * tB.scale, 1);
-    expect(Number(lineB.getAttribute("y2"))).toBeCloseTo(tB.ty + centerB[1] * tB.scale, 1);
+    const pts = layout(doc()).edges.find((e) => e.id === "r.ab")!.points;
+    const mid = arcMidpoint(pts);
+    expect(Number(lineB.getAttribute("x2"))).toBeCloseTo(round1(tB.tx + mid.x * tB.scale), 1);
+    expect(Number(lineB.getAttribute("y2"))).toBeCloseTo(round1(tB.ty + mid.y * tB.scale), 1);
+    const total = polylineLength(pts);
+    const anchor = anchorInSvg(db);
+    const fromStart = arcDistanceFromStart(pts, anchor);
+    expect(fromStart).toBeGreaterThan(0.3 * total);
+    expect(total - fromStart).toBeGreaterThan(0.3 * total);
     expect(visibleWins(db)[0]!.getAttribute("data-kind")).toBe("relation");
+  });
+
+  it("多段（6 点）边：锚点落在中段而非起点端口（旧实现回退 points[0] 的回归）", () => {
+    const d3 = docLongEdge();
+    const geom = layout(d3).edges.find((e) => e.id === "r.ca")!;
+    const pts = geom.points;
+    // 紧凑布局下跨层长边是 6 点路径；至少多于 4 点才会触发旧的"回退到端点"分支
+    expect(pts.length).toBeGreaterThan(4);
+    const total = polylineLength(pts);
+    const mid = arcMidpoint(pts);
+
+    const dom = new JSDOM(htmlOf(d3), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector('svg .edge[data-id="r.ca"]')!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const line = guideLines(d)[0]!;
+    const t = stageTransform(d);
+
+    // 锚点 == 路径弧长 t=0.5 坐标
+    expect(Number(line.getAttribute("x2"))).toBeCloseTo(round1(t.tx + mid.x * t.scale), 1);
+    expect(Number(line.getAttribute("y2"))).toBeCloseTo(round1(t.ty + mid.y * t.scale), 1);
+    // 距两端端口（points[0] / points[last]）的弧长距离均 > 30% 总弧长
+    const anchor = anchorInSvg(d);
+    const fromStart = arcDistanceFromStart(pts, anchor);
+    const fromEnd = total - fromStart;
+    expect(fromStart).toBeGreaterThan(0.3 * total);
+    expect(fromEnd).toBeGreaterThan(0.3 * total);
+    // 明确不再连到起点端口（距离端点 > 30% 弧长 => 欧氏距离也显著大于 1px）
+    const first = pts[0]!;
+    expect(Math.hypot(anchor.x - first.x, anchor.y - first.y)).toBeGreaterThan(1);
   });
 });
