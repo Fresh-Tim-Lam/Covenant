@@ -627,6 +627,29 @@
   - `docs/guides/distribution-paradigm.md` 4,169 B @17:15:17（两模式对比表 L5-17、共享不变量 L19-25、本地模式 L27+）；`.github/ISSUE_TEMPLATE/requirement.yml` 1,464 B、`bug.yml` 1,221 B、`.github/PULL_REQUEST_TEMPLATE.md` 815 B @17:15:17-43；`.github/workflows/verify.yml` L35-42（Build kit + Upload artifact `covenant-kit` → `dist/covenant-kit-*`）；`CONTRIBUTING.md` L77-80 分发章节；`package.json` L4 `private: true`、L14 `package:kit`；`arch/index.yaml` L298 `- file: scripts/build-kit.mjs`（全索引 **33** 条）；
   - 全仓 **268 tests**、verify 全绿（index 33 / adr 4 / modules 13）**均为 lead 实测**；todo-scribe 未复跑（静态核对产物/文件存在）。
 
+## R-033 批准 git init、License 已选、发 Release
+
+- **日期**：2026-11-03（发言时刻：时间未提供；录入时刻 17:25 +08:00）
+- **来源**：用户消息（lead 逐字转引；Q15 部分关闭）
+- **原话**（逐字，空格原样）：
+
+> 批准  许可选过了   发release
+
+- **整理**（引用外，todo-scribe 归纳，非用户原话）：
+  1. **批准 `git init`**；
+  2. **LICENSE 已选定**（按"许可选过了"落 **MIT**）；
+  3. **要求发 Release**。
+  - lead 已执行（**本地 release 全就绪，未推送**）：①`git init -b main` + 初始提交 `86136c9 chore: initial public snapshot v0.1.0` + annotated tag **v0.1.0**，工作区干净；②**LICENSE = MIT**（Copyright 2026 ALLELab），`package.json` 增 `"license": "MIT"`（仍 `private: true`，**暂不发 npm**）；③`docs/releases/v0.1.0.md` 发布说明（功能/快速开始/质量基线/已知边界/反馈）；④`.github/workflows/release.yml`：push tag `v*` → verify → build kit → zip+sha256 → 创建 GitHub Release（附 zip + sha256，body 用 `docs/releases/<tag>.md`）；⑤本地发布资产 `dist/covenant-kit-0.1.0.zip` + `.sha256`；⑥发布前安全清理 `.gitignore`（`.audit/`、`team/dispatch-log.jsonl`、`team/access-log.jsonl`、`team/memory/`、`team/trajectory/`、`.vite/`）。
+  - **未能执行**：本机**无 gh CLI、无 git remote**，无法自动创建/推送 GitHub 仓库与 Release；需用户提供远端仓库 URL（或安装 gh 并登录）。
+  - 对应任务：T42（进行中：本地就绪，待 push）；对应决策：D-050；对应问题：todo/Q15（部分关闭）。
+- **现状核对**（2026-11-03 17:25 +08:00，只读静态检查，**未运行 pnpm**）：
+  - git：`rev-parse --is-inside-work-tree` = true；`git log --oneline -1` = **86136c9**；`git tag -l` = **v0.1.0**（annotated，subject "Covenant v0.1.0 — first deliverable release"）；`git status --porcelain` = **空（工作区干净）**；`git remote -v` = **空（无 remote）**；
+  - `LICENSE` 首行 `MIT License`、`Copyright (c) 2026 ALLELab`；`package.json` L3 `"license": "MIT"`、L5 `"private": true`；
+  - `docs/releases/v0.1.0.md` **2,352 B** @17:21:01；`.github/workflows/release.yml` **1,024 B** @17:22:35（`on.push.tags: v*`、permissions contents:write、verify → build kit → zip+sha256sum → softprops/action-gh-release@v2，附 zip + sha256，`body_path: docs/releases/${ref_name}.md`）；
+  - `.gitignore` L38-43：`.audit/`、`team/dispatch-log.jsonl`、`team/access-log.jsonl`、`team/memory/`、`team/trajectory/`、`.vite/`（另有 `.vitest/` L11）；
+  - 发布资产**实测（17:25:22 重建）**：`dist/covenant-kit-0.1.0.zip` **191,667 B**、`.sha256` = `89627c2dca3c719baa7b0b54d5ad2a7529dd16009c7b605ed11eae3e23c5d0ef`；**与 lead 报告（191,383 B / `a6fe6836…`）不一致**——差异应为 16:52 与 17:25 两次构建之间文件变更（如 docs/LICENSE 等），**以当前磁盘实测为准，口径待对**；
+  - FRAS **33** 条；全仓 **268 tests**、verify 全绿（index 33 / adr 4 / modules 13）**均为 lead 实测**；todo-scribe 未复跑。
+
 ---
 
 ## 核对记录
@@ -660,3 +683,4 @@
 | 2026-11-03 16:20 +08:00 | R-029 转引 | 未拿到原始消息，以 lead 转引为准；"小窗， 缩放拖拽"中逗号后空格按原样保留 |
 | 2026-11-03 16:36 +08:00 | R-030 转引 | 未拿到原始消息，以 lead 转引为准；原话中 `""D:\AAA_Work\ALLELab"`（双引号叠用/半角）与"规范  设计"（双空格）均按原样保留 |
 | 2026-11-03 17:17 +08:00 | R-031 / R-032 转引 | 未拿到原始消息，以 lead 转引为准；R-031"Covenant打包成可交付物Package"（无空格）与 R-032"发到github"（小写）均按原样保留 |
+| 2026-11-03 17:25 +08:00 | R-033 转引 | 未拿到原始消息，以 lead 转引为准；原话"批准  许可选过了   发release"**空格按原样保留**（"批准"后 2 空格、"选过了"后 3 空格、release 小写）；另：zip/sha 与 lead 报告值不一致（见 R-033 现状核对，口径待对） |

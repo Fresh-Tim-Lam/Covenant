@@ -41,3 +41,4 @@ team/access-log.jsonl
 team/memory/
 team/trajectory/
 .vite/
+.gh-token
