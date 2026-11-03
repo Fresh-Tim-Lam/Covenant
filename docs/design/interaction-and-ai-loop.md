@@ -2,7 +2,7 @@
 
 > **用途**：把"用户打开生成好的本地 HTML → 在架构图上标注 → AI 读懂并执行动作"这个真实场景，落成可实现的交互模型、数据回流通道与 AI 契约。
 > **目标读者**：实现者（编辑器 / CLI / MCP）、产品决策者。
-> **状态**：提案 v0，核验于 2026-11-03。**本文件是 Q2 用户答复的正式化。**
+> **状态**：提案 v0，核验于 2026-11-03。**本文件是 Q2 用户答复的正式化。** §4.5「viewer interaction v1」于同日按实装补写（多小窗/颜色/引导线）。
 > **关联文档**：[format-spec-v0.md](format-spec-v0.md)（批注模型）；[engine-architecture-v0.md](engine-architecture-v0.md)（渲染形态）；[open-questions.md](open-questions.md)（决策记录）。
 
 ---
@@ -58,8 +58,9 @@
 **生成命令草图**：
 
 ```bash
-covenant build arch/ --out dist/arch.html --mode annotate
-covenant serve arch/            # 开发态：C3 + 热更新 + MCP 同进程
+covenant build arch/ -o dist/arch.html          # 单文件（默认，离线可标注）
+covenant bundle arch/ -o dist/site              # 文件夹站点（第二模式：index.html + manifest v3 + views/*.svg）
+covenant serve dist --edit --open              # 开发态：C3 编辑写回（loopback + token；无热更新，不与 MCP 同进程）
 ```
 
 ---
@@ -102,6 +103,49 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 
 - **不允许在 HTML 里直接改语义**（改名字、加节点）→ 必须走"AI/CLI 补丁 + 批准"。原因：浏览器端没有校验器与审计，直接改会产生非法文档。
 - **不允许自由手绘笔迹**进入语义层；若要，只进 `view.canvas` 视觉层（后期）。
+
+### 4.5 viewer interaction v1：多小窗、彩色锚点与引导线（2026-11-03 实装）
+
+> 本节记录 `packages/render/src/html.ts` 已实现并受 `html.dom.test.ts` 覆盖的查看器交互；以代码与测试为准。
+
+**状态机（单窗）**
+
+| 状态 | 进入 | 行为 | 关闭条件 |
+|---|---|---|---|
+| `hover`（预览） | 指针进入元素/边 | 打开小窗 + 同色高亮锚点 | 移出形状/窗口后 **120ms** 定时关闭；再次进入形状或移入窗口会取消计时 |
+| `clicked`（固定） | 左键点击元素/边 | 窗口保留（移开不关）；可继续点其他对象 | 点画布/画布外空白、Esc（仅未钉住）；× 只关自己 |
+| `pinned`（📌 钉住） | 点击窗口标题栏 📌 | 点空白/Esc 也不关闭；再点取消 | 仅 ×（或切图时统一清理） |
+
+补充规则：
+
+- **多窗并存**：点 A 再点 B 不关闭 A，直接再开一窗（hover/clicked/pinned 可同时存在）；每个窗独立引导线与颜色。
+- **置顶**：按下窗口任意位置 → 该窗移到 DOM 末尾并提升 `z-index`（仅当不在末尾时才移动，避免输入框失焦）；画布内窗口 `z-index` 从 20 起递增。
+- **拖拽**：按住标题栏移动（位移 > 3px 才算拖拽），坐标 clamp 在舞台内；拖拽过程实时更新引导线。
+- **切图**：切换文档时关闭全部窗口（含 📌 钉住）并清空批注内联编辑态，避免"切回来表单自动复现/窗口被隐式钉死"。
+- **表单**：「＋ 新增批注」在窗口内默认**折叠**，点击展开；提交后收起；切到别的对象时新窗重新默认折叠。
+
+**颜色（确定性）**
+
+- 固定 8 色调色板：`#2563eb #dc2626 #059669 #d97706 #7c3aed #db2777 #0891b2 #65a30d`。
+- 取色规则：优先取当前未被占用的颜色（按调色板顺序扫描），8 色占满后循环复用；不随主题/文档变化。
+- 同色贯穿一窗：窗口边框、标题条、色点（win-dot）、锚点高亮、引导线全部使用该窗颜色；锚点高亮通过 CSS 变量 `--hl` 注入。
+- 新窗默认级联偏移 18px（最多 8 档循环），避免与现存窗口完全重叠。
+
+**引导线（guide line）**
+
+- 载体：独立 SVG overlay `#insp-guides`（`position:absolute; inset:0; pointer-events:none; z-index:15`），虚线 `5 4`、线宽 1.5、圆头。
+- 端点：窗口**最近边中点** → 锚点（元素中心 / 关系边中点，来自布局 anchors，带 fallback）。
+- 更新时机：窗口拖拽与内容变化（表单展开）、缩放/平移（`applyTransform`）、窗口 resize（未手动缩放时 fitView）、侧栏折叠（fitView）、窗口打开/关闭/置顶。关闭窗口时删除自己的线。
+- 坐标：锚点按 `translate + scale` 换算到舞台坐标系；窗口端按 `style.left/top` 与 `offsetWidth/Height` 计算，保证缩放/平移下仍贴合。
+
+**边界与已知局限**
+
+- **jsdom 只验证结构与状态**：`getBoundingClientRect`/`offsetParent`/真实 CSS 布局在 jsdom 中返回 0 或缺失，测试断言 DOM、状态、引导线属性与事件结果，不验证视觉手感；真实浏览器验收仍未完成（见 `arch/system.cvn.yaml` 的 `a.01JAYS3KV0003`）。
+- 窗口无最小化/吸附/键盘焦点管理；窗口数量不设上限（颜色循环复用）；引导线不做避让与旋转窗适配。
+- 纯键盘可达性只覆盖 Esc 关窗；元素/边的键盘选中不在 v1 范围。
+- 写回仍只有两条：C1 离线导出 `.patch.json`/`edits.json`（file:// 兜底）与 C3 `serve --edit` 直写（loopback + token + 写前校验/备份/审计）；**不做 C2 浏览器直写**（Q9）。
+
+**代码与测试参照**：`packages/render/src/html.ts`（多窗状态 ~L240-538、引导线 ~L403-450、钉住/拖拽 ~L824-885、命中与空白关闭 ~L1041-1081、清窗 ~L1120-1123）；`packages/render/src/html.dom.test.ts`（悬停/点击/多窗/钉住/引导线用例 ~L740-931）。
 
 ---
 
@@ -199,7 +243,7 @@ open ──"我确认了解"──> ack ──"已解决"──> resolved
 |----|------|
 | HTML 输出 | 无网络、无外部脚本；CSP `default-src 'none'; style-src 'unsafe-inline'` |
 | 标注文本 | 渲染前转义；导出 Markdown 时同样转义 |
-| AI 通道 | 默认关闭；`serve --ai` 显式开启；MCP 连接需本地回环 |
+| AI 通道 | 默认关闭且当前无网络通道（MCP 为 stdio；`ai` 子命令仅本地）；若未来引入云端模型，须显式配置 + 首次调用前打印内容摘要并确认 |
 | 文件写回 | 只写项目根内白名单路径；拒绝 `..` 穿越 |
 | 审计 | 每次 apply/patch 记录 `{who, when, base_rev, ops, findings, approved_by}` |
 

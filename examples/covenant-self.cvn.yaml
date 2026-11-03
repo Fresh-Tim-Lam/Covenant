@@ -11,16 +11,17 @@ meta:
   non_goals: [代码模块内部结构, 部署拓扑]
   audience: [human, ai]
   status: draft
-  rev: 6
+  rev: 7
   owners: [human:lily]
-  updated: 2026-11-03T18:45:00+08:00
+  updated: 2026-11-03T20:20:00+08:00
   ai:
     summary: |
       Covenant 由 CLI / MCP / serve / 浏览器标注器四类进程/端构成，权威数据是项目内 .cvn.yaml；
       CLI 与 MCP 是并列前端，都直接调用共享库层（不经 CLI 进程）；构建管线产出单文件 HTML（默认）
       与 dist/site 文件夹站点（第二模式）；写回走 patch 门禁 + write-ahead 审计。
-      本图 9 条批注来自自举与用户评审：6 条已解决，3 条 open（HTML 组织/大模型服务定位/审计是否基于 git），
-      其中 a.BBXNVV 与 a.0JCN 的答案已由 ai:arch-owner 追加批注并写入元素摘要，最终结案仍由人确认。
+      查看器支持多小窗并存：悬停预览（移开 120ms 关闭）、点击固定、📌 钉住、8 色锚点与同色引导线；
+      编辑态经 serve 写回，离线时导出 .patch.json / edits.json。
+      本图 12 条批注：7 resolved / 5 open（HTML 组织、审计是否基于 git、两条 AI 答复待用户确认、a.A224 交点疑问）。
     budget_tokens: 1000
 
 elements:
@@ -78,16 +79,16 @@ elements:
 
   - id: e.viewer
     kind: container
-    name: 浏览器标注器
-    tech: TS bundle + SVG
-    summary: 离线查看/标注：点选、缩放平移、批注新增/编辑/删除撤销、导出补丁；编辑态经 serve 写回
+    name: 浏览器查看器
+    tech: 内联 TS + SVG
+    summary: 离线查看/标注：多小窗并存（悬停 120ms 预览 / 点击固定 / 📌 钉住）、8 色锚点与同色高亮/引导线 overlay、缩放平移、批注编辑删除撤销；编辑态经 serve 写回，离线导出补丁
     tags: [edge]
 
   - id: e.serve
     kind: container
     name: covenant serve
     tech: Node / HTTP
-    summary: serve 模式的本地 HTTP：静态托管 + 编辑态 API（/api/edit、/api/patch）；短时、loopback、随机 token；不与 MCP 同进程
+    summary: serve 模式的本地 HTTP：静态托管 + 编辑态 API（/api/edit、/api/patch）；短时、loopback、随机 token；不与 MCP 同进程；viewer 编辑态经此写回
     tags: [optional]
 
   - id: e.schema
@@ -117,6 +118,13 @@ elements:
     tech: HTML + SVG + JSON
     props: { storage_kind: file }
     summary: dist/：covenant.html 单文件 + site/ 文件夹站点（index.html + manifest v3 + views/*.svg + annotations.json）
+
+  - id: e.patchfile
+    kind: datastore
+    name: 补丁/编辑文件
+    tech: JSON
+    props: { storage_kind: file }
+    summary: viewer 导出的 .patch.json / edits.json；covenant apply / patch-check / edit 读取后落盘
 
   - id: e.llm
     kind: external-system
@@ -230,6 +238,21 @@ relations:
     from: e.viewer
     to: e.serve
     summary: 加载页面与编辑态写回 API（POST /api/edit、/api/patch）
+  - id: r.viewer-dist
+    kind: reads
+    from: e.viewer
+    to: e.dist
+    summary: 加载产物内联数据与 SVG（双击 file:// 或 bundle）
+  - id: r.viewer-patch
+    kind: writes
+    from: e.viewer
+    to: e.patchfile
+    summary: 导出补丁 / 编辑 JSON（离线写回通道）
+  - id: r.cli-patch-read
+    kind: reads
+    from: e.cli
+    to: e.patchfile
+    summary: apply / patch-check / edit 读取补丁或编辑文件
 
   - id: r.validate-schema
     kind: reads

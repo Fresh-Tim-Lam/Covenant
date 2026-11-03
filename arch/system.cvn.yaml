@@ -12,9 +12,9 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 3
+  rev: 4
   owners: [human:team]
-  updated: 2026-11-03T18:45:00+08:00
+  updated: 2026-11-03T20:20:00+08:00
   ai:
     summary: |
       单文件 HTML 优先的契约式图示工具：.cvn.yaml 为唯一事实源，
@@ -22,6 +22,8 @@ meta:
       依赖方向 core ← profile/validate/layout/render/patch/diff/indexer/ai/adr/editor ← cli/mcp；
       cli 与 mcp 是并列前端，均直接依赖库包（mcp 不经 CLI 进程）。
       交付链：cli build/bundle → dist 产物；scripts/build-kit → kit；GitHub Actions 负责 verify 与 Release。
+      浏览器查看器（v.viewer）支持多小窗并存：悬停预览、点击固定、📌 钉住、8 色锚点与同色引导线；
+      编辑态经 serve --edit 写回，离线导出 .patch.json / edits.json 后由 CLI 落盘。
 
 elements:
   - id: e.human
@@ -46,6 +48,18 @@ elements:
     name: MCP server
     summary: stdio 进程，暴露 9 个工具（brief/check/read_doc/render/build/patch_check/apply/diff/index）
     tech: TypeScript + JSON-RPC
+
+  - id: e.viewer
+    kind: container
+    name: 浏览器查看器
+    summary: 内联于 dist HTML/bundle：多小窗（悬停预览/点击固定/📌钉住）、8 色锚点、同色高亮与引导线 overlay、批注面板；编辑态经 serve 写回
+    tech: 内联 TS + SVG
+
+  - id: e.serve
+    kind: container
+    name: covenant serve
+    summary: CLI 的本地 HTTP 模式：静态托管 dist + 短时编辑态 API（/api/edit、/api/patch；loopback + token，写前校验/备份/审计）
+    tech: Node / HTTP
 
   - id: e.core
     kind: container
@@ -161,6 +175,13 @@ elements:
     tech: HTML + SVG + JSON
     props: { storage_kind: file }
 
+  - id: e.patchfile
+    kind: datastore
+    name: 补丁/编辑文件
+    summary: viewer 导出的 .patch.json / edits.json；covenant apply / patch-check / edit 读取后落盘
+    tech: JSON
+    props: { storage_kind: file }
+
   - id: e.kit
     kind: datastore
     name: 可交付包
@@ -191,6 +212,12 @@ relations:
     from: e.agent
     to: e.mcp
     summary: 通过 MCP 工具调用（9 个工具）
+
+  - id: r.human-viewer
+    kind: calls
+    from: e.human
+    to: e.viewer
+    summary: 双击 HTML / 打开 bundle 进入查看与标注
 
   - id: r.cli-core
     kind: calls
@@ -386,6 +413,57 @@ relations:
     to: e.index
     summary: 索引校验时读取
 
+  - id: r.viewer-html
+    kind: reads
+    from: e.viewer
+    to: e.html
+    summary: 读取单文件内联的文档数据与视图
+  - id: r.viewer-bundle
+    kind: reads
+    from: e.viewer
+    to: e.bundle
+    summary: 文件夹站点的 index.html 复用同一查看器
+  - id: r.viewer-serve
+    kind: calls
+    from: e.viewer
+    to: e.serve
+    summary: 编辑态写回 API（POST /api/edit、/api/patch）
+  - id: r.viewer-patch
+    kind: writes
+    from: e.viewer
+    to: e.patchfile
+    summary: 导出补丁 / 编辑 JSON（离线写回通道）
+  - id: r.cli-patchfile-read
+    kind: reads
+    from: e.cli
+    to: e.patchfile
+    summary: apply / patch-check / edit 读取补丁或编辑文件
+  - id: r.cli-serve
+    kind: calls
+    from: e.cli
+    to: e.serve
+    summary: 启动 serve 模式
+  - id: r.serve-html
+    kind: reads
+    from: e.serve
+    to: e.html
+    summary: 静态托管单文件产物
+  - id: r.serve-bundle
+    kind: reads
+    from: e.serve
+    to: e.bundle
+    summary: 静态托管文件夹站点
+  - id: r.serve-docs-write
+    kind: writes
+    from: e.serve
+    to: e.docs
+    summary: 编辑态写回（预览 diff → 确认）
+  - id: r.serve-audit
+    kind: writes
+    from: e.serve
+    to: e.audit
+    summary: 写回前备份 + edit-*.jsonl 审计
+
   - id: r.ci-cli
     kind: calls
     from: e.ci
@@ -462,6 +540,16 @@ views:
       engine: elk
       direction: RIGHT
       spacing: { rank: 120, node: 60 }
+
+  - id: v.viewer
+    title: 查看器与写回
+    include:
+      elements: [e.human, e.viewer, e.serve, e.cli, e.html, e.bundle, e.patchfile, e.docs, e.audit]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 120, node: 56 }
 
 annotations:
   - id: a.01JAYS3KV0001AAAA0001
