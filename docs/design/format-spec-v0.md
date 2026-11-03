@@ -223,6 +223,11 @@ constraints:                        # 机器可校验的文档级规则（封闭
 
 ### 5.4 Annotation（批注，见 §8）
 
+| 字段 | 说明 |
+|------|------|
+| `id` / `target` / `type` / `severity` / `title` / `status` / `author` / `created` | 见 §8.1 |
+| `target.segment` | 可选；仅 `kind: relation` 时有效，0-based **渲染折线段**下标（省略 = 锚定整条关系） |
+
 ### 5.5 Constraint（文档级规则，见 §7）
 
 ### 5.6 View（视图）
@@ -298,11 +303,22 @@ Finding：
 
 ### 8.1 目标
 
-批注可锚定到：`element` / `relation` / `view` / `region`（视图内矩形）/ `document`。
+批注可锚定到：`element` / `relation` / `view` / `region`（视图内矩形）/ `document`；
+对 `relation` 还可选 `segment`——一条多段连线的**每一段**都可以独立批注（每段可表示一个数据）。
 
 ```yaml
 - id: a.<ULID>                    # 机器生成，避免合并冲突
-  target: { kind: element|relation|view|region|document, id: ..., view: v.main, rect: [x,y,w,h] }
+  target: { kind: element|relation|view|region|document, id: ..., view: v.main, rect: [x,y,w,h],
+            segment: 0 }          # 可选：仅 kind=relation；渲染折线的第 segment 段（0-based）
+```
+
+**`relation.segment` 语义（v0.1 增补）**
+
+- `segment` 是**渲染折线**（`EdgeGeom.points`）的 0-based 段下标：第 k 段 = `points[k] → points[k+1]`；`segmentCount = points.length - 1`。
+- 省略 `segment` = 锚定整条关系（旧行为不变）；单段边（junction 拉直边、序列图消息线等）`segment: 0` 与省略视觉等价。
+- **布局相关**：增删元素、改 `pins`/方向/路由都会改变段数与段位置，旧下标可能指向别的物理段或越界。渲染/构建期对越界段给出 `annotation/segment-range` warning（不阻断；`--strict` 可升级为 error），不视为语义错误。
+- v0 简化：首尾 20px 端口 stub 也计入段；后续可在布局层区隔"内容段"。
+- 兼容：没有 `segment` 的旧文档/旧补丁行为不变；旧版工具（schema 严格）读取含 `segment` 的新文档会拒读，需升级工具。
   type: risk|question|decision|todo|defect|smell
   severity: blocker|high|medium|low
   title: 一句话结论
@@ -343,6 +359,7 @@ open ──ack──> open ──resolve──> resolved
 - 优先级：`pins`（人工）> 布局引擎计算结果。人拖动 = 写 `pins`，不破坏语义。
 - 布局引擎可替换；**只约束接口**：`layout(doc, view) -> Map<elementId, Rect>`。
 - 笔迹/图片在 `view.canvas`，可外置引用（大文件不入语义层）。
+- **段索引与坐标同源**：`annotation.target.segment` 指向渲染折线的段下标（`points[k] → points[k+1]`），随布局/路由变化可能漂移；它只用于定位，不参与语义身份（稳定标识如 `r.x#2` 留待后续版本）。
 
 ---
 

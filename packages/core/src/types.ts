@@ -103,7 +103,8 @@ export interface ViewDef {
 }
 
 export type AnnotationTarget =
-  | { kind: "element" | "relation" | "frame" | "view" | "document"; id: string; aspect?: string }
+  | { kind: "relation"; id: string; aspect?: string; segment?: number }
+  | { kind: "element" | "frame" | "view" | "document"; id: string; aspect?: string }
   | { kind: "region"; view: string; rect: [number, number, number, number] };
 
 export interface ThreadItem {

@@ -265,7 +265,22 @@
           "required": ["kind", "id"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["element", "relation", "frame", "view", "document"] },
+            "kind": { "const": "relation" },
+            "id": { "type": "string", "minLength": 1 },
+            "aspect": { "type": "string" },
+            "segment": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "多段连线上的 0-based 段下标（渲染折线 points[k] → points[k+1]）；仅 kind=relation。省略=锚定整条关系"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "id"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["element", "frame", "view", "document"] },
             "id": { "type": "string", "minLength": 1 },
             "aspect": { "type": "string" }
           }
