@@ -1,97 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="477" viewBox="0 0 1560 477" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1158" height="458" viewBox="0 0 1158 458" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
 <title id="cvn-title">容器视图</title>
 <desc id="cvn-desc">说明支付域的服务划分、数据归属与外部依赖，作为人机协作的架构契约基线。
 </desc>
 <defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
-<rect x="0" y="0" width="1560" height="477" fill="#ffffff"/>
-<g class="edge" data-id="r.web-gw"><path d="M218 124 L238 124 L549 124 L549 196 L561 196 L581 196" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 124 L238 124 L549 124 L549 196 L561 196 L581 196" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.gw-pay"><path d="M771 196 L791 196 L791 268 L861 268 L881 268" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M771 196 L791 196 L791 268 L861 268 L881 268" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.pay-psp"><path d="M1071 286 L1091 286 L1254.95 286 L1254.95 412 L1321.6 412 L1341.6 412" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1071 286 L1091 286 L1254.95 286 L1254.95 412 L1321.6 412 L1341.6 412" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.pay-ledger"><path d="M1071 250 L1091 250 L1145.65 250 L1145.65 115 L1321.6 115 L1341.6 115" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1071 250 L1091 250 L1145.65 250 L1145.65 115 L1321.6 115 L1341.6 115" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.pay-outbox"><path d="M1071 268 L1091 268 L1200.3 268 L1200.3 277 L1321.6 277 L1341.6 277" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M1071 268 L1091 268 L1200.3 268 L1200.3 277 L1321.6 277 L1341.6 277" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.outbox-read"><path d="M218 259 L393.5 259 L393.5 10 L1091 10 L1091 259 L1341.6 259" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 259 L393.5 259 L393.5 10 L1091 10 L1091 259 L1341.6 259" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.outbox-bus"><path d="M218 277 L238 277 L315.75 277 L315.75 331 L561 331 L581 331" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 277 L238 277 L315.75 277 L315.75 331 L561 331 L581 331" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.bus-recon"><path d="M218 421 L238 421 L238 349 L561 349 L581 349" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 421 L238 421 L238 349 L561 349 L581 349" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.recon-ledger"><path d="M218 403 L471.25 403 L471.25 35 L1309.6 35 L1309.6 133 L1341.6 133" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 403 L471.25 403 L471.25 35 L1309.6 35 L1309.6 133 L1341.6 133" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<circle class="crossing crossing-hollow" cx="393.5" cy="124" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="238" cy="403" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="471.25" cy="349" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="471.25" cy="331" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="471.25" cy="124" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="1091" cy="35" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<circle class="crossing crossing-hollow" cx="1309.6" cy="115" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<rect class="edge-label-bg" x="351.46" y="115.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="370.9" y="126.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="789.24" y="259.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="808.68" y="270.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="1142.25" y="277.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="1161.68" y="288.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="1093.36" y="241.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="1115.69" y="252.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
-<rect class="edge-label-bg" x="1108.73" y="259.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="1131.05" y="270.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
-<rect class="edge-label-bg" x="646.09" y="1.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="665.53" y="12.5" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
-<rect class="edge-label-bg" x="233.14" y="268.5" width="61.97" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="264.12" y="279.5" text-anchor="middle" font-size="10.5" fill="#64748b">publishes</text>
-<rect class="edge-label-bg" x="302.81" y="340.5" width="67.75" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="336.69" y="351.5" text-anchor="middle" font-size="10.5" fill="#64748b">subscribes</text>
-<rect class="edge-label-bg" x="824.88" y="26.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="844.32" y="37.5" text-anchor="middle" font-size="10.5" fill="#64748b">reads</text>
-<g class="badge"><circle cx="1141.01" cy="240" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="1141.01" y="243.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<rect x="0" y="0" width="1158" height="458" fill="#ffffff"/>
+<g class="edge" data-id="r.web-gw"><path d="M218 105 L238 105 L292.88 105 L292.88 177 L319.75 177 L339.75 177" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 105 L238 105 L292.88 105 L292.88 177 L319.75 177 L339.75 177" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.gw-pay"><path d="M529.75 177 L549.75 177 L550.19 177 L550.19 249 L619.75 249 L639.75 249" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M529.75 177 L549.75 177 L550.19 177 L550.19 249 L619.75 249 L639.75 249" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-psp"><path d="M829.75 265 L849.75 265 L883.08 265 L883.08 393 L919.75 393 L939.75 393" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M829.75 265 L849.75 265 L883.08 265 L883.08 393 L919.75 393 L939.75 393" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-ledger"><path d="M829.75 233 L849.75 233 L863.08 233 L863.08 97 L919.75 97 L939.75 97" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M829.75 233 L849.75 233 L863.08 233 L863.08 97 L919.75 97 L939.75 97" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.pay-outbox"><path d="M829.75 249 L849.75 249 L873.08 249 L873.08 257 L919.75 257 L939.75 257" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M829.75 249 L849.75 249 L873.08 249 L873.08 257 L919.75 257 L939.75 257" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.outbox-read"><path d="M218 241 L272.88 241 L272.88 10 L853.08 10 L853.08 241 L939.75 241" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 241 L272.88 241 L272.88 10 L853.08 10 L853.08 241 L939.75 241" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.outbox-bus"><path d="M218 257 L238 257 L262.88 257 L262.88 313 L319.75 313 L339.75 313" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 257 L238 257 L262.88 257 L262.88 313 L319.75 313 L339.75 313" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.bus-recon"><path d="M218 401 L238 401 L252.88 401 L252.88 329 L319.75 329 L339.75 329" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 401 L238 401 L252.88 401 L252.88 329 L319.75 329 L339.75 329" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.recon-ledger"><path d="M218 385 L282.88 385 L282.88 20 L893.08 20 L893.08 113 L939.75 113" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 385 L282.88 385 L282.88 20 L893.08 20 L893.08 113 L939.75 113" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<circle class="crossing crossing-hollow" cx="272.88" cy="105" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="252.88" cy="385" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="282.88" cy="329" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="282.88" cy="313" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="282.88" cy="105" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="853.08" cy="20" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="893.08" cy="97" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<text class="edge-label" x="254.19" y="107.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="549.86" y="179.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="862.53" y="267.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="853.81" y="235.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
+<text class="edge-label" x="857.78" y="251.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
+<text class="edge-label" x="499.15" y="12.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<text class="edge-label" x="249.87" y="259.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">publishes</text>
+<text class="edge-label" x="252.88" y="393.57" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">subscribes</text>
+<text class="edge-label" x="554.41" y="22.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<g class="badge"><circle cx="879.14" cy="223" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="879.14" y="226.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
 <g class="node kind-container" data-id="e.web">
-<rect x="28" y="87" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="40" y="111" font-size="13" font-weight="650" fill="#0f172a">商户前端</text>
-<text x="40" y="129" font-size="11" fill="#64748b">React / TS</text>
-<text x="40" y="147" font-size="10.5" fill="#94a3b8">商户发起支付、查询订单</text>
+<rect x="28" y="68" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="92" font-size="13" font-weight="650" fill="#0f172a">商户前端</text>
+<text x="40" y="110" font-size="11" fill="#64748b">React / TS</text>
+<text x="40" y="128" font-size="10.5" fill="#94a3b8">商户发起支付、查询订单</text>
 </g>
 <g class="node kind-container" data-id="e.gateway">
-<rect x="581" y="159" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="593" y="183" font-size="13" font-weight="650" fill="#0f172a">API Gateway</text>
-<text x="593" y="201" font-size="11" fill="#64748b">Nginx + Lua</text>
-<text x="593" y="219" font-size="10.5" fill="#94a3b8">鉴权、限流、路由</text>
+<rect x="339.75" y="140" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="351.75" y="164" font-size="13" font-weight="650" fill="#0f172a">API Gateway</text>
+<text x="351.75" y="182" font-size="11" fill="#64748b">Nginx + Lua</text>
+<text x="351.75" y="200" font-size="10.5" fill="#94a3b8">鉴权、限流、路由</text>
 </g>
 <g class="node kind-container" data-id="e.payments">
-<rect x="881" y="231" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="893" y="255" font-size="13" font-weight="650" fill="#0f172a">Payments Service</text>
-<text x="893" y="273" font-size="11" fill="#64748b">Kotlin / Spring</text>
-<text x="893" y="291" font-size="10.5" fill="#94a3b8">支付授权、捕获、退款编排</text>
+<rect x="639.75" y="212" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="651.75" y="236" font-size="13" font-weight="650" fill="#0f172a">Payments Service</text>
+<text x="651.75" y="254" font-size="11" fill="#64748b">Kotlin / Spring</text>
+<text x="651.75" y="272" font-size="10.5" fill="#94a3b8">支付授权、捕获、退款编排</text>
 </g>
 <g class="node kind-datastore" data-id="e.ledger">
-<rect x="1341.6" y="87" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="1353.6" y="111" font-size="13" font-weight="650" fill="#0f172a">Ledger</text>
-<text x="1353.6" y="129" font-size="11" fill="#64748b">PostgreSQL 16</text>
-<text x="1353.6" y="147" font-size="10.5" fill="#94a3b8">记账账本，只追加</text>
+<rect x="939.75" y="68" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="951.75" y="92" font-size="13" font-weight="650" fill="#0f172a">Ledger</text>
+<text x="951.75" y="110" font-size="11" fill="#64748b">PostgreSQL 16</text>
+<text x="951.75" y="128" font-size="10.5" fill="#94a3b8">记账账本，只追加</text>
 </g>
 <g class="node kind-container" data-id="e.outbox">
-<rect x="28" y="231" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="40" y="255" font-size="13" font-weight="650" fill="#0f172a">Outbox Relay</text>
-<text x="40" y="273" font-size="11" fill="#64748b">Kotlin Worker</text>
-<text x="40" y="291" font-size="10.5" fill="#94a3b8">轮询 outbox 表，把领域事件投…</text>
+<rect x="28" y="212" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="236" font-size="13" font-weight="650" fill="#0f172a">Outbox Relay</text>
+<text x="40" y="254" font-size="11" fill="#64748b">Kotlin Worker</text>
+<text x="40" y="272" font-size="10.5" fill="#94a3b8">轮询 outbox 表，把领域事件投…</text>
 </g>
 <g class="node kind-datastore" data-id="e.outbox-db">
-<rect x="1341.6" y="231" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="1353.6" y="255" font-size="13" font-weight="650" fill="#0f172a">Outbox Table</text>
-<text x="1353.6" y="273" font-size="11" fill="#64748b">PostgreSQL 16</text>
-<text x="1353.6" y="291" font-size="10.5" fill="#94a3b8">事务性 outbox 表，与支付库同…</text>
+<rect x="939.75" y="212" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="951.75" y="236" font-size="13" font-weight="650" fill="#0f172a">Outbox Table</text>
+<text x="951.75" y="254" font-size="11" fill="#64748b">PostgreSQL 16</text>
+<text x="951.75" y="272" font-size="10.5" fill="#94a3b8">事务性 outbox 表，与支付库同…</text>
 </g>
 <g class="node kind-queue" data-id="e.bus">
-<rect x="581" y="303" width="190" height="74" rx="8" fill="#fdf4ff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="593" y="327" font-size="13" font-weight="650" fill="#0f172a">Event Bus</text>
-<text x="593" y="345" font-size="11" fill="#64748b">Kafka</text>
-<text x="593" y="363" font-size="10.5" fill="#94a3b8">领域事件总线</text>
+<rect x="339.75" y="284" width="190" height="74" rx="8" fill="#fdf4ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="351.75" y="308" font-size="13" font-weight="650" fill="#0f172a">Event Bus</text>
+<text x="351.75" y="326" font-size="11" fill="#64748b">Kafka</text>
+<text x="351.75" y="344" font-size="10.5" fill="#94a3b8">领域事件总线</text>
 </g>
 <g class="node kind-container" data-id="e.recon">
-<rect x="28" y="375" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="40" y="399" font-size="13" font-weight="650" fill="#0f172a">Reconciliation</text>
-<text x="40" y="417" font-size="11" fill="#64748b">Python / Airflow</text>
-<text x="40" y="435" font-size="10.5" fill="#94a3b8">每日对账，产出差异报告</text>
+<rect x="28" y="356" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="380" font-size="13" font-weight="650" fill="#0f172a">Reconciliation</text>
+<text x="40" y="398" font-size="11" fill="#64748b">Python / Airflow</text>
+<text x="40" y="416" font-size="10.5" fill="#94a3b8">每日对账，产出差异报告</text>
 </g>
-<g class="badge"><circle cx="206" cy="387" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="206" y="390.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
+<g class="badge"><circle cx="206" cy="368" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="206" y="371.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text></g>
 <g class="node kind-external-system" data-id="e.psp">
-<rect x="1341.6" y="375" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
-<text x="1353.6" y="399" font-size="13" font-weight="650" fill="#0f172a">PSP 支付通道</text>
-<text x="1353.6" y="417" font-size="11" fill="#64748b">HTTPS API</text>
-<text x="1353.6" y="435" font-size="10.5" fill="#94a3b8">第三方收单机构</text>
+<rect x="939.75" y="356" width="190" height="74" rx="8" fill="#fff7ed" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="951.75" y="380" font-size="13" font-weight="650" fill="#0f172a">PSP 支付通道</text>
+<text x="951.75" y="398" font-size="11" fill="#64748b">HTTPS API</text>
+<text x="951.75" y="416" font-size="10.5" fill="#94a3b8">第三方收单机构</text>
 </g>
 </svg>

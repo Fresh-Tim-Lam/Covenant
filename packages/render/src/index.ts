@@ -234,15 +234,17 @@ export interface PlacedLabel extends Point {
 }
 
 const LABEL_FONT = 10.5;
-/** 胶囊实际高度（碰撞盒必须与它完全一致，否则会出现"检测不碰、实际压 1-2px"） */
-const LABEL_CAPSULE_H = 17;
+/** 文字视觉盒高度（碰撞检测用；不再有背景胶囊，碰撞盒≈文字包围盒） */
+const LABEL_BOX_H = 11;
+/** 基线相对路径点的偏移：让文字视觉中心落在线上（贴线要求） */
+const LABEL_BASELINE_OFFSET = 2.5;
 
 function labelBox(p: Point, width: number): Rect {
   return {
-    x: p.x - width / 2 - 5,
-    y: p.y - LABEL_CAPSULE_H / 2,
-    w: width + 10,
-    h: LABEL_CAPSULE_H,
+    x: p.x - width / 2 - 2,
+    y: p.y - LABEL_BOX_H / 2,
+    w: width + 4,
+    h: LABEL_BOX_H,
   };
 }
 
@@ -312,6 +314,12 @@ function fallbackLabelPoint(primary: Point, width: number, occupied: Rect[]): Po
 
 export function placeLabels(requests: LabelRequest[], obstacles: Rect[]): PlacedLabel[] {
   const occupied: Rect[] = [...obstacles];
+  const placedBoxes: Rect[] = [];
+  const overlapArea = (a: Rect, b: Rect): number => {
+    const w = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+    const h = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    return w * h;
+  };
   const placed: PlacedLabel[] = [];
   for (const req of requests) {
     const width = textWidth(req.text, LABEL_FONT);
@@ -325,18 +333,17 @@ export function placeLabels(requests: LabelRequest[], obstacles: Rect[]): Placed
     }
     if (!chosen) {
       if (req.attach) {
-        // 贴线标签：宁可沿路径轻微重叠，也不离开线；优先不压别的边
+        // 贴线标签：候选全部在路径上，优先不压节点（P0），其次不压其它标签，最后才允许跨其它边线。
+        // 紧凑布局下宽标签跨相邻车道线不可避免，但必须仍贴在线上且不盖住节点。
         let best = req.primary;
         let bestScore = Number.POSITIVE_INFINITY;
         for (const cand of req.candidates) {
           const box = labelBox(cand, width);
-          let area = 0;
-          for (const o of occupied) {
-            const w = Math.max(0, Math.min(box.x + box.w, o.x + o.w) - Math.max(box.x, o.x));
-            const h = Math.max(0, Math.min(box.y + box.h, o.y + o.h) - Math.max(box.y, o.y));
-            area += w * h;
-          }
-          const score = area + (hitsEdge(box, req.avoid) ? 1e6 : 0);
+          let nodeArea = 0;
+          for (const o of obstacles) nodeArea += overlapArea(box, o);
+          let labelArea = 0;
+          for (const o of placedBoxes) labelArea += overlapArea(box, o);
+          const score = nodeArea * 1e6 + labelArea * 1e3 + (hitsEdge(box, req.avoid) ? 1 : 0);
           if (score < bestScore) { bestScore = score; best = cand; }
         }
         chosen = best;
@@ -344,8 +351,10 @@ export function placeLabels(requests: LabelRequest[], obstacles: Rect[]): Placed
         chosen = fallbackLabelPoint(req.primary, width, occupied) ?? req.primary;
       }
     }
+    const box = labelBox(chosen, width);
     placed.push({ x: chosen.x, y: chosen.y, width });
-    occupied.push(labelBox(chosen, width));
+    occupied.push(box);
+    placedBoxes.push(box);
   }
   return placed;
 }
@@ -640,10 +649,9 @@ export function renderSvg(
   for (let i = 0; i < placedLabels.length; i++) {
     const l = placedLabels[i]!;
     const req = labelRequests[i]!;
+    // 去胶囊：只画文字；细白描边（paint-order:stroke）保证压线时可读，不产生背景块
     out.push(
-      // 边标签用胶囊承载，胶囊中心贴在线/通道上（与碰撞盒同几何）
-      `<rect class="edge-label-bg" x="${round(l.x - l.width / 2 - 5)}" y="${round(l.y - LABEL_CAPSULE_H / 2)}" width="${round(l.width + 10)}" height="${LABEL_CAPSULE_H}" rx="8.5" fill="${THEME.labelBg}" stroke="${THEME.labelStroke}" stroke-width="0.8"/>`,
-      `<text class="edge-label" x="${round(l.x)}" y="${round(l.y + 2.5)}" text-anchor="middle" font-size="${LABEL_FONT}" fill="${THEME.edgeLabel}">${esc(req.text)}</text>`,
+      `<text class="edge-label" x="${round(l.x)}" y="${round(l.y + LABEL_BASELINE_OFFSET)}" text-anchor="middle" font-size="${LABEL_FONT}" fill="${THEME.edgeLabel}" stroke="${THEME.labelBg}" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">${esc(req.text)}</text>`,
     );
   }
   for (const b of badgeIndexes) {

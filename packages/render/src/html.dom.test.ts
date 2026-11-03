@@ -655,3 +655,290 @@ describe("切图瞬态清理与跨文档编辑隔离", () => {
     expect(pending.textContent).toContain("1");
   });
 });
+
+/* ------------------- 多小窗 / 悬停预览 / 同色引导线 / 折叠表单 ------------------- */
+
+function visibleWins(d: Document): HTMLElement[] {
+  return Array.from(d.querySelectorAll<HTMLElement>(".cvn-win")).filter((w) => !w.hidden);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pointer(window: JSDOM["window"], type: string, x = 40, y = 40): MouseEvent {
+  return new window.MouseEvent(type, { bubbles: false, clientX: x, clientY: y });
+}
+
+function stageTransform(d: Document): { tx: number; ty: number; scale: number } {
+  const t = d.getElementById("stage")?.style.transform ?? "";
+  const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)\s*scale\((-?[\d.]+)\)/.exec(t);
+  return m ? { tx: Number(m[1]), ty: Number(m[2]), scale: Number(m[3]) } : { tx: 0, ty: 0, scale: 1 };
+}
+
+function embeddedCenters(d: Document): {
+  elements: Record<string, [number, number]>;
+  relations: Record<string, [number, number]>;
+} {
+  const raw = d.getElementById("covenant-data")!.textContent!;
+  return JSON.parse(raw).docs[0].centers;
+}
+
+function guideLines(d: Document): SVGLineElement[] {
+  return Array.from(d.querySelectorAll<SVGLineElement>("#insp-guides line"));
+}
+
+describe("「新增批注」表单默认折叠", () => {
+  it("默认收起；点击标题行展开；再点收起", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+    const toggle = win.querySelector(".ann-form-toggle") as HTMLElement;
+    const body = win.querySelector(".ann-form-body") as HTMLElement;
+
+    expect(toggle).not.toBeNull();
+    expect(toggle.textContent).toContain("新增批注");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(body.hidden).toBe(true);
+    // 收起时输入仍在 DOM 里（只是隐藏），展开后立即可用
+    expect(win.querySelector("#f-title")).not.toBeNull();
+
+    toggle.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(body.hidden).toBe(false);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect((win.querySelector("#f-title") as HTMLInputElement).value).toBe("");
+
+    toggle.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(body.hidden).toBe(true);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("切换到别的对象（边）后恢复默认收起", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    (visibleWins(d)[0]!.querySelector(".ann-form-toggle") as HTMLElement).dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true }),
+    );
+    expect((visibleWins(d)[0]!.querySelector(".ann-form-body") as HTMLElement).hidden).toBe(false);
+
+    // 点边 → 再开一个新窗（多窗并存），新窗表单必须是默认收起
+    d.querySelector("svg .edge")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(2);
+    const win = visibleWins(d).find((w) => w.getAttribute("data-target") === "r.ab")!;
+    expect(win).toBeTruthy();
+    expect((win.querySelector(".ann-form-body") as HTMLElement).hidden).toBe(true);
+    expect((win.querySelector(".ann-form-toggle") as HTMLElement).getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("悬停预览小窗（hover 态）", () => {
+  it("悬停元素 → 出现小窗 + 同色高亮；移开 → 小窗消失", async () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    expect(visibleWins(d)).toHaveLength(1);
+    const win = visibleWins(d)[0]!;
+    const color = win.getAttribute("data-color")!;
+    expect(color).toBeTruthy();
+    expect(win.getAttribute("data-target")).toBe("e.a");
+    // 锚定元素用同色高亮
+    expect(node.classList.contains("hl")).toBe(true);
+    expect(node.style.getPropertyValue("--hl")).toBe(color);
+
+    node.dispatchEvent(pointer(window, "pointerleave"));
+    await sleep(220);
+    expect(visibleWins(d)).toHaveLength(0);
+    expect(node.classList.contains("hl")).toBe(false);
+  });
+
+  it("鼠标移入窗口本体不关闭（可操作）；离开窗口后才收", async () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    const win = visibleWins(d)[0]!;
+    expect(win).toBeTruthy();
+
+    node.dispatchEvent(pointer(window, "pointerleave"));
+    win.dispatchEvent(pointer(window, "pointerenter"));
+    await sleep(200);
+    expect(visibleWins(d)).toHaveLength(1); // 计时被取消，预览保留
+
+    win.dispatchEvent(pointer(window, "pointerleave"));
+    await sleep(220);
+    expect(visibleWins(d)).toHaveLength(0);
+  });
+});
+
+describe("点击保留与关闭规则", () => {
+  it("左键点击后移开不消失；点空白才关闭", async () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    const node = d.querySelector("svg .node") as SVGElement;
+
+    node.dispatchEvent(pointer(window, "pointerenter"));
+    node.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    node.dispatchEvent(pointer(window, "pointerleave"));
+    await sleep(220);
+    expect(visibleWins(d)).toHaveLength(1); // 点击态：移开不消失
+    // 引导线 overlay 在有小窗时可见（svg 靠 attribute 控制显示）
+    expect(d.getElementById("insp-guides")!.hasAttribute("hidden")).toBe(false);
+
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(0);
+    expect(d.getElementById("insp-guides")!.hasAttribute("hidden")).toBe(true);
+  });
+
+  it("点 A 再点 B → 两窗并存（未钉住也保留）；点空白 → 两窗都关", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)[0]!.getAttribute("data-target")).toBe("e.a");
+
+    // 点击另一个对象不关闭已有点击窗，而是再开一个窗
+    d.querySelector("svg .edge")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const wins = visibleWins(d);
+    expect(wins).toHaveLength(2);
+    expect(wins.map((w) => w.getAttribute("data-target")).sort()).toEqual(["e.a", "r.ab"]);
+    expect(wins.map((w) => w.getAttribute("data-kind")).sort()).toEqual(["element", "relation"]);
+    // 两个锚定对象都同色高亮
+    expect(d.querySelector("svg .node")!.classList.contains("hl")).toBe(true);
+    expect(d.querySelector("svg .edge")!.classList.contains("hl")).toBe(true);
+    expect(guideLines(d)).toHaveLength(2);
+
+    // 点空白画布 → 关闭所有未钉住的窗
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(0);
+    expect(d.querySelector("svg .node")!.classList.contains("hl")).toBe(false);
+    expect(d.querySelector("svg .edge")!.classList.contains("hl")).toBe(false);
+    expect(guideLines(d)).toHaveLength(0);
+    expect(d.getElementById("insp-guides")!.hasAttribute("hidden")).toBe(true);
+  });
+});
+
+describe("多小窗并存 / 颜色 / 层级", () => {
+  it("📌 钉住后点击另一个对象：两窗并存、颜色不同、各有引导线、级联错开", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win1 = visibleWins(d)[0]!;
+    (win1.querySelector(".pin-btn") as HTMLElement).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect((win1.querySelector(".pin-btn") as HTMLElement).getAttribute("aria-pressed")).toBe("true");
+
+    d.querySelector("svg .edge")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const wins = visibleWins(d);
+    expect(wins).toHaveLength(2);
+    const colors = new Set(wins.map((w) => w.getAttribute("data-color")));
+    expect(colors.size).toBe(2);
+    // 窗口边框/标题条用各自颜色
+    expect(win1.style.borderColor).not.toBe("");
+    // 级联偏移：两窗默认位置不完全重叠
+    expect(`${wins[0]!.style.left},${wins[0]!.style.top}`).not.toBe(`${wins[1]!.style.left},${wins[1]!.style.top}`);
+    // 每条引导线颜色 = 对应窗口颜色
+    const lines = guideLines(d);
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      const owner = wins.find((w) => w.getAttribute("data-win") === line.getAttribute("data-win"))!;
+      expect(owner).toBeTruthy();
+      expect(line.getAttribute("stroke")).toBe(owner.getAttribute("data-color"));
+    }
+  });
+
+  it("点空白只关未钉住的窗，📌 钉住的保留", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win1 = visibleWins(d)[0]!;
+    (win1.querySelector(".pin-btn") as HTMLElement).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector("svg .edge")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(visibleWins(d)).toHaveLength(2);
+
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const left = visibleWins(d);
+    expect(left).toHaveLength(1);
+    expect(left[0]!.getAttribute("data-target")).toBe("e.a");
+    expect((left[0]!.querySelector(".pin-btn") as HTMLElement).getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("窗口拖拽与同色引导线", () => {
+  it("拖拽窗头移动窗口：引导线窗口端实时更新、锚点端不动", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+    const line = guideLines(d)[0]!;
+    expect(line).toBeTruthy();
+    const before = {
+      left: parseFloat(win.style.left),
+      top: parseFloat(win.style.top),
+      x1: line.getAttribute("x1"),
+      y1: line.getAttribute("y1"),
+      x2: line.getAttribute("x2"),
+      y2: line.getAttribute("y2"),
+    };
+    expect(Number.isFinite(before.left)).toBe(true);
+    expect(Number.isFinite(before.top)).toBe(true);
+
+    const head = win.querySelector(".insp-head") as Element;
+    head.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
+    window.dispatchEvent(new window.MouseEvent("pointermove", { bubbles: true, clientX: 110, clientY: 90 }));
+    window.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 110, clientY: 90 }));
+
+    expect(parseFloat(win.style.left)).toBeCloseTo(before.left + 100, 0);
+    expect(parseFloat(win.style.top)).toBeCloseTo(before.top + 80, 0);
+    // 窗口端坐标变化
+    const moved = line.getAttribute("x1") !== before.x1 || line.getAttribute("y1") !== before.y1;
+    expect(moved).toBe(true);
+    // 锚点端（元素中心）不随窗口拖拽改变
+    expect(line.getAttribute("x2")).toBe(before.x2);
+    expect(line.getAttribute("y2")).toBe(before.y2);
+  });
+
+  it("引导线连到元素中心 / 边中点，且颜色=窗口色", () => {
+    // 元素锚点
+    const domA = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const wa = domA.window;
+    const da = wa.document;
+    da.querySelector("svg .node")!.dispatchEvent(new wa.MouseEvent("click", { bubbles: true }));
+    const lineA = guideLines(da)[0]!;
+    const tA = stageTransform(da);
+    const centerA = embeddedCenters(da).elements["e.a"]!;
+    expect(Number(lineA.getAttribute("x2"))).toBeCloseTo(tA.tx + centerA[0] * tA.scale, 1);
+    expect(Number(lineA.getAttribute("y2"))).toBeCloseTo(tA.ty + centerA[1] * tA.scale, 1);
+    const winA = visibleWins(da)[0]!;
+    expect(lineA.getAttribute("stroke")).toBe(winA.getAttribute("data-color"));
+
+    // 边锚点（关系中点）
+    const domB = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const wb = domB.window;
+    const db = wb.document;
+    db.querySelector("svg .edge")!.dispatchEvent(new wb.MouseEvent("click", { bubbles: true }));
+    const lineB = guideLines(db)[0]!;
+    const tB = stageTransform(db);
+    const centerB = embeddedCenters(db).relations["r.ab"]!;
+    expect(Number(lineB.getAttribute("x2"))).toBeCloseTo(tB.tx + centerB[0] * tB.scale, 1);
+    expect(Number(lineB.getAttribute("y2"))).toBeCloseTo(tB.ty + centerB[1] * tB.scale, 1);
+    expect(visibleWins(db)[0]!.getAttribute("data-kind")).toBe("relation");
+  });
+});

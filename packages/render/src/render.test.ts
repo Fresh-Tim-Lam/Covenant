@@ -62,9 +62,9 @@ describe("renderSvg", () => {
 
 const labelBox = (l: { x: number; y: number; width: number }) => ({
   x: l.x - l.width / 2 - 2,
-  y: l.y - 10,
+  y: l.y - 5.5,
   w: l.width + 4,
-  h: 15,
+  h: 11,
 });
 
 describe("标签避让", () => {
@@ -199,8 +199,8 @@ describe("边标签语义", () => {
     expect(svg).toContain("1. 提交订单");
   });
 });
-describe("边标签胶囊与交叉跳线", () => {
-  it("边标签带胶囊背景", () => {
+describe("边标签（去胶囊）与交点圆点", () => {
+  it("边标签只有文字 + 白描边，不再画背景胶囊", () => {
     const d: CovenantDoc = {
       covenant: "0.1",
       id: "t/capsule",
@@ -214,7 +214,10 @@ describe("边标签胶囊与交叉跳线", () => {
       views: [{ id: "v.main", title: "m" }],
     };
     const svg = renderSvg(d, layout(d));
-    expect(svg).toContain("edge-label-bg");
+    expect(svg).not.toContain("edge-label-bg"); // 不再有背景胶囊
+    expect(svg).toContain('class="edge-label"');
+    expect(svg).toContain('paint-order="stroke"'); // 白描边保证压线可读
+    expect(svg).toContain('stroke="#ffffff"');
   });
 });
 
@@ -312,7 +315,7 @@ describe("交点圆点（空心=几何交叉 / 实心=真实连接）", () => {
 });
 
 describe("边标签不压别的边线", () => {
-  it("胶囊沿路径滑动，避开穿过的另一条边", () => {
+  it("标签沿路径滑动，避开穿过的另一条边", () => {
     const d: CovenantDoc = {
       covenant: "0.1",
       id: "t/avoid",
@@ -323,7 +326,7 @@ describe("边标签不压别的边线", () => {
         { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS" },
       ],
       relations: [
-        { id: "r.h", kind: "calls", from: "e.a", to: "e.b", summary: "h", props: { label: "很长的中文胶囊标签" } },
+        { id: "r.h", kind: "calls", from: "e.a", to: "e.b", summary: "h", props: { label: "很长的中文边标签" } },
         { id: "r.v", kind: "calls", from: "e.b", to: "e.a", summary: "v" },
       ],
     };
@@ -342,10 +345,16 @@ describe("边标签不压别的边线", () => {
       ranks: {},
     };
     const svg = renderSvg(d, fabricated);
-    const rect = /<rect class="edge-label-bg" x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)"/.exec(svg);
-    expect(rect).not.toBeNull();
-    const box = { x: Number(rect![1]), y: Number(rect![2]), w: Number(rect![3]), h: Number(rect![4]) };
-    // 垂直边线段 (450,60)-(450,340)：胶囊不得与它相交
+    // 去胶囊后按文字锚点换算视觉包围盒：中心=(x, y-2.5)，宽≈文本宽+4，高 11
+    const txt = /<text class="edge-label" x="([-\d.]+)" y="([-\d.]+)"[^>]*>([^<]*)<\/text>/.exec(svg);
+    expect(txt).not.toBeNull();
+    let units = 0;
+    for (const ch of txt![3]!) units += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 1 : 0.55;
+    const width = units * 10.5 + 4;
+    const cx = Number(txt![1]);
+    const cy = Number(txt![2]) - 2.5;
+    const box = { x: cx - width / 2, y: cy - 5.5, w: width, h: 11 };
+    // 垂直边线段 (450,60)-(450,340)：文字盒不得与它相交
     const verticalAt450 = 450;
     const boxCovers450 = box.x < verticalAt450 && box.x + box.w > verticalAt450 && box.y < 340 && box.y + box.h > 60;
     expect(boxCovers450).toBe(false);
@@ -358,9 +367,9 @@ describe("标签避让回退（候选耗尽也不重叠）", () => {
     const placed = placeLabels(Array.from({ length: 6 }, () => req), []);
     const boxes = placed.map((p) => ({
       x: p.x - p.width / 2 - 2,
-      y: p.y - 10,
+      y: p.y - 5.5,
       w: p.width + 4,
-      h: 15,
+      h: 11,
     }));
     for (let i = 0; i < boxes.length; i++) {
       for (let j = i + 1; j < boxes.length; j++) {

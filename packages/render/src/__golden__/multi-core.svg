@@ -3,12 +3,10 @@
 <desc id="cvn-desc">演示视图选择器（include/exclude/tag）</desc>
 <defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
 <rect x="0" y="0" width="846" height="130" fill="#ffffff"/>
-<g class="edge" data-id="r.w-a"><path d="M218 65 L238 65 L308 65 L328 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 65 L238 65 L308 65 L328 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<g class="edge" data-id="r.a-d"><path d="M518 65 L538 65 L608 65 L628 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M518 65 L538 65 L608 65 L628 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<rect class="edge-label-bg" x="236.24" y="56.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="255.68" y="67.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
-<rect class="edge-label-bg" x="533.35" y="56.5" width="44.65" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="555.67" y="67.5" text-anchor="middle" font-size="10.5" fill="#64748b">writes</text>
+<g class="edge" data-id="r.w-a"><path d="M218 65 L238 65 L238.44 65 L308 65 L328 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 65 L238 65 L238.44 65 L308 65 L328 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.a-d"><path d="M518 65 L538 65 L541.33 65 L608 65 L628 65" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M518 65 L538 65 L541.33 65 L608 65 L628 65" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<text class="edge-label" x="238.11" y="67.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="540.21" y="67.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
 <g class="node kind-container" data-id="e.web">
 <rect x="28" y="28" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
 <text x="40" y="52" font-size="13" font-weight="650" fill="#0f172a">Web</text>

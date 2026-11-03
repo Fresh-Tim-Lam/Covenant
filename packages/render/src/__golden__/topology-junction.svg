@@ -10,14 +10,10 @@
 <circle class="crossing crossing-hollow" cx="336.33" cy="178.33" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
 <circle class="crossing crossing-hollow" cx="509.67" cy="251.67" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
 <circle class="crossing crossing-hollow" cx="423" cy="215" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
-<rect class="edge-label-bg" x="545.82" y="269.91" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="572.87" y="280.91" text-anchor="middle" font-size="10.5" fill="#64748b">A→F 跨层</text>
-<rect class="edge-label-bg" x="285.26" y="190.16" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="312.31" y="201.16" text-anchor="middle" font-size="10.5" fill="#64748b">B→D 反向</text>
-<rect class="edge-label-bg" x="536.88" y="197.25" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="563.93" y="208.25" text-anchor="middle" font-size="10.5" fill="#64748b">C→E 旁路</text>
-<rect class="edge-label-bg" x="395.95" y="160.71" width="54.1" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="423" y="171.71" text-anchor="middle" font-size="10.5" fill="#64748b">B→E 直连</text>
+<text class="edge-label" x="277.32" y="155.86" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">A→F 跨层</text>
+<text class="edge-label" x="287.84" y="221.86" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">B→D 反向</text>
+<text class="edge-label" x="578.48" y="195.94" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">C→E 旁路</text>
+<text class="edge-label" x="423" y="239.15" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">B→E 直连</text>
 <g class="node kind-module" data-id="e.a">
 <circle cx="163" cy="105" r="6" fill="#0f172a" stroke="#ffffff" stroke-width="1.5"/>
 <text x="163" y="127" text-anchor="middle" font-size="12" font-weight="650" fill="#0f172a">A</text>

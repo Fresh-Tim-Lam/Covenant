@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CovenantDoc } from "@covenant/core";
-import { estimateLabelWidth, layout, layoutSequence, route, selectView } from "./index";
+import { layout, layoutSequence, route, selectView } from "./index";
 
 function doc(): CovenantDoc {
   return {
@@ -422,7 +422,7 @@ describe("长边侧边走廊（不穿任何中间层节点）", () => {
   });
 });
 
-describe("平行边车道按胶囊尺寸留距", () => {
+describe("平行边紧凑间距（去胶囊后不再按标签宽推宽）", () => {
   function parallelDoc(label: string, count: number): CovenantDoc {
     const relations = Array.from({ length: count }, (_, i) => ({
       id: `r.${i}`,
@@ -445,26 +445,23 @@ describe("平行边车道按胶囊尺寸留距", () => {
     };
   }
 
-  it("同间隙短边车道间距 ≥ 最大胶囊宽 + 10（不是固定 14px）", () => {
-    const label = "授权成功 [金额一致]";
-    const count = 3;
-    const d = parallelDoc(label, count);
+  it("同间隙短边车道间距 = 10px（≥8 且远小于标签宽）", () => {
+    const d = parallelDoc("授权成功 [金额一致]", 3);
     const r = layout(d);
-    const step = estimateLabelWidth({ kind: "calls", props: { label } }) + 10;
-    expect(step).toBeGreaterThan(80);
-    // edge.lane 是"相对走廊中心的偏移/14"，相邻车道间距 = steps
     const offsets = r.edges.map((e) => e.lane * 14).sort((a, b) => a - b);
     for (let i = 1; i < offsets.length; i++) {
-      expect(offsets[i]! - offsets[i - 1]!).toBeGreaterThanOrEqual(step - 0.01);
+      const step = offsets[i]! - offsets[i - 1]!;
+      expect(step).toBeGreaterThanOrEqual(8);
+      expect(step).toBeLessThanOrEqual(10.01);
     }
-    // 间隙也应按胶囊宽扩大（不是压回 rankGap 默认值）
+    // 宽标签不再把间隙扩到"胶囊宽 + 10"；只按半宽留出刚好不压节点的边距
     const a = r.nodes["e.a"]!;
     const b = r.nodes["e.b"]!;
     const gap = b.x - (a.x + a.w);
-    expect(gap).toBeGreaterThanOrEqual(52 + (count - 1) * (step - 0.01));
+    expect(gap).toBeLessThan(200);
   });
 
-  it("长边通道间距 ≥ 胶囊高 17 + 8（保证标签不压相邻通道线）", () => {
+  it("长边通道间距 = 10px（紧凑，不再按胶囊高 25）", () => {
     const d: CovenantDoc = {
       covenant: "0.1",
       id: "t/channels",
@@ -488,6 +485,13 @@ describe("平行边车道按胶囊尺寸留距", () => {
     const longs = r.edges.filter((e) => e.labelSegment);
     expect(longs.length).toBe(2);
     const ys = longs.map((e) => e.points![2]!.y).sort((a, b) => a - b);
-    expect(Math.abs(ys[1]! - ys[0]!)).toBeGreaterThanOrEqual(25);
+    const step = Math.abs(ys[1]! - ys[0]!);
+    expect(step).toBeGreaterThanOrEqual(8);
+    expect(step).toBeLessThanOrEqual(10.01);
+  });
+
+  it("紧凑模式下仍无穿框（长边侧边走廊保持）", () => {
+    const r = layout(parallelDoc("很长的中文标签文本用于测试", 3));
+    assertNoEdgeCrossesNodes(r);
   });
 });

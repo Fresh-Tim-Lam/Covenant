@@ -30,22 +30,24 @@ function distToSegment(p: { x: number; y: number }, a: { x: number; y: number },
   return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
 }
 
-describe("边标签胶囊贴线", () => {
-  it("每个 edge-label-bg 的中心都落在某条边路径上（≤2.5px），不悬浮", () => {
+describe("边标签贴线（去胶囊）", () => {
+  it("每个 edge-label 文字中心都落在某条边路径上（≤2.5px），不悬浮", () => {
     const d = doc();
     const result = layout(d);
     const svg = renderSvg(d, result);
-    const rects = [...svg.matchAll(/class="edge-label-bg"[^>]*x="([\d.]+)"[^>]*y="([\d.]+)"[^>]*width="([\d.]+)"/g)];
-    expect(rects.length).toBeGreaterThan(0);
+    const texts = [...svg.matchAll(/class="edge-label" x="([\d.]+)" y="([\d.]+)"/g)];
+    expect(texts.length).toBeGreaterThan(0);
+    expect(svg).not.toContain("edge-label-bg"); // 去胶囊：无背景块
     const segs = result.edges.flatMap((e) => {
       const pts = e.points;
       const out: Array<[{ x: number; y: number }, { x: number; y: number }]> = [];
       for (let i = 0; i + 1 < pts.length; i++) out.push([pts[i]!, pts[i + 1]!]);
       return out;
     });
-    for (const m of rects) {
-      const cx = Number(m[1]) + Number(m[3]) / 2;
-      const cy = Number(m[2]) + 17 / 2;
+    for (const m of texts) {
+      // 文字视觉中心 = 锚点 y - 2.5（基线偏移）
+      const cx = Number(m[1]);
+      const cy = Number(m[2]) - 2.5;
       const best = Math.min(...segs.map(([a, b]) => distToSegment({ x: cx, y: cy }, a, b)));
       expect(best).toBeLessThanOrEqual(2.5);
     }
@@ -54,12 +56,13 @@ describe("边标签胶囊贴线", () => {
   it("平行双向边的两个标签沿路径错开（不叠在同一点）", () => {
     const d = doc();
     const svg = renderSvg(d, layout(d));
-    const centers = [...svg.matchAll(/class="edge-label-bg"[^>]*x="([\d.]+)"[^>]*y="([\d.]+)"/g)].map((m) => ({
+    const centers = [...svg.matchAll(/class="edge-label" x="([\d.]+)" y="([\d.]+)"/g)].map((m) => ({
       x: Number(m[1]),
-      y: Number(m[2]),
+      y: Number(m[2]) - 2.5,
     }));
     expect(centers.length).toBe(2);
     const dist = Math.hypot(centers[0]!.x - centers[1]!.x, centers[0]!.y - centers[1]!.y);
-    expect(dist).toBeGreaterThan(20);
+    // 紧凑模式车道间距 10px：只要求不重合（允许轻微相邻/重叠）
+    expect(dist).toBeGreaterThan(1);
   });
 });

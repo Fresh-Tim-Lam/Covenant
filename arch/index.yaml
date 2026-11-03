@@ -56,7 +56,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 显式 undefined 参数会覆盖默认值导致 NaN，必须逐字段兜底
-    source_sha256: cc9e2f5d9aea0ca5443ccdbb964cdeb78fe0bc3712ee931c7eea96670bb2622e
+    source_sha256: 96fd906635d14fab3acdb62b175e63f3844c0f730e288b0693719d6519146cdb
   - file: packages/render/src/index.ts
     f: SVG 渲染：节点/边/标签/frame/批注角标
     r:
@@ -66,7 +66,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 渲染必须确定性：同输入逐字节一致
-    source_sha256: af36881e4976377a36a2b463a1b0bf1ca0ef4dad215d8e4aeca40f52b43ef07f
+    source_sha256: 2bf7abf11d7a48ffaffca34c969f964c42252aa5ae3d323b4b8984cc44ce4ed2
   - file: packages/render/src/html.ts
     f: 可标注自包含 HTML：内联 SVG + 内嵌语义 JSON + 状态流转
     r:
@@ -77,7 +77,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 0118719703099623d276a9bd2f2d5cbd93aaeec51b4226fafc1453f40b0dff51
+    source_sha256: 496bd8be28b17ab1abdaf167c07e6c001b717ac109e14234682da7d9e0813cc8
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

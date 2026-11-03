@@ -3,12 +3,10 @@
 <desc id="cvn-desc">说明制品落在哪些节点、节点间链路与跨环境边界。</desc>
 <defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
 <rect x="0" y="0" width="966" height="478" fill="#ffffff"/>
-<g class="edge" data-id="r.prod-stage"><path d="M363 102 L363 122 L123 122 L123 182 L123 202" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M363 102 L363 122 L123 122 L123 182 L123 202" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.prod-stage"><path d="M363 102 L363 122 L363 139.76 L123 139.76 L123 182 L123 202" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M363 102 L363 122 L363 139.76 L123 139.76 L123 182 L123 202" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
 <g class="edge" data-id="r.api-worker"><path d="M363 276 L363 296 L603 296 L603 276" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M363 276 L363 296 L603 296 L603 276" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
-<rect class="edge-label-bg" x="260.92" y="113.5" width="73.52" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="297.69" y="124.5" text-anchor="middle" font-size="10.5" fill="#64748b">https · vpc</text>
-<rect class="edge-label-bg" x="437.16" y="287.5" width="38.88" height="17" rx="8.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
-<text class="edge-label" x="456.6" y="298.5" text-anchor="middle" font-size="10.5" fill="#64748b">calls</text>
+<text class="edge-label" x="363" y="130.57" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">https · vpc</text>
+<text class="edge-label" x="456.6" y="298.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
 <g class="node kind-node" data-id="e.node-prod">
 <rect x="268" y="28" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
 <text x="280" y="52" font-size="13" font-weight="650" fill="#0f172a">生产集群</text>

@@ -49,6 +49,27 @@ function anchors(layout: LayoutResult) {
   return { elements, relations };
 }
 
+/**
+ * 引导线锚点：元素取矩形中心，关系取折线中点（与 badge 锚点不同，badge 偏右上角）。
+ * 多小窗的引导线需要"连到元素/边本体"，所以单独投影一份。
+ */
+function centers(layout: LayoutResult) {
+  const elements: Record<string, [number, number]> = {};
+  for (const [id, r] of Object.entries(layout.nodes)) {
+    elements[id] = [r.x + r.w / 2, r.y + r.h / 2] as [number, number];
+  }
+  const relations: Record<string, [number, number]> = {};
+  for (const e of layout.edges) {
+    const p = e.points;
+    const mid =
+      p.length === 4
+        ? { x: (p[1]!.x + p[2]!.x) / 2, y: (p[1]!.y + p[2]!.y) / 2 }
+        : (p[0] ?? { x: 0, y: 0 });
+    relations[e.id] = [mid.x, mid.y] as [number, number];
+  }
+  return { elements, relations };
+}
+
 function projectDoc(view: DocView) {
   const d = view.doc;
   return {
@@ -63,6 +84,7 @@ function projectDoc(view: DocView) {
     profile: d.profile,
     size: { width: view.layout.width, height: view.layout.height },
     anchors: anchors(view.layout),
+    centers: centers(view.layout),
     positions: Object.fromEntries(
       Object.entries(view.layout.nodes).map(([id, r]) => [id, [r.x, r.y]]),
     ) as Record<string, [number, number]>,
@@ -196,6 +218,22 @@ svg text{user-select:none}
 .edit-box .row{display:flex;gap:8px}
 .edit-box .row>div{flex:1}
 .edit-box button{margin-top:9px;width:100%;font:inherit;font-size:12.5px;padding:7px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+/* —— 多小窗 / 同色引导线 / 彩色锚点高亮 / 折叠表单 —— */
+.cvn-win{position:absolute;left:16px;top:16px;z-index:20;width:360px;max-width:calc(100vw - 24px);max-height:calc(100% - 24px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:2px solid var(--line);border-radius:10px;box-shadow:0 14px 36px rgba(15,23,42,.2)}
+.cvn-win[hidden]{display:none}
+.cvn-win,.cvn-win input,.cvn-win textarea,.cvn-win select{user-select:text}
+.cvn-win .insp-head{border-bottom-width:2px;border-bottom-style:solid}
+.win-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(15,23,42,.12)}
+#insp-guides{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:15}
+#insp-guides[hidden]{display:none}
+#insp-guides line{stroke-width:1.5;stroke-dasharray:5 4;stroke-opacity:.85}
+.node.hl rect,.node.hl polygon,.node.hl ellipse,.edge.hl path{stroke:var(--hl)!important;stroke-width:2.5!important}
+.ann-form{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.ann-form-toggle{display:flex;align-items:center;gap:6px;width:100%;font:inherit;font-size:12.5px;font-weight:600;padding:6px 9px;border:1px dashed var(--line);border-radius:7px;background:#f8fafc;color:#334155;cursor:pointer;text-align:left}
+.ann-form-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.ann-form-chev{font-size:11px;color:var(--muted);width:10px;display:inline-block}
+.ann-form-body{margin-top:8px}
+.ann-form-body[hidden]{display:none}
 `;
 
 const SCRIPT = `
@@ -211,9 +249,18 @@ const SCRIPT = `
   var editOps = {};
   var pendingDiff = null;
   var nodeDrag = null;
-  var pinned = false;
   var editingAnn = null;
   var local = load();
+  // —— 多小窗状态 ——
+  // wins: 打开中的窗口（hover 预览 / 点击保留 / 📌 钉住 三种态）；el 复用 #inspector 作为主窗
+  var wins = [];
+  var winSeq = 0;
+  var zSeq = 0;
+  var primaryEl = document.getElementById("inspector");
+  var guidesEl = document.getElementById("insp-guides");
+  var COLORS = ["#2563eb","#dc2626","#059669","#d97706","#7c3aed","#db2777","#0891b2","#65a30d"];
+  var colorSeq = 0;
+  var HOVER_CLOSE_MS = 120;
 
   function normalize(v){
     if (Array.isArray(v)) return { add: v, status: {}, deleted: [], edited: {} };
@@ -274,11 +321,227 @@ const SCRIPT = `
     return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()) + sign + p(Math.floor(off/60)) + ":" + p(off%60);
   }
 
+  // ===== 多小窗 / 同色引导线 / 彩色锚点高亮 =====
+  function currentSvg(){
+    var docs = document.querySelectorAll(".doc");
+    for (var i=0;i<docs.length;i++) if (!docs[i].hidden) return docs[i].querySelector("svg");
+    return null;
+  }
+  function shapeOf(kind, id){
+    var svg = currentSvg();
+    if (!svg) return null;
+    var list = svg.querySelectorAll(kind === "element" ? ".node" : ".edge");
+    for (var i=0;i<list.length;i++) if (list[i].getAttribute("data-id") === id) return list[i];
+    return null;
+  }
+  function findWin(kind, id){
+    for (var i=wins.length-1;i>=0;i--) if (wins[i].kind === kind && wins[i].targetId === id) return wins[i];
+    return null;
+  }
+  function activeWin(){ return wins.length ? wins[wins.length-1] : null; }
+  function primaryBusy(){ for (var i=0;i<wins.length;i++) if (wins[i].el === primaryEl) return true; return false; }
+  function acquireWinEl(){
+    if (!primaryBusy()) return primaryEl;
+    var el = document.createElement("div");
+    el.className = "cvn-win"; el.hidden = true;
+    (primaryEl.parentNode || document.body).appendChild(el);
+    return el;
+  }
+  // 8 色确定性调色板：优先取当前未被占用的颜色，占满后循环
+  function colorFor(){
+    var used = {};
+    for (var i=0;i<wins.length;i++) used[wins[i].color] = 1;
+    for (var j=0;j<COLORS.length;j++){
+      var idx = (colorSeq + j) % COLORS.length;
+      if (!used[COLORS[idx]]) { colorSeq = idx + 1; return COLORS[idx]; }
+    }
+    var c = COLORS[colorSeq % COLORS.length]; colorSeq = (colorSeq + 1) % COLORS.length; return c;
+  }
+  function stripIds(el){
+    var list = el.querySelectorAll("[id]");
+    for (var i=0;i<list.length;i++) list[i].removeAttribute("id");
+  }
+  function fieldOf(w, name){ return w.el.querySelector('[data-field="' + name + '"]'); }
+  function fieldVal(w, name){ var el = fieldOf(w, name); return el ? String(el.value) : ""; }
+  function positionWin(w, at){
+    var el = w.el;
+    var parent = el.offsetParent || document.body;
+    var pr = parent.getBoundingClientRect();
+    var ww = el.offsetWidth || 360, hh = el.offsetHeight || 320;
+    // 级联偏移，避免新窗与现存窗完全重叠
+    var off = 18 * ((wins.length - 1) % 8);
+    var cx = at && isFinite(at.x) ? at.x : 140 + off;
+    var cy = at && isFinite(at.y) ? at.y : 120 + off;
+    var maxL = (parent.clientWidth || window.innerWidth || 1024) - ww - 8;
+    var maxT = (parent.clientHeight || window.innerHeight || 768) - hh - 8;
+    var left = cx - pr.left + 16 + off;
+    var top = cy - pr.top + 12 + off;
+    el.style.left = Math.max(8, Math.min(left, Math.max(8, maxL))) + "px";
+    el.style.top = Math.max(8, Math.min(top, Math.max(8, maxT))) + "px";
+  }
+  function syncHighlights(){
+    var old = document.querySelectorAll(".node.hl, .edge.hl");
+    for (var i=0;i<old.length;i++){ old[i].classList.remove("hl"); old[i].style.removeProperty("--hl"); }
+    for (var j=0;j<wins.length;j++){
+      var el = shapeOf(wins[j].kind, wins[j].targetId);
+      if (!el) continue;
+      el.classList.add("hl");
+      el.style.setProperty("--hl", wins[j].color);
+    }
+  }
+  function anchorOf(w){
+    var doc = currentDoc();
+    if (!doc) return null;
+    var src = doc.centers && doc.centers[w.kind === "element" ? "elements" : "relations"];
+    var p = src && src[w.targetId];
+    if (!p){
+      var fb = w.kind === "element" ? (doc.anchors && doc.anchors.elements) : (doc.anchors && doc.anchors.relations);
+      p = fb && fb[w.targetId];
+    }
+    return p || null;
+  }
+  // 从窗口最近边中点连到锚点（元素中心 / 边中点）；坐标已换算到 main 容器坐标系
+  function guidePoints(w){
+    var a = anchorOf(w);
+    if (!a) return null;
+    var el = w.el;
+    var tvx = tx + a[0] * scale, tvy = ty + a[1] * scale;
+    var wx = parseFloat(el.style.left) || 0, wy = parseFloat(el.style.top) || 0;
+    var ww = el.offsetWidth || 360, wh = el.offsetHeight || 320;
+    var cx = wx + ww / 2, cy = wy + wh / 2;
+    var dx = tvx - cx, dy = tvy - cy;
+    var sx, sy;
+    if (Math.abs(dx) * wh >= Math.abs(dy) * ww){ sx = dx < 0 ? wx : wx + ww; sy = cy; }
+    else { sx = cx; sy = dy < 0 ? wy : wy + wh; }
+    return [sx, sy, tvx, tvy];
+  }
+  function round1(v){ return String(Math.round(v * 10) / 10); }
+  function updateGuides(){
+    if (!guidesEl) return;
+    var keep = {};
+    for (var i=0;i<wins.length;i++){
+      var w = wins[i], pts = guidePoints(w);
+      if (!pts){
+        if (w.line && w.line.parentNode) w.line.parentNode.removeChild(w.line);
+        w.line = null;
+        continue;
+      }
+      if (!w.line){
+        w.line = document.createElementNS(SVGNS, "line");
+        w.line.setAttribute("data-win", w.id);
+        w.line.setAttribute("stroke-linecap", "round");
+        guidesEl.appendChild(w.line);
+      }
+      w.line.setAttribute("x1", round1(pts[0]));
+      w.line.setAttribute("y1", round1(pts[1]));
+      w.line.setAttribute("x2", round1(pts[2]));
+      w.line.setAttribute("y2", round1(pts[3]));
+      w.line.setAttribute("stroke", w.color);
+      keep[w.id] = 1;
+    }
+    var lines = guidesEl.querySelectorAll("line");
+    for (var j=lines.length-1;j>=0;j--){ if (!keep[lines[j].getAttribute("data-win")]) lines[j].parentNode.removeChild(lines[j]); }
+    // svg 元素没有 HTMLElement 的 hidden 属性，必须用 attribute 控制，否则引导线永远不显示
+    if (wins.length === 0) guidesEl.setAttribute("hidden", "");
+    else guidesEl.removeAttribute("hidden");
+    var wrapEl = document.getElementById("stage-wrap");
+    guidesEl.setAttribute("width", String((wrapEl && wrapEl.clientWidth) || 1024));
+    guidesEl.setAttribute("height", String((wrapEl && wrapEl.clientHeight) || 768));
+  }
+  function colorAlpha(hex, alpha){
+    var h = String(hex || "").replace("#", "");
+    if (h.length !== 6) return "rgba(37,99,235," + alpha + ")";
+    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+  }
+  function paintWin(w){
+    w.el.setAttribute("data-color", w.color);
+    w.el.style.borderColor = w.color;
+    var head = w.el.querySelector(".insp-head");
+    if (head){
+      head.style.borderBottomColor = w.color;
+      head.style.boxShadow = "inset 4px 0 0 0 " + w.color;
+      // 标题条用该窗颜色的浅色渐染，边框/标题条/引导线/锚点高亮保持同色
+      head.style.background = "linear-gradient(90deg, " + colorAlpha(w.color, 0.16) + ", #f8fafc 62%)";
+    }
+  }
+  function activateWin(w){
+    var idx = wins.indexOf(w);
+    if (idx < 0){ wins.push(w); }
+    else if (wins[wins.length-1] !== w){ wins.splice(idx, 1); wins.push(w); }
+    // 点击置顶：仅当不在 DOM 末尾时移动（避免输入框每点一次就重排导致失焦）
+    var parent = w.el.parentNode;
+    if (parent && parent.lastElementChild !== w.el) parent.appendChild(w.el);
+    w.el.style.zIndex = String(20 + (++zSeq % 1000));
+    selected = { kind: w.kind, id: w.targetId };
+    syncHighlights();
+    updateGuides();
+  }
+  function closeWin(w){
+    clearTimeout(w.closeTimer);
+    var idx = wins.indexOf(w);
+    if (idx >= 0) wins.splice(idx, 1);
+    if (w.line && w.line.parentNode) w.line.parentNode.removeChild(w.line);
+    w.line = null;
+    if (w.el === primaryEl){
+      w.el.hidden = true; w.el.innerHTML = "";
+      w.el.removeAttribute("data-win"); w.el.removeAttribute("data-color");
+      w.el.removeAttribute("data-kind"); w.el.removeAttribute("data-target");
+      w.el.style.borderColor = "";
+    } else if (w.el.parentNode){
+      w.el.parentNode.removeChild(w.el);
+    }
+    if (selected && selected.kind === w.kind && selected.id === w.targetId){
+      var top = activeWin();
+      selected = top ? { kind: top.kind, id: top.targetId } : null;
+    }
+    if (!wins.length){
+      var sel = document.querySelectorAll(".sel");
+      for (var i=0;i<sel.length;i++) sel[i].classList.remove("sel");
+    }
+    syncHighlights();
+    updateGuides();
+  }
+  function closeUnpinned(){
+    for (var i=wins.length-1;i>=0;i--) if (!wins[i].pinned) closeWin(wins[i]);
+  }
+  function closeAll(){ for (var i=wins.length-1;i>=0;i--) closeWin(wins[i]); }
+  function openWindow(kind, id, state, at){
+    var w = findWin(kind, id);
+    if (w){
+      clearTimeout(w.closeTimer);
+      if (state === "clicked" && w.state === "hover"){ w.state = "clicked"; renderWin(w); }
+      activateWin(w);
+      return w;
+    }
+    var el = acquireWinEl();
+    var color = colorFor();
+    w = { id: "w" + (++winSeq), kind: kind, targetId: id, color: color, state: state, pinned: false, formOpen: false, el: el, line: null, closeTimer: 0 };
+    wins.push(w);
+    el.hidden = false;
+    el.className = "cvn-win";
+    el.setAttribute("data-win", w.id);
+    el.setAttribute("data-kind", kind);
+    el.setAttribute("data-target", id);
+    el.setAttribute("data-color", color);
+    el.style.borderColor = color;
+    positionWin(w, at);
+    renderWin(w);
+    activateWin(w);
+    return w;
+  }
+  // 悬停预览：离开形状后延时关闭；进入窗口/再次悬停会取消计时
+  function scheduleHoverClose(w){
+    if (!w || w.state !== "hover" || w.pinned) return;
+    clearTimeout(w.closeTimer);
+    w.closeTimer = setTimeout(function(){ if (w.state === "hover" && !w.pinned) closeWin(w); }, HOVER_CLOSE_MS);
+  }
+
   function switchDoc(id){
     current = id; selected = null;
-    // 切图必须清掉悬浮窗的瞬态：批注内联编辑残留 + 钉住（否则回来时表单会"自动复现"、窗口被隐式钉死）
+    // 切图必须清掉全部小窗的瞬态：批注内联编辑残留 + 钉住（否则回来时表单会"自动复现"、窗口被隐式钉死）
     editingAnn = null;
-    pinned = false;
+    closeAll();
     var docs = document.querySelectorAll(".doc");
     for (var i=0;i<docs.length;i++) docs[i].hidden = docs[i].getAttribute("data-doc") !== id;
     var btns = document.querySelectorAll("#views button");
@@ -387,16 +650,16 @@ const SCRIPT = `
     pushUndo(function(){ var ll = localFor(doc.docId); ll.deleted = ll.deleted.filter(function(x){ return x !== id; }); save(); refreshDocUi(); renderInspector(selected ? selected.kind : null, selected ? selected.id : null); });
     showUndoToast("已移入回收桶（导出时生成 remove）", "撤销");
   }
-  function saveAnnEdit(id, kind, selId){
+  function saveAnnEdit(id, w){
     var doc = currentDoc();
-    if (!doc) return;
+    if (!doc || !w) return;
     var l = localFor(doc.docId);
     var values = {
-      type: document.getElementById("ae-type").value,
-      severity: document.getElementById("ae-sev").value,
-      title: document.getElementById("ae-title").value.trim(),
-      body: document.getElementById("ae-body").value,
-      aiHint: document.getElementById("ae-hint").value,
+      type: fieldVal(w, "ae-type"),
+      severity: fieldVal(w, "ae-sev"),
+      title: fieldVal(w, "ae-title").trim(),
+      body: fieldVal(w, "ae-body"),
+      aiHint: fieldVal(w, "ae-hint"),
     };
     if (!values.title) { alert("标题不能为空"); return; }
     var idx = -1;
@@ -407,7 +670,7 @@ const SCRIPT = `
       l.edited[id] = values;
     }
     editingAnn = null;
-    save(); refreshDocUi(); renderInspector(kind, selId);
+    save(); refreshDocUi(); renderWin(w);
     showToast("批注已更新（导出补丁生效）");
   }
   function restoreAnn(id){
@@ -445,12 +708,20 @@ const SCRIPT = `
   }
 
   function renderInspector(kind, id){
-    var box = document.getElementById("inspector");
+    // 兼容旧调用：null 表示清空全部窗口；否则定位/创建对应窗口并重绘
+    if (!id){ closeAll(); return; }
+    var w = findWin(kind, id);
+    if (!w){ openWindow(kind, id, "clicked", null); return; }
+    renderWin(w);
+  }
+
+  // 单个小窗的内容渲染 + 事件绑定（多窗共用；主窗复用 #inspector 保留旧 id 以便兼容）
+  function renderWin(w){
     var doc = currentDoc();
-    if (!box || !doc) return;
-    if (!id){ box.hidden = true; box.innerHTML = ""; return; }
+    if (!doc) return;
+    var kind = w.kind, id = w.targetId;
     var obj = kind === "element" ? byId(doc.elements, id) : byId(doc.relations, id);
-    if (!obj){ box.innerHTML = ""; return; }
+    if (!obj){ closeWin(w); return; }
     var html = "";
     if (kind === "element"){
       html += '<h3>' + esc(obj.name) + '</h3><div class="meta">' + esc(obj.id) + ' · ' + esc(obj.kind) + '</div>';
@@ -463,15 +734,15 @@ const SCRIPT = `
     if (editing) {
       html += '<div class="edit-box"><h3>编辑（暂存）</h3>';
       if (kind === "element") {
-        html += '<label>名称</label><input id="e-name" value="' + esc(obj.name) + '">';
-        html += '<label>职责</label><textarea id="e-summary">' + esc(obj.summary) + '</textarea>';
-        html += '<label>技术</label><input id="e-tech" value="' + esc(obj.tech || "") + '">';
+        html += '<label>名称</label><input id="e-name" data-field="e-name" value="' + esc(obj.name) + '">';
+        html += '<label>职责</label><textarea id="e-summary" data-field="e-summary">' + esc(obj.summary) + '</textarea>';
+        html += '<label>技术</label><input id="e-tech" data-field="e-tech" value="' + esc(obj.tech || "") + '">';
         var pos = doc.positions && doc.positions[id] ? doc.positions[id] : [0, 0];
-        html += '<div class="row"><div><label>X</label><input id="e-pin-x" type="number" value="' + esc(pos[0]) + '"></div><div><label>Y</label><input id="e-pin-y" type="number" value="' + esc(pos[1]) + '"></div></div>';
+        html += '<div class="row"><div><label>X</label><input id="e-pin-x" data-field="e-pin-x" type="number" value="' + esc(pos[0]) + '"></div><div><label>Y</label><input id="e-pin-y" data-field="e-pin-y" type="number" value="' + esc(pos[1]) + '"></div></div>';
       } else {
-        html += '<label>语义</label><textarea id="e-summary">' + esc(obj.summary) + '</textarea>';
+        html += '<label>语义</label><textarea id="e-summary" data-field="e-summary">' + esc(obj.summary) + '</textarea>';
       }
-      html += '<button id="edit-apply">暂存修改</button><p class="hint">导出编辑 JSON 后运行 covenant edit 预览/应用。</p></div>';
+      html += '<button id="edit-apply" data-field="edit-apply">暂存修改</button><p class="hint">导出编辑 JSON 后运行 covenant edit 预览/应用。</p></div>';
     }
     var list = annsFor(doc, kind, id).filter(function(a){ return !isAnnDeleted(doc, a.id); }).map(function(a){ return effAnn(doc, a); });
     html += '<h3 style="margin-top:12px">批注（' + list.length + '）</h3>';
@@ -508,106 +779,137 @@ const SCRIPT = `
     if (editTarget) {
       var ea = editTarget;
       html += '<div class="form edit-form"><div class="edit-head"><h3>编辑批注</h3><div class="edit-actions"><button class="ann-save" data-id="' + esc(ea.id) + '">保存</button><button class="ann-cancel" data-id="' + esc(ea.id) + '" title="取消编辑，返回新增批注">← 返回</button></div></div>' +
-        '<div class="row"><div><label>类型</label><select id="ae-type">' + ["risk","question","todo","defect","smell","decision"].map(function(t){ return "<option" + (t === ea.type ? " selected" : "") + ">" + t + "</option>"; }).join("") + '</select></div>' +
-        '<div><label>严重度</label><select id="ae-sev">' + ["blocker","high","medium","low"].map(function(s2){ return "<option" + (s2 === ea.severity ? " selected" : "") + ">" + s2 + "</option>"; }).join("") + '</select></div></div>' +
-        '<label>标题</label><input id="ae-title" value="' + esc(ea.title) + '">' +
-        '<label>正文</label><textarea id="ae-body">' + esc(ea.body || "") + '</textarea>' +
-        '<label>给 AI 的指令 ai_hint</label><textarea id="ae-hint">' + esc(ea.aiHint || "") + '</textarea>' +
+        '<div class="row"><div><label>类型</label><select id="ae-type" data-field="ae-type">' + ["risk","question","todo","defect","smell","decision"].map(function(t){ return "<option" + (t === ea.type ? " selected" : "") + ">" + t + "</option>"; }).join("") + '</select></div>' +
+        '<div><label>严重度</label><select id="ae-sev" data-field="ae-sev">' + ["blocker","high","medium","low"].map(function(s2){ return "<option" + (s2 === ea.severity ? " selected" : "") + ">" + s2 + "</option>"; }).join("") + '</select></div></div>' +
+        '<label>标题</label><input id="ae-title" data-field="ae-title" value="' + esc(ea.title) + '">' +
+        '<label>正文</label><textarea id="ae-body" data-field="ae-body">' + esc(ea.body || "") + '</textarea>' +
+        '<label>给 AI 的指令 ai_hint</label><textarea id="ae-hint" data-field="ae-hint">' + esc(ea.aiHint || "") + '</textarea>' +
         '</div>';
     } else {
       editingAnn = null;
-      html += '<div class="form">' +
-        '<h3>新增批注</h3>' +
-        '<div class="row"><div><label>类型</label><select id="f-type"><option>risk</option><option>question</option><option>todo</option><option>defect</option><option>smell</option><option>decision</option></select></div>' +
-        '<div><label>严重度</label><select id="f-sev"><option>high</option><option selected>medium</option><option>low</option><option>blocker</option></select></div></div>' +
-        '<label>标题（一句话结论）</label><input id="f-title" placeholder="例如：这里缺少降级路径">' +
-        '<label>正文（证据与背景）</label><textarea id="f-body"></textarea>' +
-        '<label>给 AI 的指令 ai_hint（祈使句，可留空）</label><textarea id="f-hint" placeholder="例如：优先改为异步；禁止两阶段提交"></textarea>' +
-        '<button id="f-submit">钉到图上</button></div>';
+      // 「新增批注」默认折叠：只留标题行，点击展开/再点收起（不重建 DOM，展开时保留已输入内容）
+      html += '<div class="form ann-form">' +
+        '<button type="button" class="ann-form-toggle" aria-expanded="' + (w.formOpen ? "true" : "false") + '"><span class="ann-form-chev">' + (w.formOpen ? "▾" : "▸") + '</span>＋ 新增批注</button>' +
+        '<div class="ann-form-body"' + (w.formOpen ? "" : " hidden") + '>' +
+        '<div class="row"><div><label>类型</label><select id="f-type" data-field="f-type"><option>risk</option><option>question</option><option>todo</option><option>defect</option><option>smell</option><option>decision</option></select></div>' +
+        '<div><label>严重度</label><select id="f-sev" data-field="f-sev"><option>high</option><option selected>medium</option><option>low</option><option>blocker</option></select></div></div>' +
+        '<label>标题（一句话结论）</label><input id="f-title" data-field="f-title" placeholder="例如：这里缺少降级路径">' +
+        '<label>正文（证据与背景）</label><textarea id="f-body" data-field="f-body"></textarea>' +
+        '<label>给 AI 的指令 ai_hint（祈使句，可留空）</label><textarea id="f-hint" data-field="f-hint" placeholder="例如：优先改为异步；禁止两阶段提交"></textarea>' +
+        '<button id="f-submit" data-field="f-submit">钉到图上</button>' +
+        '</div></div>';
     }
-    box.innerHTML = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="hint">' + (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) + '</span><span class="insp-actions"><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div><div class="insp-body">' + html + '</div>';
-    box.hidden = false;
+    var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) + '</span><span class="insp-actions"><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
+    w.el.innerHTML = head + '<div class="insp-body">' + html + '</div>';
+    w.el.hidden = false;
+    if (w.el !== primaryEl) stripIds(w.el);
+    bindWin(w);
+    paintWin(w);
     if (editingAnn) {
-      var ef = box.querySelector(".edit-form");
+      var ef = w.el.querySelector(".edit-form");
       if (ef && ef.scrollIntoView) ef.scrollIntoView({ block: "nearest" });
     }
-    document.getElementById("insp-close").addEventListener("click", function(){
-      pinned = false;
-      box.hidden = true; box.innerHTML = ""; selected = null; clearSelection();
-    });
-    var pinBtn = document.getElementById("insp-pin");
+    syncHighlights();
+    updateGuides();
+  }
+
+  function bindWin(w){
+    var el = w.el;
+    var kind = w.kind, id = w.targetId;
+    var head = el.querySelector(".insp-head");
+    var closeBtn = el.querySelector(".insp-close");
+    if (closeBtn) closeBtn.addEventListener("click", function(ev){ ev.stopPropagation(); closeWin(w); });
+    var copyBtn = el.querySelector(".copy-btn");
+    if (copyBtn) copyBtn.addEventListener("click", function(ev){ ev.stopPropagation(); copySelection(kind, id); });
+    var pinBtn = el.querySelector(".pin-btn");
     if (pinBtn) {
       function paintPin(){
-        pinBtn.className = pinned ? "pin-btn on" : "pin-btn";
-        pinBtn.setAttribute("aria-pressed", pinned ? "true" : "false");
-        pinBtn.title = pinned ? "已钉住：点击别处也不关闭（再点取消）" : "钉住：点击别处不关闭";
+        pinBtn.className = w.pinned ? "pin-btn on" : "pin-btn";
+        pinBtn.setAttribute("aria-pressed", w.pinned ? "true" : "false");
+        pinBtn.title = w.pinned ? "已钉住：点击别处也不关闭（再点取消）" : "钉住：点击别处不关闭";
       }
       paintPin();
-      pinBtn.addEventListener("click", function(){
-        pinned = !pinned;
+      pinBtn.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        w.pinned = !w.pinned;
+        if (w.pinned){ w.state = "clicked"; clearTimeout(w.closeTimer); }
         paintPin();
-        showToast(pinned ? "已钉住：点击别处不关闭" : "已取消钉住：点击别处会关闭");
+        showToast(w.pinned ? "已钉住：点击别处不关闭" : "已取消钉住：点击别处会关闭");
       });
     }
-    var head = box.querySelector(".insp-head");
+    var toggle = el.querySelector(".ann-form-toggle");
+    if (toggle) toggle.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      w.formOpen = !w.formOpen;
+      var body = el.querySelector(".ann-form-body");
+      if (body) body.hidden = !w.formOpen;
+      toggle.setAttribute("aria-expanded", w.formOpen ? "true" : "false");
+      var chev = toggle.querySelector(".ann-form-chev");
+      if (chev) chev.textContent = w.formOpen ? "▾" : "▸";
+      updateGuides();
+    });
     if (head) {
       head.addEventListener("pointerdown", function(ev){
         if (!ev.target || !ev.target.closest || ev.target.closest("button")) return;
         ev.preventDefault();
         if (ev.button !== 0) return;
-        var parent = box.offsetParent || document.body;
+        activateWin(w);
+        var parent = el.offsetParent || document.body;
         var px = function(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; };
         var drag = {
           sx: ev.clientX,
           sy: ev.clientY,
-          l: px(box.style.left) || box.offsetLeft,
-          t: px(box.style.top) || box.offsetTop,
+          l: px(el.style.left) || el.offsetLeft,
+          t: px(el.style.top) || el.offsetTop,
           moved: false,
         };
         function move(e2){
           var dx = e2.clientX - drag.sx, dy = e2.clientY - drag.sy;
           if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
           if (!drag.moved) return;
-          var maxL = (parent.clientWidth || window.innerWidth) - (box.offsetWidth || 360) - 4;
-          var maxT = (parent.clientHeight || window.innerHeight) - (box.offsetHeight || 320) - 4;
-          box.style.left = Math.max(4, Math.min(drag.l + dx, maxL)) + "px";
-          box.style.top = Math.max(4, Math.min(drag.t + dy, maxT)) + "px";
+          var maxL = (parent.clientWidth || window.innerWidth) - (el.offsetWidth || 360) - 4;
+          var maxT = (parent.clientHeight || window.innerHeight) - (el.offsetHeight || 320) - 4;
+          el.style.left = Math.max(4, Math.min(drag.l + dx, maxL)) + "px";
+          el.style.top = Math.max(4, Math.min(drag.t + dy, maxT)) + "px";
+          updateGuides();
         }
         function up(){ window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); }
         window.addEventListener("pointermove", move);
         window.addEventListener("pointerup", up);
       });
-    }    var editBtns = box.querySelectorAll(".edit-ann");
+    }
+    // 鼠标进入窗口本体不关闭 hover 预览（可在窗内继续操作）；离开后再延时收；按下即置顶
+    el.addEventListener("pointerdown", function(){ activateWin(w); });
+    el.addEventListener("pointerenter", function(){ if (w.state === "hover") clearTimeout(w.closeTimer); });
+    el.addEventListener("pointerleave", function(){ if (w.state === "hover") scheduleHoverClose(w); });
+    var editBtns = el.querySelectorAll(".edit-ann");
     for (var ei = 0; ei < editBtns.length; ei++){
-      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = btn.getAttribute("data-id"); renderInspector(kind, id); }); })(editBtns[ei]);
+      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = btn.getAttribute("data-id"); renderWin(w); }); })(editBtns[ei]);
     }
-    var saveBtns = box.querySelectorAll(".ann-save");
+    var saveBtns = el.querySelectorAll(".ann-save");
     for (var si2 = 0; si2 < saveBtns.length; si2++){
-      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); saveAnnEdit(btn.getAttribute("data-id"), kind, id); }); })(saveBtns[si2]);
+      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); saveAnnEdit(btn.getAttribute("data-id"), w); }); })(saveBtns[si2]);
     }
-    var cancelBtns = box.querySelectorAll(".ann-cancel");
+    var cancelBtns = el.querySelectorAll(".ann-cancel");
     for (var ci = 0; ci < cancelBtns.length; ci++){
-      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = null; renderInspector(kind, id); }); })(cancelBtns[ci]);
+      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = null; renderWin(w); }); })(cancelBtns[ci]);
     }
-    var delBtns = box.querySelectorAll(".del-ann");
+    var delBtns = el.querySelectorAll(".del-ann");
     for (var di = 0; di < delBtns.length; di++){
       (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); deleteAnn(btn.getAttribute("data-id")); }); })(delBtns[di]);
     }
-    var resBtns = box.querySelectorAll(".trash-restore");
+    var resBtns = el.querySelectorAll(".trash-restore");
     for (var ri = 0; ri < resBtns.length; ri++){
       (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); restoreAnn(btn.getAttribute("data-id")); }); })(resBtns[ri]);
     }
-    var copyBtn = document.getElementById("insp-copy");
-    if (copyBtn) copyBtn.addEventListener("click", function(){ copySelection(kind, id); });
     if (editing) {
-      var applyBtn = document.getElementById("edit-apply");
-      if (applyBtn) applyBtn.addEventListener("click", function(){ applyEditUi(kind, id); });
+      var applyBtn = fieldOf(w, "edit-apply");
+      if (applyBtn) applyBtn.addEventListener("click", function(){ applyEditUi(kind, id, w); });
     }
     // 批注内联编辑态不渲染"新增批注"表单 → f-submit 可能不存在，必须判空
-    // （否则这里抛 TypeError 会跳过下面 .acts 状态流转按钮的事件绑定）
-    var fSubmit = document.getElementById("f-submit");
-    if (fSubmit) fSubmit.addEventListener("click", function(){ submit(kind, id); });
-    var acts = box.querySelectorAll(".acts button");
+    var fSubmit = fieldOf(w, "f-submit");
+    if (fSubmit) fSubmit.addEventListener("click", function(){ submit(w); });
+    var acts = el.querySelectorAll(".acts button");
     for (var j=0;j<acts.length;j++){
       (function(btn){
         if (!btn.getAttribute("data-act")) return; // 编辑表单的按钮不走状态流转
@@ -618,28 +920,29 @@ const SCRIPT = `
     }
   }
 
-  function submit(kind, id){
+  function submit(w){
     var doc = currentDoc();
-    if (!doc || !selected) return;
-    var title = document.getElementById("f-title").value.trim();
+    if (!doc || !w) return;
+    var title = fieldVal(w, "f-title").trim();
     if (!title) { alert("标题必填"); return; }
     var ann = {
       id: newId(),
-      target: { kind: kind, id: id },
-      type: document.getElementById("f-type").value,
-      severity: document.getElementById("f-sev").value,
+      target: { kind: w.kind, id: w.targetId },
+      type: fieldVal(w, "f-type"),
+      severity: fieldVal(w, "f-sev"),
       title: title,
-      body: document.getElementById("f-body").value.trim(),
+      body: fieldVal(w, "f-body").trim(),
       status: "open",
       author: "human:you",
       created: nowISO(),
-      aiHint: document.getElementById("f-hint").value.trim()
+      aiHint: fieldVal(w, "f-hint").trim()
     };
     localFor(doc.docId).add.push(ann);
+    w.formOpen = false; // 提交后回到默认折叠
     save();
     drawBadges(doc);
     updateHeader();
-    renderInspector(kind, id);
+    renderWin(w);
   }
 
   function buildAnnotationPatch(){
@@ -738,30 +1041,40 @@ const SCRIPT = `
   var shapes = document.querySelectorAll(".node, .edge");
   for (var k=0;k<shapes.length;k++){
     (function(el){
+      function kindOf(){ return el.getAttribute("data-kind") || (el.classList.contains("node") ? "element" : "relation"); }
+      function idOf(){ return el.getAttribute("data-id") || ""; }
       el.addEventListener("click", function(ev){
         ev.stopPropagation();
         if (moved) { moved = false; return; }
-        var kind = el.getAttribute("data-kind") || (el.classList.contains("node") ? "element" : "relation");
-        var id = el.getAttribute("data-id");
-        var sel = document.querySelectorAll(".sel");
-        for (var s=0;s<sel.length;s++) sel[s].classList.remove("sel");
-        el.classList.add("sel");
-        selected = { kind: kind, id: id };
-        renderInspector(kind, id);
-        placeInspector(ev.clientX, ev.clientY);
+        var kind = kindOf(), id = idOf();
+        if (!id) return;
+        // 点击另一个对象：保留已有点击窗，直接再开一个新窗（多窗并存）；
+        // 只有点空白画布才关闭所有未钉住的窗（见 clearSelection）。
+        openWindow(kind, id, "clicked", { x: ev.clientX, y: ev.clientY });
+      });
+      // 悬停 → 预览窗 + 同色高亮；移开（非点击/非钉住）→ 延时关闭
+      el.addEventListener("pointerenter", function(ev){
+        var kind = kindOf(), id = idOf();
+        if (!id) return;
+        var w = findWin(kind, id);
+        if (w){ clearTimeout(w.closeTimer); return; }
+        openWindow(kind, id, "hover", { x: ev.clientX, y: ev.clientY });
+      });
+      el.addEventListener("pointerleave", function(){
+        var w = findWin(kindOf(), idOf());
+        if (w) scheduleHoverClose(w);
       });
     })(shapes[k]);
   }
   var wrap = document.getElementById("stage-wrap");
   var stage = document.getElementById("stage");
 
-  // 未钉住时：点画布空白、画布外空白、工具条之外的区域都应关闭悬浮窗。
+  // 未钉住时：点画布空白、画布外空白、工具条之外的区域都应关闭小窗。
   // 命中节点/连线由它们自己的 click 处理（会 stopPropagation），此处不干预。
   document.addEventListener("click", function(ev){
-    if (pinned) return;
     var t = ev.target;
     if (!t || !t.closest || !t.isConnected) return;
-    if (t.closest("#inspector, #toast, header")) return;
+    if (t.closest(".cvn-win, #toast, header, #views")) return;
     if (t.closest("a[download]")) return; // 导出用的隐藏下载链接，不应触发关闭
     if (t.closest(".node, .edge")) return;
     clearSelection();
@@ -776,6 +1089,7 @@ const SCRIPT = `
     if (!stage) return;
     stage.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + scale + ")";
     if (zoomLabel) zoomLabel.textContent = Math.round(scale * 100) + "%";
+    updateGuides(); // 缩放/平移时引导线实时跟随
   }
   function activeSvg(){
     var docs = document.querySelectorAll(".doc");
@@ -804,25 +1118,8 @@ const SCRIPT = `
     tx = px - nx * scale; ty = py - ny * scale; userZoomed = true; applyTransform();
   }
   function clearSelection(){
-    if (pinned) return; // 钉住后点击别处不关闭
-    var sel = document.querySelectorAll(".sel");
-    for (var i=0;i<sel.length;i++) sel[i].classList.remove("sel");
-    selected = null;
-    var box = document.getElementById("inspector");
-    if (box){ box.hidden = true; box.innerHTML = ""; }
-  }
-  function placeInspector(cx, cy){
-    var box = document.getElementById("inspector");
-    if (!box || pinned) return;
-    var parent = box.offsetParent || document.body;
-    var pr = parent.getBoundingClientRect();
-    var w = box.offsetWidth || 360, h = box.offsetHeight || 320;
-    var maxL = (parent.clientWidth || window.innerWidth) - w - 8;
-    var maxT = (parent.clientHeight || window.innerHeight) - h - 8;
-    var left = cx - pr.left + 16;
-    var top = cy - pr.top + 12;
-    box.style.left = Math.max(8, Math.min(left, maxL)) + "px";
-    box.style.top = Math.max(8, Math.min(top, maxT)) + "px";
+    // 点空白 / Esc：关闭所有未钉住的小窗；📌 钉住的窗保持不动
+    closeUnpinned();
   }
 
   function selectionPayload(kind, id){
@@ -878,35 +1175,35 @@ const SCRIPT = `
     currentEditOps()[path] = { op: "set", path: path, value: value };
     updateEditPending();
   }
-  function fieldValue(id){ var el = document.getElementById(id); return el ? String(el.value) : ""; }
   function toggleEdit(){
     editing = !editing;
     document.body.classList.toggle("editing", editing);
     var b = document.getElementById("btn-edit");
     if (b) b.textContent = editing ? "退出编辑" : "编辑";
     updateEditPending();
-    if (selected) renderInspector(selected.kind, selected.id);
+    // 所有打开的小窗一起切换到/退出编辑态
+    for (var i=0;i<wins.length;i++) renderWin(wins[i]);
     showToast(editing ? "编辑模式：改文本/坐标后点「暂存修改」" : "已退出编辑模式");
   }
-  function applyEditUi(kind, id){
+  function applyEditUi(kind, id, w){
     var doc = currentDoc();
-    if (!doc) return;
+    if (!doc || !w) return;
     if (kind === "element") {
-      var name = fieldValue("e-name").trim();
-      var summary = fieldValue("e-summary").trim();
+      var name = fieldVal(w, "e-name").trim();
+      var summary = fieldVal(w, "e-summary").trim();
       if (!name) { alert("名称不能为空"); return; }
       if (!summary) { alert("职责不能为空"); return; }
       setEditOp("/elements/" + id + "/name", name);
       setEditOp("/elements/" + id + "/summary", summary);
-      var tech = fieldValue("e-tech").trim();
+      var tech = fieldVal(w, "e-tech").trim();
       if (tech) setEditOp("/elements/" + id + "/tech", tech);
       var viewId = doc.viewId || doc.defaultViewId;
       if (viewId) {
-        var x = Number(fieldValue("e-pin-x")), y = Number(fieldValue("e-pin-y"));
+        var x = Number(fieldVal(w, "e-pin-x")), y = Number(fieldVal(w, "e-pin-y"));
         if (isFinite(x) && isFinite(y)) setEditOp("/views/" + viewId + "/layout/pins/" + id, [x, y]);
       }
     } else {
-      var s = fieldValue("e-summary").trim();
+      var s = fieldVal(w, "e-summary").trim();
       if (!s) { alert("语义不能为空"); return; }
       setEditOp("/relations/" + id + "/summary", s);
     }
@@ -951,9 +1248,10 @@ const SCRIPT = `
       if (!res.ok) { showToast("失败：" + (res.message || "未知错误")); return; }
       if (!accept) {
         pendingDiff = res.diff || "（无差异）";
-        var box = document.getElementById("inspector");
+        var aw = activeWin();
+        var box = aw ? aw.el : document.getElementById("inspector");
         if (box) {
-          var pre = document.getElementById("edit-diff");
+          var pre = box.querySelector("#edit-diff");
           if (!pre) { pre = document.createElement("pre"); pre.id = "edit-diff"; box.appendChild(pre); }
           pre.textContent = "预览 diff（再点「确认写回」）：\\n" + pendingDiff;
           pre.style.cssText = "max-height:240px;overflow:auto;background:#0b1220;color:#e2e8f0;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap";
@@ -1017,7 +1315,7 @@ const SCRIPT = `
     if (zf) zf.addEventListener("click", fitView);
     var zr = document.getElementById("zoom-reset");
     if (zr) zr.addEventListener("click", function(){ scale = 1; tx = 0; ty = 0; userZoomed = true; applyTransform(); });
-    window.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && !pinned) clearSelection(); });
+    window.addEventListener("keydown", function(ev){ if (ev.key === "Escape") clearSelection(); });
   }
   var nodeEls = document.querySelectorAll(".node");
   for (var q = 0; q < nodeEls.length; q++) {
@@ -1047,8 +1345,11 @@ const SCRIPT = `
         var doc = currentDoc();
         var viewId = doc ? (doc.viewId || doc.defaultViewId) : null;
         if (viewId) setEditOp("/views/" + viewId + "/layout/pins/" + nodeDrag.id, [x, y]);
-        var px = document.getElementById("e-pin-x"), py = document.getElementById("e-pin-y");
-        if (px && py && selected && selected.id === nodeDrag.id) { px.value = String(x); py.value = String(y); }
+        var aw = findWin("element", nodeDrag.id);
+        if (aw) {
+          var px2 = fieldOf(aw, "e-pin-x"), py2 = fieldOf(aw, "e-pin-y");
+          if (px2 && py2) { px2.value = String(x); py2.value = String(y); }
+        }
         nodeDrag = null;
         showToast("位置已暂存（" + x + ", " + y + "），导出/写回生效");
       });
@@ -1133,8 +1434,9 @@ export function renderHtml(views: DocView[], options: SiteOptions = {}): string 
     `<aside id="views">\n      ${nav}\n</aside>`,
     "<main>",
     `<div id="stage-wrap"><div id="stage">\n${sections}\n</div></div>`,
-    '<div id="tip">滚轮缩放 · 拖拽平移 · 双击放大 · 点击元素/连线标注</div>',
-    '<div id="inspector" hidden></div>',
+    '<div id="tip">滚轮缩放 · 拖拽平移 · 双击放大 · 悬停预览 · 点击元素/连线标注</div>',
+    '<svg id="insp-guides" aria-hidden="true" hidden></svg>',
+    '<div id="inspector" hidden class="cvn-win"></div>',
     "</main>",
     "</div>",
     '<footer><span>由 covenant 构建</span><span>只读语义 + 本地批注 · 导出后交给 CLI/Agent 校验入库</span><span>语义副本内嵌于 #covenant-data</span></footer>',

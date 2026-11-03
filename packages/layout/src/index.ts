@@ -159,7 +159,7 @@ export function estimateTextWidth(text: string, fontPx = 10.5): number {
   return units * fontPx;
 }
 
-/** 标签胶囊宽度（文本 + 左右 padding 10px）：给平行车道留间距用。 */
+/** 标签文本估算宽度（文本 + 左右 padding 10px）。紧凑布局不再按它扩车道，保留给测试/兜底口径。 */
 export function estimateLabelWidth(rel: { kind: string; props?: Record<string, unknown> }): number {
   return estimateTextWidth(relationLabelText(rel)) + 10;
 }
@@ -426,19 +426,21 @@ export function layout(
   const longEdges = relations
     .map((rel) => ({ rel, span: relSpan(rel) }))
     .filter((x) => x.span > 1);
-  /** 通道间距 = 胶囊高 17 + 8：保证通道上的标签不压相邻通道线（通道偏移是竖直/水平方向） */
-  const CHANNEL_STEP = 25;
+  /**
+   * 通道间距（紧凑）：10px。边标签已去掉背景胶囊、只留文字，通道上的文字允许轻微相邻，
+   * 换取更小的画布；不再按胶囊高度预留 25px。
+   */
+  const CHANNEL_STEP = 10;
   const channelOf = new Map<string, number>();
   longEdges.forEach((x, i) => channelOf.set(x.rel.id, 10 + i * CHANNEL_STEP));
   const channelBand =
-    longEdges.length > 0 ? 10 + (longEdges.length - 1) * CHANNEL_STEP + 24 : 0;
+    longEdges.length > 0 ? 10 + (longEdges.length - 1) * CHANNEL_STEP + 20 : 0;
   /** 通道占用的外侧留白：水平布局在顶部、垂直布局在左侧 */
   const padX = opts.padding + (horizontal ? 0 : channelBand);
   const padY = opts.padding + (horizontal ? channelBand : 0);
 
-  // 列/行间隙要同时容纳：长边走廊段（无标签，可 10px 紧凑）+ 短边的中间车道（标签贴在这里）。
-  // 短边车道间距必须按胶囊尺寸预留：水平布局车道沿 x 偏移 → ≥ 最大胶囊宽 + 10；
-  // 垂直布局车道沿 y 偏移 → ≥ 胶囊高 17 + 8。间隙不够就加大 rankGap（不压回小间距）。
+  // 列/行间隙要同时容纳：长边走廊段 + 短边的中间车道。紧凑模式下车道统一 10px，
+  // 不再按标签胶囊宽度扩张；只有 lane 很多（间隙装不下）时才加大该间隙。
   interface GapSlot {
     relId: string;
     kind: "long-src" | "long-dst" | "short";
@@ -449,7 +451,11 @@ export function layout(
     list.push(slot);
     gapSlots.set(gap, list);
   };
+  /** 车道最小间距（紧凑）：所有方向统一 10px */
+  const LANE_STEP = 10;
+  /** 短边标签占位：宽标签无法塞进 20px stub，按半宽把该 lane 起点外移（仅少量间隙变宽） */
   const relById = new Map(relations.map((rel) => [rel.id, rel]));
+  const gapHalf = new Map<number, number>();
   const relInfos = relations.map((rel) => ({
     rel,
     pf: phys(rankOf(endpoint(rel.from))),
@@ -465,19 +471,17 @@ export function layout(
       addGapSlot(Math.min(info.pf, info.pt), { relId: info.rel.id, kind: "short" });
     }
   }
-  const gapStep = new Map<number, number>();
   for (const [gap, slots] of gapSlots) {
-    let step = horizontal ? 10 : CHANNEL_STEP;
-    if (horizontal) {
-      for (const s of slots) {
-        if (s.kind !== "short") continue;
-        const rel = relById.get(s.relId);
-        if (rel) step = Math.max(step, estimateLabelWidth(rel) + 10);
-      }
-    }
     slots.sort((u, v) => u.relId.localeCompare(v.relId) || u.kind.localeCompare(v.kind));
-    gapStep.set(gap, step);
+    let half = 0;
+    for (const s of slots) {
+      if (s.kind !== "short") continue;
+      const rel = relById.get(s.relId);
+      if (rel) half = Math.max(half, estimateTextWidth(relationLabelText(rel)) / 2);
+    }
+    if (half > 0) gapHalf.set(gap, half);
   }
+  const laneStart = (gap: number): number => Math.max(20, (gapHalf.get(gap) ?? 0) + 6);
   const gapSize = new Map<number, number>();
   for (let p = 0; p < maxRank; p++) {
     const n = gapSlots.get(p)?.length ?? 0;
@@ -485,9 +489,14 @@ export function layout(
       gapSize.set(p, opts.rankGap);
       continue;
     }
-    const step = gapStep.get(p) ?? 10;
-    // 20 stub + lane 带 + 20 stub + 12 余量，保证最后一条 lane 仍距右列 32px
-    gapSize.set(p, Math.max(opts.rankGap, 52 + (n - 1) * step));
+    // 紧凑：step=10；仅当 lane 很多/标签较宽时按"半宽 + 6 边距"把间隙撑到刚好不压节点
+    const half = gapHalf.get(p) ?? 0;
+    const start = laneStart(p);
+    const last = start + (n - 1) * LANE_STEP;
+    gapSize.set(
+      p,
+      Math.max(opts.rankGap, 52 + (n - 1) * LANE_STEP, last + half + 18, start + half + 18),
+    );
   }
   // 物理列/行坐标：按每个间隙的实际尺寸累加（间隙变大时仍完全确定性）
   const axisAt = new Map<number, number>();
@@ -537,7 +546,7 @@ export function layout(
 
   // 边路由：每条边独立接入点（同侧按对端位置排序、保留最小间距；端口不够则扩框）
   type PortSide = "left" | "right" | "top" | "bottom";
-  const PORT_GAP = 18;
+  const PORT_GAP = 16;
   const PORT_PAD = 12;
   const centerOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 
@@ -652,15 +661,16 @@ export function layout(
     g.hi = Math.max(g.hi, horizontal ? r.x + r.w : r.y + r.h);
     nodeRows.set(p, g);
   }
-  // 车道坐标：同一间隙内所有 lane（长边走廊段 + 短边中间车道）从间隙起点依次排布，
-  // 间距 gapStep 已按胶囊尺寸预留 → 平行边不会贴在一起，标签也不会压到相邻线。
+  // 车道坐标：同一间隙内所有 lane（长边走廊段 + 短边中间车道）从间隙起点依次排布；
+  // 紧凑模式统一 LANE_STEP=10，平行边靠得很近但不重合。
   const laneAt = new Map<string, number>();
   for (const [gap, slots] of gapSlots) {
     const a = nodeRows.get(gap);
     const b = nodeRows.get(gap + 1);
     if (!a || !b) continue;
-    const step = gapStep.get(gap) ?? 10;
-    slots.forEach((slot, i) => laneAt.set(`${slot.relId}|${slot.kind}`, a.hi + 20 + i * step));
+    slots.forEach((slot, i) =>
+      laneAt.set(`${slot.relId}|${slot.kind}`, a.hi + laneStart(gap) + i * LANE_STEP),
+    );
   }
 
   // 分配端口：同侧按对端位置排序（减少交叉），线性排布并保持最小间距
