@@ -506,6 +506,7 @@ const SCRIPT = `
   var COLORS = ["#2563eb","#dc2626","#059669","#d97706","#7c3aed","#db2777","#0891b2","#65a30d"];
   var colorSeq = 0;
   var HOVER_CLOSE_MS = 120;
+var draggingWin = false;
   // hover 色忆：同一 (kind,id,segment) 的 hover 窗在 400ms 内重开时复用同一颜色，
   // 避免"窗口盖住元素 → leave → close → enter → 重新分配颜色"的振荡闪色。
   var hoverColorMemo = {};
@@ -1383,6 +1384,7 @@ const SCRIPT = `
         ev.preventDefault();
         if (ev.button !== 0) return;
         activateWin(w);
+        draggingWin = true;
         var parent = el.offsetParent || document.body;
         var px = function(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; };
         var drag = {
@@ -1401,7 +1403,7 @@ const SCRIPT = `
           el.style.top = (drag.t + dy) + "px";
           updateGuides();
         }
-        function up(){ window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); }
+        function up(){ draggingWin = false; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); }
         window.addEventListener("pointermove", move);
         window.addEventListener("pointerup", up);
       });
@@ -1638,6 +1640,7 @@ const SCRIPT = `
       el.addEventListener("click", function(ev){
         ev.stopPropagation();
         if (moved) { moved = false; return; }
+        if (draggingWin) return;
         // 段热区（.seg-hit）自己 stopPropagation 处理；命中则整边 handler 不重复开窗
         var segEl = ev.target && ev.target.closest ? ev.target.closest("[data-seg]") : null;
         if (segEl) return;
