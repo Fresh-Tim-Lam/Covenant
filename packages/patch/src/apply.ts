@@ -17,7 +17,7 @@ import { audit, sha256 } from "./audit";
 import { classifyOps, finding } from "./parse";
 import { replaceAnnotationBlocks } from "./text";
 import type { Patch } from "./parse";
-import { appendAnnotations, applyStatusChanges, bumpRev, removeAnnotationBlocks } from "./text";
+import { appendAnnotations, appendElements, applyStatusChanges, bumpRev, removeAnnotationBlocks, removeNamedBlocks } from "./text";
 
 export interface ApplyOptions {
   /** 操作者标识，写入审计 */
@@ -111,6 +111,19 @@ export function applyPatch(
     classified.adds.map((op) => (op.value ?? {}) as Record<string, unknown>),
   );
   next = applyStatusChanges(next, classified.statuses, by, at);
+
+  // 元素/关系操作（v0.2 新增）
+  // 先删旧（元素→级联删关系），再加新
+  if (classified.elementRemoves.length > 0 || classified.relationRemoves.length > 0) {
+    next = removeNamedBlocks(next, "relations", classified.relationRemoves);
+    next = removeNamedBlocks(next, "elements", classified.elementRemoves);
+  }
+  if (classified.elementAdds.length > 0) {
+    next = appendElements(next, classified.elementAdds.map((op) => (op.value ?? {}) as Record<string, unknown>));
+  }
+  if (classified.relationAdds.length > 0) {
+    next = appendElements(next, classified.relationAdds.map((op) => (op.value ?? {}) as Record<string, unknown>));
+  }
   next = replaceAnnotationBlocks(next, classified.edits);
   next = removeAnnotationBlocks(next, classified.removes);
   next = bumpRev(next);

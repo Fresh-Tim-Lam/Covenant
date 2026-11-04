@@ -198,3 +198,65 @@ export function applyStatusChanges(
   }
   return lines.join("\n");
 }
+
+
+/** 元素 YAML 块（与 annotationYaml 类似，字段更少） */
+export function elementYaml(value: Record<string, unknown>): string {
+  const lines: string[] = [];
+  lines.push(`  - id: ${value.id}`);
+  lines.push(`    kind: ${value.kind}`);
+  lines.push(`    name: ${value.name}`);
+  if (value.summary) lines.push(`    summary: ${value.summary}`);
+  if (value.tech) lines.push(`    tech: ${value.tech}`);
+  if (value.impl_status) lines.push(`    impl_status: ${value.impl_status}`);
+  if (Array.isArray(value.evidence) && value.evidence.length > 0) {
+    lines.push(`    evidence:`);
+    for (const ev of value.evidence) {
+      lines.push(`      - kind: ${ev.kind}`);
+      lines.push(`        path: ${ev.path}`);
+      if (ev.lines) lines.push(`        lines: "${ev.lines}"`);
+    }
+  }
+  if (value.props && typeof value.props === "object" && Object.keys(value.props).length > 0) {
+    lines.push(`    props: ${JSON.stringify(value.props)}`);
+  }
+  return lines.join("\n");
+}
+
+export function appendElements(text: string, values: Record<string, unknown>[]): string {
+  if (values.length === 0) return text;
+  const block = values.map(elementYaml).join("\n");
+  const lines = text.split(/\r?\n/);
+  const idx = lines.findIndex((l) => /^elements:\s*$/.test(l));
+  if (idx < 0) return text;
+  let end = idx + 1;
+  while (end < lines.length && (lines[end] === "" || /^\s/.test(lines[end]!) || /^\s*#/.test(lines[end]!))) end++;
+  let insertAt = end;
+  while (insertAt > idx + 1 && (lines[insertAt - 1] ?? "").trim() === "") insertAt--;
+  return [...lines.slice(0, insertAt), block, ...lines.slice(insertAt)].join("\n");
+}
+
+export function removeNamedBlocks(text: string, section: string, ids: string[]): string {
+  if (ids.length === 0) return text;
+  const lines = text.split(/\r?\n/);
+  const sectionIdx = lines.findIndex((l) => new RegExp("^" + section + ":\\s*$").test(l));
+  if (sectionIdx < 0) return text;
+  const removeSet = new Set(ids);
+  const out: string[] = [];
+  let skip = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (i >= sectionIdx && /^\s+- id: /.test(line)) {
+      const m = line.match(/- id: (\S+)/);
+      if (m && removeSet.has(m[1]!)) { skip = true; continue; }
+      skip = false;
+    } else if (skip && /^\s+- id: /.test(line)) {
+      skip = false;
+    } else if (skip && !/^\s/.test(line) && line.trim() !== "" && !/^\s*#/.test(line)) {
+      skip = false;
+    }
+    if (!skip) out.push(line);
+  }
+  return out.join("\n");
+}
+

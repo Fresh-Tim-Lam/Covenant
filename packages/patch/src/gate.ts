@@ -363,7 +363,13 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
       }
     } else if (target.kind === "document") {
       // document 级批注无需解析目标
-    } else if (!target.kind || !target.id || !targetExists(doc, target.kind, target.id)) {
+    } else if (!target.kind || !target.id || (
+      !targetExists(doc, target.kind, target.id) &&
+      !(target.kind === "element" && (patch.ops ?? []).some(
+        (o) => o.op === "add" && o.path === "/elements/-" &&
+          String((o.value as Record<string, unknown>)?.id ?? "") === target.id,
+      ))
+    )) {
       out.push(
         finding(
           "gate/target",

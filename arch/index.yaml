@@ -272,7 +272,7 @@ entries:
       - 只动目标行/块、不重排 YAML（保注释）
       - '删空时规范化为 annotations: []'
       - 本文件不判断合法性（门禁/复验在 gate/apply）
-    source_sha256: 7eec00904094f54a59c38fb4081dc51c268e59241b8714a3da85aca01b1cce5c
+    source_sha256: b17006b179a1fefc0098097c0980b8a5caf995740bf16b8fa68a369a4254ad16
   - file: packages/patch/src/parse.ts
     f: 补丁文件解析与结构校验
     r:
@@ -291,7 +291,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
-    source_sha256: 41f5c760893433bda920b3bbe668e63777ef26923feceac811ea153c34114204
+    source_sha256: 950a594ec3636731d3a1b1e0248dc61adea8273548906b3d3ec601f9f6f3cdf5
   - file: packages/patch/src/apply.ts
     f: 应用补丁：保留注释的文本插入/替换 + rev+1
     r:
@@ -300,7 +300,7 @@ entries:
       - packages/patch/src/index.ts
     s:
       - 文本级编辑保注释；幂等性由 base_rev 与调用方校验
-    source_sha256: 22b41c896c545f9aefb90f058f191a6d343f7082f2f88c09cc489cafe098e60a
+    source_sha256: 0860f3b34c4dce42303c999478917216479b7d8432346ac20d24c5e50be7c4a1
   - file: packages/patch/src/audit.ts
     f: 写前审计（intent → rename → commit）
     r: []
