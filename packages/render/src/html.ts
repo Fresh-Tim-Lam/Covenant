@@ -1248,7 +1248,7 @@ const SCRIPT = `
         '<label>标题（一句话结论）</label><input id="f-title" data-field="f-title" placeholder="例如：这里缺少降级路径">' +
         '<label>正文（证据与背景）</label><textarea id="f-body" data-field="f-body"></textarea>' +
         '<label>给 AI 的指令 ai_hint（祈使句，可留空）</label><textarea id="f-hint" data-field="f-hint" placeholder="例如：优先改为异步；禁止两阶段提交"></textarea>' +
-        '<button id="f-submit" data-field="f-submit">钉到图上</button>' +
+        '<button id="f-submit" data-field="f-submit" style="position:sticky;bottom:0;width:100%;background:#2563eb;color:#fff;font-weight:600;border-color:#2563eb;z-index:1">钉到图上</button>' +
         '</div></div>';
     }
     var headHint = (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) +
