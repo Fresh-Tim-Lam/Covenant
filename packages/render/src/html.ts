@@ -448,12 +448,9 @@ svg text{user-select:none}
 #insp-guides line{stroke-width:1.5;stroke-dasharray:5 4;stroke-opacity:.85}
 .node.hl rect,.node.hl polygon,.node.hl ellipse,.edge.hl path{stroke:var(--hl)!important;stroke-width:2.5!important}
 .ann-form{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
-.ann-form-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ann-form-toggle{display:flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:4px 0;border:0;background:transparent;color:#334155;cursor:pointer;text-align:left;flex:1}
-.ann-form-toggle:hover{color:var(--accent)}
+.ann-form-toggle{display:flex;align-items:center;gap:6px;width:100%;font:inherit;font-size:12.5px;font-weight:600;padding:6px 9px;border:1px dashed var(--line);border-radius:7px;background:#f8fafc;color:#334155;cursor:pointer;text-align:left}
+.ann-form-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .ann-form-chev{font-size:11px;color:var(--muted);width:10px;display:inline-block}
-.f-submit-btn{font:inherit;font-size:12px;font-weight:600;padding:3px 12px;border:1px solid #2563eb;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap}
-.f-submit-btn:hover{background:#1d4ed8}
 .ann-form-body{margin-top:8px}
 .ann-form-body[hidden]{display:none}
 /* 运行时多段热区：永远透明、不吃 hover/彩色高亮的路径样式，只负责命中 */
@@ -1257,9 +1254,6 @@ var draggingWin = false;
       }
       html += '<button id="edit-apply" data-field="edit-apply">暂存修改</button><p class="hint">导出编辑 JSON 后运行 covenant edit 预览/应用。</p></div>';
     }
-    // ✓ 核验按钮
-    var isChecked = !!localFor(doc.docId).checked[id];
-    html += '<div class="verify-row"><button class="verify-btn' + (isChecked ? " on" : "") + '" data-id="' + esc(id) + '" data-kind="' + esc(kind) + '">' + (isChecked ? "✓ 已核验" : "✓ 核验通过") + '</button></div>';
     var list = visibleAnnsForScope(doc, kind, id, w.segment);
     var wholeEdge = kind === "relation" && w.segment != null ? visibleAnnsForScope(doc, kind, id, null) : [];
     var scopeLabel = w.segment != null ? ' · 本段' : '';
@@ -1307,9 +1301,9 @@ var draggingWin = false;
           '<option value="edge"' + (w.formScope === "edge" ? " selected" : "") + '>整条边</option>' +
           '</select></div></div>';
       }
-      // 「新增批注」默认折叠：标题行 + 右侧「钉到图上」按钮（始终可见，不随表单滚动）
+      // 「新增批注」默认折叠：只留标题行，点击展开/再点收起（不重建 DOM，展开时保留已输入内容）
       html += '<div class="form ann-form">' +
-        '<div class="ann-form-head"><button type="button" class="ann-form-toggle" aria-expanded="' + (w.formOpen ? "true" : "false") + '"><span class="ann-form-chev">' + (w.formOpen ? "▾" : "▸") + '</span>＋ 新增批注</button><button id="f-submit" data-field="f-submit" class="f-submit-btn">钉到图上</button></div>' +
+        '<button type="button" class="ann-form-toggle" aria-expanded="' + (w.formOpen ? "true" : "false") + '"><span class="ann-form-chev">' + (w.formOpen ? "▾" : "▸") + '</span>＋ 新增批注</button>' +
         '<div class="ann-form-body"' + (w.formOpen ? "" : " hidden") + '>' +
         scopeRow +
         '<div class="row"><div><label>类型</label><select id="f-type" data-field="f-type"><option>risk</option><option>question</option><option>todo</option><option>defect</option><option>smell</option><option>decision</option></select></div>' +
@@ -1317,6 +1311,7 @@ var draggingWin = false;
         '<label>标题（一句话结论）</label><input id="f-title" data-field="f-title" placeholder="例如：这里缺少降级路径">' +
         '<label>正文（证据与背景）</label><textarea id="f-body" data-field="f-body"></textarea>' +
         '<label>给 AI 的指令 ai_hint（祈使句，可留空）</label><textarea id="f-hint" data-field="f-hint" placeholder="例如：优先改为异步；禁止两阶段提交"></textarea>' +
+        '<button id="f-submit" data-field="f-submit" style="position:sticky;bottom:0;width:100%;background:#2563eb;color:#fff;font-weight:600;border-color:#2563eb;z-index:1">钉到图上</button>' +
         '</div></div>';
     }
     var headHint = (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) +
