@@ -1,0 +1,143 @@
+# 混合剖面示例：展示 impl_status + evidence[] + 多类型元素共存
+covenant: "0.1"
+id: example/impl-status-demo
+profile: mixed@1
+
+meta:
+  title: 实现状态与证据链示例
+  purpose: 展示 mixed@1 剖面 + impl_status 线型 + evidence 证据链的用法
+  non_goals:
+    - 完整的支付域建模
+  owners: [human:you]
+  status: draft
+  rev: 1
+  updated: 2026-11-04T00:00:00+08:00
+
+elements:
+  - id: e.user
+    kind: person
+    name: 商户
+    summary: 发起支付
+
+  - id: e.gateway
+    kind: container
+    name: 支付网关
+    summary: 鉴权、限流、路由
+    tech: Ktor
+    impl_status: implemented
+    evidence:
+      - kind: code
+        path: src/gateway/main.ts
+        lines: "1-200"
+      - kind: doc
+        path: docs/design/gateway.md
+        lines: "1-30"
+
+  - id: e.fraud
+    kind: container
+    name: 反欺诈引擎
+    summary: 规则 + 模型评分
+    tech: Python
+    impl_status: partial
+    evidence:
+      - kind: code
+        path: src/fraud/score.py
+        lines: "1-80"
+
+  - id: e.ledger
+    kind: datastore
+    name: 账本库
+    summary: 复式记账
+    tech: PostgreSQL
+    props: { storage_kind: rdbms }
+    impl_status: implemented
+    evidence:
+      - kind: code
+        path: src/ledger/schema.sql
+        lines: "1-40"
+
+  - id: e.rag
+    kind: datastore
+    name: RAG 知识库
+    summary: 外部知识检索
+    tech: pgvector
+    props: { storage_kind: kv }
+    impl_status: not_connected
+    evidence:
+      - kind: doc
+        path: docs/design/rag.md
+        lines: "1-10"
+
+  - id: e.recurring
+    kind: container
+    name: 定期扣款
+    summary: 自动扣款调度
+    tech: Node.js
+    impl_status: planned
+
+  - id: e.psp
+    kind: external-system
+    name: PSP
+    summary: 外部收单通道
+    impl_status: unknown
+
+relations:
+  - id: r.user-gateway
+    kind: calls
+    from: e.user
+    to: e.gateway
+    summary: 发起支付
+
+  - id: r.gateway-fraud
+    kind: calls
+    from: e.gateway
+    to: e.fraud
+    summary: 评分
+    impl_status: partial
+
+  - id: r.fraud-ledger
+    kind: writes
+    from: e.fraud
+    to: e.ledger
+    summary: 写入风控结果
+    impl_status: implemented
+
+  - id: r.gateway-rag
+    kind: reads
+    from: e.gateway
+    to: e.rag
+    summary: 检索风控知识
+    impl_status: not_connected
+
+  - id: r.recurring-gateway
+    kind: calls
+    from: e.recurring
+    to: e.gateway
+    summary: 定期发起
+    impl_status: planned
+
+  - id: r.gateway-psp
+    kind: calls
+    from: e.gateway
+    to: e.psp
+    summary: 外部收单
+    impl_status: unknown
+
+annotations:
+  - id: a.01JAY1MPLSTATUS00000001
+    target: { kind: element, id: e.fraud }
+    type: risk
+    severity: medium
+    title: 反欺诈引擎规则模块只完成了评分部分
+    body: |
+      评分模型已上线（src/fraud/score.py），
+      但规则引擎（黑名单/白名单/限频）还没写。
+    status: open
+    author: human:you
+    created: 2026-11-04T00:00:00+08:00
+    ai_hint: 先补规则引擎，再接入实时流量。
+
+views:
+  - id: v.main
+    title: 实现状态全景
+    layout: { direction: RIGHT }

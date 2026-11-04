@@ -948,6 +948,24 @@ const SCRIPT = `
     w.closeTimer = setTimeout(function(){ if (w.state === "hover" && !w.pinned) closeWin(w); }, HOVER_CLOSE_MS);
   }
 
+  var searchInput = document.getElementById("views-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", function() {
+      var q = this.value.toLowerCase();
+      var groups = document.querySelectorAll("#views .views-group");
+      for (var g = 0; g < groups.length; g++) {
+        var btns = groups[g].querySelectorAll(".views-doc");
+        var visible = 0;
+        for (var b = 0; b < btns.length; b++) {
+          var match = !q || btns[b].textContent.toLowerCase().includes(q);
+          btns[b].style.display = match ? "" : "none";
+          if (match) visible++;
+        }
+        var title = groups[g].querySelector(".views-group-title");
+        if (title) title.style.display = visible > 0 ? "" : "none";
+      }
+    });
+  }
   function switchDoc(id){
     current = id; selected = null;
     // 切图必须清掉全部小窗的瞬态：批注内联编辑残留 + 钉住（否则回来时表单会"自动复现"、窗口被隐式钉死）
@@ -2036,7 +2054,9 @@ export function renderHtml(views: DocView[], options: SiteOptions = {}): string 
     '<button id="btn-ann-save" class="pri" hidden title="把批注改动直接写回 .cvn.yaml（需 pnpm edit:serve）">写回批注</button>',
     "</header>",
     '<div id="shell">',
-    `<aside id="views">\n      ${nav}\n</aside>`,
+    `<aside id="views">\n      <input id="views-search" type="text" placeholder="搜索架构图…" style="width:100%;padding:5px 8px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px;color:var(--ink2);background:var(--surface);outline:none">
+      ${nav}
+</aside>`,
     "<main>",
     `<div id="stage-wrap"><div id="stage">\n${sections}\n</div></div>`,
     '<div id="tip">滚轮缩放 · 拖拽平移 · 双击放大 · 悬停预览 · 点击元素/连线标注</div>',
