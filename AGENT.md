@@ -202,6 +202,7 @@
 
 ## 10. References
 
+- **[AGENTS.md](AGENTS.md)** — 多 Agent 派发契约（Lead 不变量 L1–L10、派发记录、验收阶梯、漂移审计）**← 团队协作必读**
 - [README.md](README.md) — 项目总览与文档地图
 - [docs/README.md](docs/README.md) — 文档总索引（必读）
 - [docs/to-dolist.md](docs/to-dolist.md) — 活跃待办（唯一任务源）

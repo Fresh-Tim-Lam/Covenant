@@ -23,6 +23,7 @@
     "mcp": "tsx packages/mcp/src/server.ts",
     "golden": "node scripts/update-golden.mjs",
     "modules": "node scripts/check-module-docs.mjs",
+    "agent:audit": "node scripts/agent/team_audit.mjs",
     "cleanroom": "node scripts/clean-room-verify.mjs",
     "serve": "tsx packages/cli/src/index.ts serve",
     "edit:serve": "tsx packages/cli/src/index.ts serve dist --edit --open",
