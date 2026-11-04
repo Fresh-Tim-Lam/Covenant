@@ -375,7 +375,12 @@ main{position:relative;flex:1;min-height:0;overflow:hidden}
 .edit-head .ann-save:hover{background:#1d4ed8}
 .edit-head .ann-cancel{font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:#475569}
 .edit-head .ann-cancel:hover{background:#f1f5f9}
-.trash{margin-top:10px;padding:8px;border:1px dashed var(--line);border-radius:8px;background:#fafafa}
+.trash{margin-top:10px;border:1px dashed var(--line);border-radius:8px;background:#fafafa}
+.trash summary{cursor:pointer;padding:6px 10px;font-size:12px;color:#64748b;user-select:none;list-style:none}
+.trash summary::before{content:"▸ ";font-size:10px}
+.trash[open] summary::before{content:"▾ "}
+.trash summary:hover{color:#334155;background:#f1f5f9;border-radius:6px}
+.trash .anns{padding:0 10px 8px}
 .trash .anns li{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .trash-restore{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
 #toast.undoable{pointer-events:auto;display:flex;gap:10px;align-items:center}
@@ -1204,12 +1209,12 @@ const SCRIPT = `
     }
     var trash = localFor(doc.docId).deleted;
     if (trash.length) {
-      html += '<div class="trash"><h3>回收桶（' + trash.length + '）</h3><p class="hint">已隐藏；导出补丁会生成 remove 操作。点「恢复」撤回。</p><ul class="anns">';
+      html += '<details class="trash"><summary>🗑 回收桶（' + trash.length + '）</summary><p class="hint">已隐藏；导出补丁会生成 remove 操作。点「恢复」撤回。</p><ul class="anns">';
       for (var t = 0; t < trash.length; t++) {
         var ta = byId(doc.annotations, trash[t]);
         html += '<li><div class="ann-title">' + esc(ta ? ta.title : "（文档中已不存在）") + '</div><div class="hint">' + esc(trash[t]) + '</div><button class="trash-restore" data-id="' + esc(trash[t]) + '">恢复</button></li>';
       }
-      html += '</ul></div>';
+      html += '</ul></details>';
     }
     var editTarget = null;
     for (var q = 0; q < list.length; q++) if (list[q].id === editingAnn) editTarget = list[q];
