@@ -77,7 +77,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 2aa04f720073d5d34bd6e9914992f094a3ca3dc2f3ae1bd6cee01579694b6bcb
+    source_sha256: 9ac2f4521e098287a97c667497022e2d7cae2150e1037b94023434c781aebc04
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
@@ -129,7 +129,7 @@ entries:
     a: []
     s:
       - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
-    source_sha256: c0c4124345947e1d08028db0e51382c5742704a337a25eb70b2ecba034fc05e9
+    source_sha256: 1f0a8af5f242a0aa7b2d755813e1db3766a9c026a289a8ec408e4b03dc3a8a5f
   - file: scripts/svg-to-png.mjs
     f: 开发期视觉核对：SVG→PNG
     r: []
@@ -222,7 +222,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 默认只读；编辑态仅 loopback + 启动随机 token；防目录穿越；写回走门禁/备份/审计
-    source_sha256: 15b2841d22562ed17ff2f3b7a9edab26839c06ed158013b8d240d2a72ff7fbe1
+    source_sha256: 8fcd8bf2fe085838b8e019e910819eab55259cf68d634bfb83d5562582dc0cb7
   - file: packages/cli/src/doctor.ts
     f: 环境自检：Node/pnpm/锁文件/schema/BOM/索引/ADR/git/产物
     r:

@@ -7,6 +7,7 @@ import { parseDocument } from "@covenant/core";
 import type { CovenantDoc, Finding } from "@covenant/core";
 import { checkDocument } from "@covenant/validate";
 import { applyPatch, gatePatch, parseActor, parsePatch } from "@covenant/patch";
+import type { Patch } from "@covenant/patch";
 import { diffDocs, formatDiff } from "@covenant/diff";
 import { checkIndex, writeIndex } from "@covenant/indexer";
 import { buildAnnotationPatch, buildBrief, formatBrief } from "@covenant/ai";
@@ -41,6 +42,7 @@ function usage(): string {
     "  covenant build <file-or-dir>... [-o out.html]",
   "  covenant bundle <file-or-dir>... [-o outdir]   打成一整套图（index.html + manifest.json + views/*.svg）",
     "  covenant apply <doc.cvn.yaml> <patch.json> [--by actor] [--dry-run]",
+    "  covenant apply-bundle <all.patches.json> [--root <dir>] [--by actor] [--dry-run]",
     "  covenant patch-check <doc.cvn.yaml> <patch.json> [--actor human:|ai:] [--json]",
     "  covenant diff <a.cvn.yaml> <b.cvn.yaml> [--json]",
     "  covenant index [--write] [--json]",
@@ -471,6 +473,83 @@ function cmdApply(args: string[], by?: string, dryRun?: boolean): number {
   return EXIT.OK;
 }
 
+function cmdApplyBundle(bundleArg: string | undefined, rootArg: string | undefined, by?: string, dryRun?: boolean): number {
+  if (!bundleArg) {
+    console.error("apply-bundle 需要 <all.patches.json> [--root <dir>]\n");
+    console.error(usage());
+    return EXIT.TOOL_FAILURE;
+  }
+  const bundlePath = resolve(bundleArg);
+  let data: { patches?: Patch[] };
+  try {
+    data = JSON.parse(readFileSync(bundlePath, "utf8")) as { patches?: Patch[] };
+  } catch (e) {
+    console.error(`无法读取/解析 bundle: ${(e as Error).message}`);
+    return EXIT.TOOL_FAILURE;
+  }
+  const patches = Array.isArray(data.patches) ? data.patches : [];
+  if (patches.length === 0) {
+    console.error("bundle 里没有 patches");
+    return EXIT.ERROR;
+  }
+
+  const actorRaw = by ?? "human:you";
+  const actor = parseActor(actorRaw);
+  if (!actor) {
+    console.error(`--by 必须是 human:<id> 或 ai:<name>，实际 "${actorRaw}"`);
+    return EXIT.TOOL_FAILURE;
+  }
+
+  // docId → 文件路径（扫 --root，默认当前目录）
+  const root = resolve(rootArg ?? ".");
+  const files = collectFiles(root);
+  const idToPath = new Map<string, string>();
+  for (const f of files) {
+    const parsed = parseDocument(readFileSync(f, "utf8"), f);
+    if (parsed.doc?.id) idToPath.set(parsed.doc.id, f);
+  }
+
+  let okCount = 0;
+  const failed: string[] = [];
+  for (const patch of patches) {
+    const docPath = idToPath.get(patch.doc);
+    if (!docPath) {
+      console.error(`跳过 ${patch.doc}：在 ${root} 下找不到该 id 的 .cvn.yaml`);
+      failed.push(patch.doc);
+      continue;
+    }
+    const docParsed = parseDocument(readFileSync(docPath, "utf8"), docPath);
+    if (!docParsed.doc) {
+      console.error(`跳过 ${patch.doc}：文档解析失败`);
+      for (const f of docParsed.findings) console.error(renderFinding(f));
+      failed.push(patch.doc);
+      continue;
+    }
+    const gateFindings = gatePatch(docParsed.doc, patch, { actor });
+    if (gateFindings.length > 0) {
+      console.error(`跳过 ${patch.doc}：门禁拒绝`);
+      for (const f of gateFindings) console.error(renderFinding(f));
+      failed.push(patch.doc);
+      continue;
+    }
+    const result = applyPatch(docPath, patch, { by: actorRaw, dryRun: Boolean(dryRun) });
+    if (!result.ok) {
+      console.error(`跳过 ${patch.doc}：写回失败`);
+      for (const f of result.findings) console.error(renderFinding(f));
+      failed.push(patch.doc);
+      continue;
+    }
+    okCount++;
+    console.log(
+      `${dryRun ? "[dry-run] 将应用" : "applied"} ${result.applied} op(s) → ${relative(process.cwd(), docPath)}  (rev ${patch.base_rev} → ${result.newRev})`,
+    );
+  }
+
+  console.log(`\nbundle 汇总：成功 ${okCount} / ${patches.length}${failed.length ? `，失败 ${failed.length}（${failed.join(", ")}）` : ""}`);
+  if (dryRun) console.log("dry-run：未写入磁盘");
+  return failed.length === 0 ? EXIT.OK : EXIT.ERROR;
+}
+
 function cmdPatchCheck(args: string[], actorRaw?: string, jsonOut?: boolean): number {
   const [docArg, patchArg] = args;
   if (!docArg || !patchArg) {
@@ -855,6 +934,7 @@ function main(): number {
   let strict = false;
   let json = false;
   let out: string | undefined;
+  let rootDir: string | undefined;
   let by: string | undefined;
   let actor: string | undefined;
   let viewId: string | undefined;
@@ -879,6 +959,7 @@ function main(): number {
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--write") writeIndexFlag = true;
     else if (arg === "-o" || arg === "--out") out = rest[++i];
+    else if (arg === "--root") rootDir = rest[++i];
     else if (arg === "--by") by = rest[++i];
     else if (arg === "--actor") actor = rest[++i];
     else if (arg === "--view") viewId = rest[++i];
@@ -911,6 +992,8 @@ function main(): number {
       return cmdBundle(positional, out);
     case "apply":
       return cmdApply(positional, by, dryRun);
+    case "apply-bundle":
+      return cmdApplyBundle(positional[0], rootDir, by, dryRun);
     case "patch-check":
       return cmdPatchCheck(positional, actor, json);
     case "diff":

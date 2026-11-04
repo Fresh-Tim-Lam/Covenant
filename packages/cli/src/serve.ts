@@ -113,6 +113,35 @@ async function handleEditApi(
   findDoc: (docId: string) => string | null,
   pathname: string,
 ): Promise<void> {
+  // GET /api/rev?doc=<docId>：返回 .cvn.yaml 的当前 rev。
+  // 目的：页面里的 doc.rev 是构建时冻结的；写回成功后服务端 rev+1，
+  // 第二次写回必然 base_rev 不匹配。写入前先取真实 rev 并 rebase。
+  if (pathname === "/api/rev") {
+    const url = new URL(req.url ?? "/", "http://127.0.0.1");
+    const token0 = req.headers["x-covenant-token"];
+    if (typeof token0 !== "string" || token0 !== edit.token) {
+      json(res, 401, { ok: false, message: "token 无效" });
+      return;
+    }
+    const docId = url.searchParams.get("doc") ?? "";
+    if (!docId) {
+      json(res, 400, { ok: false, message: "缺少 doc 参数" });
+      return;
+    }
+    const docPath = findDoc(docId);
+    if (!docPath) {
+      json(res, 404, { ok: false, message: `找不到文档 ${docId}` });
+      return;
+    }
+    const parsed = parseDocument(readFileSync(docPath, "utf8"), docPath);
+    if (!parsed.doc) {
+      json(res, 422, { ok: false, message: "文档解析失败", findings: parsed.findings });
+      return;
+    }
+    json(res, 200, { ok: true, doc: docId, rev: parsed.doc.meta?.rev ?? 1, path: docPath });
+    return;
+  }
+
   if (pathname !== "/api/edit" && pathname !== "/api/patch") {
     json(res, 404, { ok: false, message: "未知 API" });
     return;
@@ -235,6 +264,13 @@ function handle(req: IncomingMessage, res: ServerResponse, options: ServeOptions
     }
     res.writeHead(405, { allow: "GET, HEAD" });
     res.end();
+    return;
+  }
+  // GET /api/rev：读当前 rev（供页面写回前 rebase）
+  if (req.method === "GET" && options.edit && pathname === "/api/rev") {
+    void handleEditApi(req, res, options.edit, findDoc, pathname).catch((e: Error) => {
+      if (!res.headersSent) json(res, 500, { ok: false, message: e.message });
+    });
     return;
   }
   if (req.method !== "GET" && req.method !== "HEAD") {

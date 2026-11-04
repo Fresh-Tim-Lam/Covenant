@@ -525,6 +525,8 @@ var draggingWin = false;
   }
   function byId(list, id){ for (var i=0;i<list.length;i++) if (list[i].id===id) return list[i]; return null; }
   function docByKey(key){ for (var i=0;i<DATA.docs.length;i++) if (DATA.docs[i].key===key) return DATA.docs[i]; return null; }
+  /** 按 docId / key / id 任一命中（写回与导出都按 docId 定位，避免 key≠docId 时取不到） */
+  function docByAny(k){ for (var i=0;i<DATA.docs.length;i++){ var d=DATA.docs[i]; if (d.docId===k || d.key===k || d.id===k) return d; } return null; }
   function currentDoc(){ return docByKey(current); }
   function editOpsFor(doc){
     if (!doc) return {};
@@ -1512,9 +1514,8 @@ var draggingWin = false;
     renderWin(w);
   }
 
-  function buildAnnotationPatch(){
-    var doc = currentDoc();
-    if (!doc) return;
+  function buildPatchFor(doc){
+    if (!doc) return null;
     var l = localFor(doc.docId);
     var ops = [];
     for (var i=0;i<l.add.length;i++){
@@ -1556,8 +1557,28 @@ var draggingWin = false;
       var newProps = Object.assign({}, cel.props || {}, { user_verified: true });
       ops.push({ op: "replace", path: "/elements/" + cid, value: Object.assign({}, cel, { props: newProps }) });
     }
-    var patch = { covenant: "0.1", doc: doc.docId, base_rev: doc.rev, intent: "人工审查（HTML 导出：新增批注 + 状态流转 + 编辑批注 + 删除批注 + 元素核验）", ops: ops };
+    var patch = { covenant: "0.1", doc: doc.docId, base_rev: doc.rev, intent: "人工审查（HTML 导出：批注 / 状态流转 / 元素核验 / 元素增删）", ops: ops };
     return patch;
+  }
+
+  function buildAnnotationPatch(){ return buildPatchFor(currentDoc()); }
+
+  /** 导出全部文档的改动（单文件 bundle，供 covenant apply 批量落盘） */
+  function exportAllPatches(){
+    var all = [];
+    for (var di = 0; di < DATA.docs.length; di++) {
+      var p = buildPatchFor(DATA.docs[di]);
+      if (p) all.push(p);
+    }
+    if (!all.length) { alert("所有文档都没有改动可导出"); return; }
+    var bundle = { covenant: "0.1", patches: all };
+    var blob = new Blob([JSON.stringify(bundle, null, 2)], {type: "application/json"});
+    var url = URL.createObjectURL(blob);
+    var a3 = document.createElement("a");
+    a3.href = url; a3.download = "covenant-all.patches.json";
+    document.body.appendChild(a3); a3.click(); document.body.removeChild(a3);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    showToast("已导出 " + all.length + " 个文档的补丁");
   }
 
   function exportPatch(){
@@ -1573,33 +1594,62 @@ var draggingWin = false;
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
   }
 
+  /**
+   * 写回：先取服务端真实 rev 并 rebase，再 POST。
+   * 为什么必须 rebase：页面里的 doc.rev 是构建时冻结的；服务端每次写回 rev+1，
+   * 若不 rebase，第二次写回必然被 gate 以 patch/base-rev 拒绝。
+   */
   function serverSaveAnnotations(){
     var patch = buildAnnotationPatch();
     if (!patch) { showToast("没有改动可写回"); return; }
     var cfg = window.__CVN_EDIT__;
     if (!cfg || !cfg.patchEndpoint) { showToast("请用 pnpm edit:serve 打开页面后再写回"); return; }
-    fetch(cfg.patchEndpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-covenant-token": cfg.token },
-      body: JSON.stringify({ patch: patch, actor: "human:you" }),
-    }).then(function(r){
-      return r.json().then(function(j){ return { status: r.status, body: j }; });
-    }).then(function(x){
-      if (!x.body || !x.body.ok) {
-        var msg = (x.body && x.body.message) ? x.body.message : "写回失败";
-        var codes = [];
-        if (x.body && x.body.findings) for (var i = 0; i < x.body.findings.length; i++) codes.push(x.body.findings[i].code);
-        showToast(msg + (codes.length ? "：" + codes.join(", ") : ""));
-        return;
-      }
-      var doc = currentDoc();
-      if (doc) {
-        delete local[doc.docId]; save();
-        drawBadges(doc); updateHeader();
-        renderSelected();
-      }
-      showToast("批注已写回 .cvn.yaml（rev " + x.body.rev + "）");
-    }).catch(function(){ showToast("写回请求失败：请确认 edit:serve 仍在运行"); });
+    var docId = patch.doc;
+    var headers = { "content-type": "application/json", "x-covenant-token": cfg.token };
+    var revUrl = "/api/rev?doc=" + encodeURIComponent(docId);
+
+    function post(){
+      return fetch(cfg.patchEndpoint, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ patch: patch, actor: "human:you" }),
+      }).then(function(r){
+        return r.json().then(function(j){ return { status: r.status, body: j }; });
+      });
+    }
+
+    fetch(revUrl, { headers: headers })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(revBody){
+        // 取不到就按原 rev 试（旧 serve 无 /api/rev 时保持兼容）
+        if (revBody && revBody.ok && typeof revBody.rev === "number") {
+          if (revBody.rev !== patch.base_rev) {
+            patch.base_rev = revBody.rev;  // rebase
+            var d0 = docByAny(docId);
+            if (d0) d0.rev = revBody.rev;  // 同步本地，供后续导出
+          }
+        }
+        return post();
+      })
+      .then(function(x){
+        if (!x.body || !x.body.ok) {
+          var msg = (x.body && x.body.message) ? x.body.message : "写回失败";
+          var codes = [];
+          if (x.body && x.body.findings) for (var i = 0; i < x.body.findings.length; i++) codes.push(x.body.findings[i].code);
+          showToast(msg + (codes.length ? "：" + codes.join(", ") : ""));
+          return;
+        }
+        // 成功后把新 rev 写回内存中的 doc，下一次写回/导出才不会用旧 rev
+        var d = docByAny(docId);
+        if (d && typeof x.body.rev === "number") d.rev = x.body.rev;
+        if (d) {
+          delete local[docId]; save();
+          drawBadges(d); updateHeader();
+          renderSelected();
+        }
+        showToast("已写回 .cvn.yaml（rev " + x.body.rev + "）");
+      })
+      .catch(function(){ showToast("写回请求失败：请确认 edit:serve 仍在运行"); });
   }
 
   function resetLocal(){
@@ -1952,6 +2002,7 @@ var draggingWin = false;
     })(nodeEls[q]);
   }
   var ex = document.getElementById("btn-export"); if (ex) ex.addEventListener("click", exportPatch);
+  var exAll = document.getElementById("btn-export-all"); if (exAll) exAll.addEventListener("click", exportAllPatches);
   var annSave = document.getElementById("btn-ann-save"); if (annSave) annSave.addEventListener("click", serverSaveAnnotations);
   try {
     if (localStorage.getItem("covenant:viewer:nav") === "off") document.body.classList.add("nav-collapsed");
@@ -2040,7 +2091,8 @@ export function renderHtml(views: DocView[], options: SiteOptions = {}): string 
     '<span class="sub" id="pending">未导出批注 0</span>',
     '<button id="btn-reset">重置本地改动</button>',
     '<button id="btn-export" class="pri">导出补丁 JSON</button>',
-    '<button id="btn-ann-save" class="pri" hidden title="把批注改动直接写回 .cvn.yaml（需 pnpm edit:serve）">写回批注</button>',
+    '<button id="btn-export-all" title="把所有文档的改动打包成一个 covenant-all.patches.json">导出全部 JSON</button>',
+    '<button id="btn-ann-save" class="pri" hidden title="把批注改动直接写回 .cvn.yaml（需 pnpm edit:serve）">写回</button>',
     "</header>",
     '<div id="shell">',
     `<aside id="views">\n      <input id="views-search" type="text" placeholder="搜索架构图…" style="width:100%;padding:5px 8px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px;color:var(--ink2);background:var(--surface);outline:none">
