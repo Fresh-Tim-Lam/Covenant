@@ -35,7 +35,7 @@ entries:
       - packages/validate/src/index.ts
     s:
       - 关系矩阵只允许词表内的源/目标 kind
-    source_sha256: 5ff3ebff1982f586c459ea3d6351ae83554cbeb610d8c20eb53981b901dcf863
+    source_sha256: a7ff8addecf361b2562a44e4956d313275eb0bdac11a864b99d52b902cd9ba57
   - file: packages/validate/src/index.ts
     f: L1 schema / L2 完整性 / L3 剖面一致性校验
     r:

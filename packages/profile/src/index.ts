@@ -851,6 +851,46 @@ export const STATE: ProfileDef = {
   ],
 };
 
+/**
+ * 混合剖面：允许所有已注册元素类型共存于同一文档。
+ * 用于需要跨记法建图的项目（如 ALLELab：module + entity + process + data_store 混合）。
+ * 关系矩阵全放行（from/to 不限），由业务不变量约束。
+ */
+const ALL_KINDS = [
+  ...new Set([
+    C4_CONTAINER.elements, DFD.elements, ER.elements,
+    FLOWCHART.elements, C4_CONTEXT.elements, DEPLOYMENT.elements,
+    C4_COMPONENT.elements, GRAPH.elements, SEQUENCE.elements, STATE.elements,
+  ].flat()),
+].sort();
+
+const ALL_REL_KINDS = [
+  ...new Set([
+    ...Object.keys(C4_CONTAINER.relations), ...Object.keys(DFD.relations),
+    ...Object.keys(ER.relations), ...Object.keys(FLOWCHART.relations),
+    ...Object.keys(C4_CONTEXT.relations), ...Object.keys(DEPLOYMENT.relations),
+    ...Object.keys(C4_COMPONENT.relations), ...Object.keys(GRAPH.relations),
+    ...Object.keys(SEQUENCE.relations), ...Object.keys(STATE.relations),
+  ]),
+].sort();
+
+export const MIXED: ProfileDef = {
+  ref: "mixed@1",
+  elements: ALL_KINDS,
+  relations: Object.fromEntries(
+    ALL_REL_KINDS.map((kind) => [kind, { from: ALL_KINDS, to: ALL_KINDS }]),
+  ),
+  requiredProps: {
+    container: ["tech"],
+    datastore: ["tech", "storage_kind"],
+    "data-store": [],
+    queue: ["tech"],
+  },
+  propEnums: {
+    datastore: { storage_kind: ["rdbms", "kv", "object", "search", "file"] },
+  },
+};
+
 const REGISTRY: Record<string, ProfileDef> = {
   [C4_CONTAINER.ref]: C4_CONTAINER,
   [DFD.ref]: DFD,
@@ -862,6 +902,7 @@ const REGISTRY: Record<string, ProfileDef> = {
   [GRAPH.ref]: GRAPH,
   [SEQUENCE.ref]: SEQUENCE,
   [STATE.ref]: STATE,
+  [MIXED.ref]: MIXED,
 };
 
 /** 通过 "name@major" 取剖面；未知剖面返回 undefined 由调用方报错 */
