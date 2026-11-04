@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDocument } from "@covenant/core";
-import type { CovenantDoc } from "@covenant/core";
+import type { CovenantDoc, ImplStatus } from "@covenant/core";
 import { layout, segmentMidpoint, selectView } from "@covenant/layout";
 import { labelCandidates, placeLabels, renderSvg } from "./index";
 
@@ -479,5 +479,254 @@ describe("段级批注 badge", () => {
     expect(b).toHaveLength(1);
     expect(b[0]!.x).toBeCloseTo(mid.x, 1);
     expect(b[0]!.y).toBeCloseTo(mid.y - 10, 1);
+  });
+});
+
+/* ------------------- impl_status 线型映射（P0 格式扩展） ------------------- */
+
+const IMPL_TEST_STATUSES: ImplStatus[] = [
+  "implemented",
+  "partial",
+  "planned",
+  "not_connected",
+  "unknown",
+];
+
+interface PaintExpect {
+  stroke?: string;
+  dash?: string;
+  opacity?: string;
+  marker?: string;
+}
+
+const EDGE_EXPECT: Record<ImplStatus, PaintExpect> = {
+  implemented: { marker: "cvn-arrow" },
+  partial: { dash: "7 4", marker: "cvn-arrow" },
+  planned: { dash: "2 3", opacity: ".72", marker: "cvn-arrow" },
+  not_connected: { stroke: "#8b98a5", dash: "5 5", opacity: ".8", marker: "cvn-arrow-muted" },
+  unknown: { stroke: "#9a6a00", dash: "2 3", marker: "cvn-arrow-unknown" },
+};
+
+function statusDoc(a: ImplStatus, b: ImplStatus, relStatus?: ImplStatus): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id: "t/impl",
+    profile: "c4-container@1",
+    meta: { title: "impl", purpose: "p", non_goals: [] },
+    elements: [
+      { id: "e.a", kind: "container", name: "A", summary: "a", tech: "TS", impl_status: a },
+      { id: "e.b", kind: "container", name: "B", summary: "b", tech: "TS", impl_status: b },
+    ],
+    relations: [
+      {
+        id: "r.ab",
+        kind: "calls",
+        from: "e.a",
+        to: "e.b",
+        summary: "c",
+        ...(relStatus ? { impl_status: relStatus } : {}),
+      },
+    ],
+    views: [{ id: "v.main", title: "m" }],
+  };
+}
+
+/** 取元素第一个几何图元的属性串 */
+function nodeGeomAttrs(svg: string, id: string): string {
+  return new RegExp(`<g class="node kind-container" data-id="${id}">\\s*<rect ([^>]*)/>`).exec(svg)?.[1] ?? "";
+}
+
+/** 取边可见 path（第二段 path）的属性串 */
+function edgeVisibleAttrs(svg: string, id: string): string {
+  const g = new RegExp(`<g class="edge" data-id="${id}">([\\s\\S]*?)</g>`).exec(svg)?.[1] ?? "";
+  const paths = [...g.matchAll(/<path d="[^"]*"([^>]*)\/>/g)];
+  return paths[paths.length - 1]?.[1] ?? "";
+}
+
+describe("impl_status 元素线型（5 状态）", () => {
+  function fiveNodeDoc(): CovenantDoc {
+    const elements = IMPL_TEST_STATUSES.map((s) => ({
+      id: `e.${s}`,
+      kind: "container",
+      name: s,
+      summary: s,
+      tech: "TS",
+      impl_status: s,
+    }));
+    const relations = IMPL_TEST_STATUSES.slice(1).map((s, i) => ({
+      id: `r.${IMPL_TEST_STATUSES[i]}-${s}`,
+      kind: "calls",
+      from: `e.${IMPL_TEST_STATUSES[i]}`,
+      to: `e.${s}`,
+      summary: "c",
+      impl_status: "implemented" as ImplStatus,
+    }));
+    return {
+      covenant: "0.1",
+      id: "t/impl5",
+      profile: "c4-container@1",
+      meta: { title: "impl5", purpose: "p", non_goals: [] },
+      elements,
+      relations,
+      views: [{ id: "v.main", title: "m" }],
+    };
+  }
+
+  it("implemented 不加任何新属性；其余按状态覆盖 dash/opacity/stroke", () => {
+    const d = fiveNodeDoc();
+    const svg = renderSvg(d, layout(d));
+    const impl = nodeGeomAttrs(svg, "e.implemented");
+    expect(impl).toContain('stroke="#94a3b8"');
+    expect(impl).not.toContain("stroke-dasharray");
+
+    const partial = nodeGeomAttrs(svg, "e.partial");
+    expect(partial).toContain('stroke-dasharray="7 4"');
+    expect(partial).not.toContain("opacity");
+
+    const planned = nodeGeomAttrs(svg, "e.planned");
+    expect(planned).toContain('stroke-dasharray="2 3"');
+    expect(planned).toContain('opacity=".72"');
+
+    const nc = nodeGeomAttrs(svg, "e.not_connected");
+    expect(nc).toContain('stroke="#8b98a5"');
+    expect(nc).toContain('stroke-dasharray="5 5"');
+    expect(nc).toContain('opacity=".8"');
+
+    const unk = nodeGeomAttrs(svg, "e.unknown");
+    expect(unk).toContain('stroke="#9a6a00"');
+    expect(unk).toContain('stroke-dasharray="2 3"');
+  });
+
+  it("非 implemented 覆盖 kind-dash（datastore 的 6 3 被替换）", () => {
+    const d = fiveNodeDoc();
+    d.elements![0] = {
+      ...d.elements![0]!,
+      kind: "datastore",
+      props: { storage_kind: "rdbms" },
+      impl_status: "partial",
+    };
+    const svg = renderSvg(d, layout(d));
+    const attrs = new RegExp(`<g class="node kind-datastore" data-id="e.implemented">\\s*<rect ([^>]*)/>`).exec(svg)?.[1] ?? "";
+    expect(attrs).toContain('stroke-dasharray="7 4"');
+    expect(attrs).not.toContain("6 3");
+  });
+
+  it("junction 圆点：状态色作 stroke、fill 保持", () => {
+    const d = statusDoc("implemented", "unknown");
+    const pins = { "e.a": [40, 40] as [number, number], "e.b": [320, 40] as [number, number] };
+    const view = { id: "v.j", title: "j", present: { node_style: "junction" as const }, layout: { pins } };
+    d.views = [view];
+    const l = layout(d, { pins, includeIds: ["e.a", "e.b"], includeRelationIds: ["r.ab"] });
+    const svg = renderSvg(d, l, { view });
+    // junction 圆点：fill 保持深色，unknown 端 stroke 用琥珀 + 状态虚线
+    expect(svg).toContain('fill="#0f172a"');
+    expect(svg).toContain('stroke="#9a6a00"');
+    expect(svg).toContain('stroke-dasharray="2 3"');
+  });
+});
+
+describe("impl_status 关系继承（弱端）与显式覆盖", () => {
+  const TABLE: [ImplStatus, ImplStatus, ImplStatus][] = [
+    ["implemented", "implemented", "implemented"],
+    ["implemented", "planned", "planned"],
+    ["partial", "not_connected", "not_connected"],
+    ["planned", "unknown", "unknown"],
+    ["partial", "planned", "planned"],
+    ["not_connected", "not_connected", "not_connected"],
+  ];
+
+  for (const [a, b, expected] of TABLE) {
+    it(`${a} + ${b} → ${expected}`, () => {
+      const d = statusDoc(a, b);
+      const l = layout(d);
+      const attrs = edgeVisibleAttrs(renderSvg(d, l), "r.ab");
+      const e = EDGE_EXPECT[expected];
+      if (e.dash) expect(attrs).toContain(`stroke-dasharray="${e.dash}"`);
+      else expect(attrs).not.toContain("stroke-dasharray");
+      if (e.stroke) expect(attrs).toContain(`stroke="${e.stroke}"`);
+      else expect(attrs).toContain('stroke="#94a3b8"');
+      if (e.opacity) expect(attrs).toContain(`opacity="${e.opacity}"`);
+      else expect(attrs).not.toContain("opacity=");
+      expect(attrs).toContain(`marker-end="url(#${e.marker})"`);
+    });
+  }
+
+  it("显式关系状态优先（覆盖弱端继承）", () => {
+    const declared = statusDoc("implemented", "planned", "implemented");
+    const attrs = edgeVisibleAttrs(renderSvg(declared, layout(declared)), "r.ab");
+    expect(attrs).not.toContain("stroke-dasharray");
+    expect(attrs).toContain('marker-end="url(#cvn-arrow)"');
+
+    const forced = statusDoc("implemented", "implemented", "unknown");
+    const attrs2 = edgeVisibleAttrs(renderSvg(forced, layout(forced)), "r.ab");
+    expect(attrs2).toContain('stroke="#9a6a00"');
+    expect(attrs2).toContain('stroke-dasharray="2 3"');
+    expect(attrs2).toContain('marker-end="url(#cvn-arrow-unknown)"');
+  });
+
+  it("箭头 marker：not_connected/unknown 追加专用 marker，其余用默认", () => {
+    const nc = statusDoc("implemented", "not_connected");
+    const ncSvg = renderSvg(nc, layout(nc));
+    expect(ncSvg).toContain('<marker id="cvn-arrow-muted"');
+    expect(ncSvg).toContain('stroke="#8b98a5"');
+    expect(ncSvg).not.toContain('<marker id="cvn-arrow-unknown"');
+
+    const unk = statusDoc("implemented", "unknown");
+    const unkSvg = renderSvg(unk, layout(unk));
+    expect(unkSvg).toContain('<marker id="cvn-arrow-unknown"');
+    expect(unkSvg).toContain('stroke="#9a6a00"');
+
+    const plain = statusDoc("implemented", "implemented");
+    const plainSvg = renderSvg(plain, layout(plain));
+    expect(plainSvg).not.toContain("cvn-arrow-muted");
+    expect(plainSvg).not.toContain("cvn-arrow-unknown");
+  });
+
+  it("无 impl_status 字段文档：输出与旧版逐字节一致（deps 黄金）", () => {
+    const file = "examples/covenant-deps.cvn.yaml";
+    const parsed = parseDocument(readFileSync(file, "utf8"), file);
+    const d = parsed.doc!;
+    const view = (d.views ?? [])[0]!;
+    const sel = selectView(d, view);
+    const l = layout(d, {
+      direction: view.layout?.direction,
+      rankGap: view.layout?.spacing?.rank,
+      nodeGap: view.layout?.spacing?.node,
+      pins: view.layout?.pins,
+      includeIds: sel.elementIds,
+      includeRelationIds: sel.relationIds,
+    });
+    const svg = renderSvg(d, l, { title: view.title ?? d.meta?.title, view });
+    expect(svg).toBe(readFileSync("packages/render/src/__golden__/deps.svg", "utf8"));
+    expect(svg).not.toContain("impl_status");
+    expect(svg).not.toContain("cvn-arrow-muted");
+    expect(svg).not.toContain("cvn-arrow-unknown");
+  });
+});
+
+describe("impl_status 序列图（参与者方框 + reply 虚线覆盖）", () => {
+  function seqDoc(): CovenantDoc {
+    const file = "examples/order-sequence.cvn.yaml";
+    const parsed = parseDocument(readFileSync(file, "utf8"), file);
+    return parsed.doc!;
+  }
+
+  it("参与者非 implemented 有状态线型；reply 的 5 3 被状态 dash 覆盖", () => {
+    const d = seqDoc();
+    const participant = d.elements![0]!;
+    participant.impl_status = "planned";
+    const reply = (d.relations ?? []).find((r) => r.kind === "return");
+    expect(reply).toBeTruthy();
+    reply!.impl_status = "not_connected";
+    const svg = renderSvg(d, layout(d));
+    // 参与者方框：planned 线型
+    expect(svg).toMatch(/<g class="participant" data-id="[^"]+">\s*<rect[^>]*stroke-dasharray="2 3"[^>]*opacity="\.72"/);
+    // reply 消息：not_connected 覆盖 5 3
+    const msg = new RegExp(`<g class="message kind-reply" data-id="${reply!.id}">([\\s\\S]*?)</g>`).exec(svg)?.[1] ?? "";
+    expect(msg).toContain('stroke-dasharray="5 5"');
+    expect(msg).not.toContain("5 3");
+    expect(msg).toContain('stroke="#8b98a5"');
+    expect(msg).toContain('marker-end="url(#cvn-arrow-muted)"');
+    expect(svg).toContain('<marker id="cvn-arrow-muted"');
   });
 });

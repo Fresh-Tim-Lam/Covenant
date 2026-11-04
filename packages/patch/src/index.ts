@@ -19,3 +19,4 @@ export { applyPatch } from "./apply";
 
 /** 文本层辅助（barrel 也导出，测试直接覆盖）；removeAnnotationBlocks 仅模块内导出 */
 export { annotationYaml, appendAnnotations, applyStatusChanges, bumpRev } from "./text";
+export { validateTypedObjectFields } from "./gate";

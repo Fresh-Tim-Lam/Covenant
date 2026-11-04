@@ -5,7 +5,7 @@
  *   点选元素/关系 → 新增批注（localStorage）→ 角标实时更新 → 导出 .patch.json。
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
-import type { CovenantDoc, ViewDef } from "@covenant/core";
+import type { CovenantDoc, Evidence, ImplStatus, ViewDef } from "@covenant/core";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
 export interface DocView {
@@ -175,6 +175,59 @@ function centers(layout: LayoutResult, segments: Record<string, RelationSegments
   return { elements, relations };
 }
 
+/** 投影到内嵌 JSON 的证据项（lines 只在有值时输出，控制体积） */
+interface ProjectedEvidence {
+  kind: "doc" | "code";
+  path: string;
+  lines?: string;
+}
+
+interface ProjectedElement {
+  id: string;
+  kind: string;
+  name: string;
+  summary: string;
+  tech: string;
+  implStatus?: ImplStatus;
+  implStatusExplicit?: boolean;
+  evidence?: ProjectedEvidence[];
+}
+
+interface ProjectedRelation {
+  id: string;
+  kind: string;
+  from: string;
+  to: string;
+  summary: string;
+  implStatus?: ImplStatus;
+  implStatusExplicit?: boolean;
+  evidence?: ProjectedEvidence[];
+}
+
+/** impl_status 强度序：implemented(0) < partial(1) < planned(2) < not_connected(3) < unknown(4) */
+const IMPL_STATUS_ORDER: Record<ImplStatus, number> = {
+  implemented: 0,
+  partial: 1,
+  planned: 2,
+  not_connected: 3,
+  unknown: 4,
+};
+
+/** 关系缺省 impl_status = 两端有效状态中较弱者（取 max） */
+function weakerImplStatus(a: ImplStatus, b: ImplStatus): ImplStatus {
+  return IMPL_STATUS_ORDER[b] > IMPL_STATUS_ORDER[a] ? b : a;
+}
+
+/** 证据只在非空时输出；无字段文档的 DATA 字节不变 */
+function projectEvidence(list: Evidence[] | undefined): ProjectedEvidence[] | undefined {
+  if (!list || list.length === 0) return undefined;
+  return list.map((ev) => {
+    const out: ProjectedEvidence = { kind: ev.kind, path: ev.path };
+    if (ev.lines) out.lines = ev.lines;
+    return out;
+  });
+}
+
 function projectDoc(view: DocView) {
   const d = view.doc;
   // 与 CLI 构建一致地解析当前视图（junction 的 node_style 影响边的实际绘制几何）
@@ -182,6 +235,9 @@ function projectDoc(view: DocView) {
     ? (d.views ?? []).find((v) => v.id === view.viewId)
     : (d.views && d.views.length === 1 ? d.views[0] : undefined);
   const segments = relationSegments(view.layout, d, viewDef);
+  // 元素有效状态先算好，关系缺省时按弱端继承
+  const elementStatus = new Map<string, ImplStatus>();
+  for (const e of d.elements ?? []) elementStatus.set(e.id, e.impl_status ?? "implemented");
   return {
     key: view.viewId ? `${d.id}#${view.viewId}` : d.id,
     docId: d.id,
@@ -200,20 +256,53 @@ function projectDoc(view: DocView) {
     positions: Object.fromEntries(
       Object.entries(view.layout.nodes).map(([id, r]) => [id, [r.x, r.y]]),
     ) as Record<string, [number, number]>,
-    elements: (d.elements ?? []).map((e) => ({
-      id: e.id,
-      kind: e.kind,
-      name: e.name,
-      summary: e.summary,
-      tech: e.tech ?? "",
-    })),
-    relations: (d.relations ?? []).map((r) => ({
-      id: r.id,
-      kind: r.kind,
-      from: r.from,
-      to: r.to,
-      summary: r.summary,
-    })),
+    elements: (d.elements ?? []).map((e): ProjectedElement => {
+      const status: ImplStatus = e.impl_status ?? "implemented";
+      const explicit = e.impl_status !== undefined;
+      const out: ProjectedElement = {
+        id: e.id,
+        kind: e.kind,
+        name: e.name,
+        summary: e.summary,
+        tech: e.tech ?? "",
+      };
+      // 仅"有值"时输出键：显式声明，或有效值不是缺省 implemented
+      if (explicit || status !== "implemented") {
+        out.implStatus = status;
+        out.implStatusExplicit = explicit;
+      }
+      const evidence = projectEvidence(e.evidence);
+      if (evidence) out.evidence = evidence;
+      return out;
+    }),
+    relations: (d.relations ?? []).map((r): ProjectedRelation => {
+      const out: ProjectedRelation = {
+        id: r.id,
+        kind: r.kind,
+        from: r.from,
+        to: r.to,
+        summary: r.summary,
+      };
+      let status: ImplStatus;
+      let explicit: boolean;
+      if (r.impl_status !== undefined) {
+        status = r.impl_status;
+        explicit = true;
+      } else {
+        status = weakerImplStatus(
+          elementStatus.get(r.from) ?? "implemented",
+          elementStatus.get(r.to) ?? "implemented",
+        );
+        explicit = false;
+      }
+      if (explicit || status !== "implemented") {
+        out.implStatus = status;
+        out.implStatusExplicit = explicit;
+      }
+      const evidence = projectEvidence(r.evidence);
+      if (evidence) out.evidence = evidence;
+      return out;
+    }),
     annotations: (d.annotations ?? []).map((a) => ({
       id: a.id,
       target: a.target,
@@ -359,6 +448,24 @@ svg text{user-select:none}
 .whole-edge-body{margin-top:8px}
 .whole-edge-body[hidden]{display:none}
 .whole-edge-actions{margin-top:6px}
+/* 实现状态 chip（implemented 灰 / partial 蓝 / planned 琥珀 / not_connected 灰 / unknown 琥珀） */
+.impl-chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;line-height:1.6;border:1px solid transparent;font-weight:600}
+.impl-implemented{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+.impl-partial{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+.impl-planned{background:#fef3c7;color:#b45309;border-color:#fde68a}
+.impl-not_connected{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
+.impl-unknown{background:#fffbeb;color:#b45309;border-color:#fde68a}
+.impl-note{font-size:11px;color:var(--muted);margin-left:4px}
+/* 结构化证据列表（不画进 SVG） */
+.evidence{list-style:none;margin:8px 0 0;padding:0}
+.evidence li{display:flex;align-items:center;gap:6px;font-size:11.5px;padding:3px 0;border-bottom:1px dashed #eef2f7}
+.evidence li:last-child{border-bottom:0}
+.ev-kind{flex:0 0 auto;font-size:10px;padding:0 5px;border-radius:4px;background:#e2e8f0;color:#475569}
+.ev-kind.ev-code{background:#e0f2fe;color:#0369a1}
+.ev-kind.ev-doc{background:#ede9fe;color:#6d28d9}
+.ev-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:#334155}
+.copy-evidence{flex:0 0 auto;font:inherit;font-size:11px;padding:1px 7px;border:1px solid var(--line);border-radius:5px;background:#fff;cursor:pointer;color:#475569}
+.copy-evidence:hover{border-color:var(--accent);color:var(--accent)}
 `;
 
 const SCRIPT = `
@@ -1022,6 +1129,31 @@ const SCRIPT = `
     return html;
   }
 
+  // 实现状态 chip + 结构化证据（仅小窗内展示，不画进 SVG）
+  function implStatusChip(status){
+    var st = status || "implemented";
+    return '<span class="impl-chip impl-' + esc(st) + '">' + esc(st) + '</span>';
+  }
+  function implStatusRow(obj){
+    var out = '<div class="kv"><b>实现</b>' + implStatusChip(obj.implStatus);
+    if (obj.implStatusExplicit === false) out += '<span class="impl-note">（继承自端点）</span>';
+    return out + '</div>';
+  }
+  function renderEvidence(evidence){
+    if (!evidence || !evidence.length) return '';
+    var out = '<h3 style="margin-top:12px">证据（' + evidence.length + '）</h3><ul class="evidence">';
+    for (var i=0;i<evidence.length;i++){
+      var e = evidence[i] || {};
+      var p = String(e.path == null ? "" : e.path);
+      var loc = p + (e.lines ? ':' + String(e.lines) : '');
+      var kind = String(e.kind || "");
+      out += '<li><span class="ev-kind ev-' + esc(kind) + '">' + esc(kind) + '</span>' +
+        '<code class="ev-path" title="' + esc(loc) + '">' + esc(loc) + '</code>' +
+        '<button type="button" class="copy-evidence" data-copy="' + esc(loc) + '" title="复制证据路径">复制</button></li>';
+    }
+    return out + '</ul>';
+  }
+
   // 单个小窗的内容渲染 + 事件绑定（多窗共用；主窗复用 #inspector 保留旧 id 以便兼容）
   function renderWin(w){
     var doc = currentDoc();
@@ -1038,6 +1170,9 @@ const SCRIPT = `
       html += '<h3>' + esc(obj.kind) + '</h3><div class="meta">' + esc(obj.id) + ' · ' + esc(obj.from) + ' → ' + esc(obj.to) + '</div>';
       html += '<div class="kv"><b>语义</b>' + esc(obj.summary) + '</div>';
     }
+    // 实现状态（缺省 implemented；关系缺省为弱端继承）+ 证据列表（不画进 SVG）
+    html += implStatusRow(obj);
+    html += renderEvidence(obj.evidence);
     if (editing) {
       html += '<div class="edit-box"><h3>编辑（暂存）</h3>';
       if (kind === "element") {
@@ -1135,6 +1270,17 @@ const SCRIPT = `
     if (closeBtn) closeBtn.addEventListener("click", function(ev){ ev.stopPropagation(); closeWin(w); });
     var copyBtn = el.querySelector(".copy-btn");
     if (copyBtn) copyBtn.addEventListener("click", function(ev){ ev.stopPropagation(); copySelection(kind, id, w.segment); });
+    // 证据路径复制（复用 fallbackCopy；不做 file:// 跳转）
+    var evBtns = el.querySelectorAll(".copy-evidence");
+    for (var evi = 0; evi < evBtns.length; evi++){
+      (function(btn){
+        btn.addEventListener("click", function(ev){
+          ev.stopPropagation();
+          var text = btn.getAttribute("data-copy") || "";
+          fallbackCopy(text, function(ok){ showToast(ok ? "已复制路径" : "复制失败：请手动选择路径"); });
+        });
+      })(evBtns[evi]);
+    }
     var pinBtn = el.querySelector(".pin-btn");
     if (pinBtn) {
       function paintPin(){

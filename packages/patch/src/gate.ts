@@ -53,6 +53,90 @@ function targetExists(doc: CovenantDoc, kind: string, id: string): boolean {
   return Boolean(sets[kind]?.has(id));
 }
 
+const IMPL_STATUSES = ["implemented", "partial", "planned", "not_connected", "unknown"];
+const EVIDENCE_KINDS = ["doc", "code"];
+const EVIDENCE_LINES = /^[0-9]+(-[0-9]+)?$/;
+
+/**
+ * 元素/关系等"带类型字段对象"的通用字段校验（纯函数，供 gate 在元素编辑协议开放时接线）。
+ *
+ * 覆盖 schema 里 impl_status / evidence / segment-kind 三条约定；
+ * 不校验 path 存在性（格式层明确允许先写证据后补文件），也不做任何 IO。
+ *
+ * @param kind  对象类型：element / relation / frame / …（segment 仅 relation 合法）
+ * @param value 待校验对象（元素/关系定义的原始字段）
+ */
+export function validateTypedObjectFields(
+  kind: string,
+  value: Record<string, unknown>,
+): Finding[] {
+  const out: Finding[] = [];
+  const raw = (value ?? {}) as Record<string, unknown>;
+
+  if (raw.impl_status !== undefined && !IMPL_STATUSES.includes(String(raw.impl_status))) {
+    out.push(
+      finding(
+        "gate/impl-status",
+        `impl_status "${String(raw.impl_status)}" 不在允许值内`,
+        IMPL_STATUSES.join(" | "),
+      ),
+    );
+  }
+
+  if (raw.evidence !== undefined) {
+    const evidence = raw.evidence;
+    if (!Array.isArray(evidence)) {
+      out.push(
+        finding(
+          "gate/evidence",
+          "evidence 必须是数组",
+          "evidence: [{ kind: doc|code, path, lines? }]",
+        ),
+      );
+    } else {
+      for (let i = 0; i < evidence.length; i++) {
+        const item = (evidence[i] ?? {}) as Record<string, unknown>;
+        const kindValue = item.kind;
+        const pathValue = item.path;
+        const hasKind = typeof kindValue === "string" && EVIDENCE_KINDS.includes(kindValue);
+        const hasPath = typeof pathValue === "string" && pathValue.length > 0;
+        if (!hasKind || !hasPath) {
+          const miss = !hasKind && hasPath ? "kind（doc|code）" : !hasPath && hasKind ? "path" : "kind 与 path";
+          out.push(
+            finding(
+              "gate/evidence",
+              `evidence[${i}] 缺少或非法 ${miss}`,
+              "每项必须包含 kind（doc|code）与 path（仓库相对 POSIX 路径）",
+            ),
+          );
+          continue;
+        }
+        if (item.lines !== undefined && !(typeof item.lines === "string" && EVIDENCE_LINES.test(item.lines))) {
+          out.push(
+            finding(
+              "gate/evidence-lines",
+              `evidence[${i}].lines 必须是 "12" 或 "12-34"，实际 ${JSON.stringify(item.lines)}`,
+              "lines 形如 12 或 12-34",
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  if (kind !== "relation" && raw.segment !== undefined) {
+    out.push(
+      finding(
+        "gate/segment-kind",
+        `segment 只能用于 relation 对象，实际 kind=${kind}`,
+        "删除 segment，或把对象改为 relation",
+      ),
+    );
+  }
+
+  return out;
+}
+
 /** 纯函数：返回门禁 findings；空数组 = 放行 */
 export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions): Finding[] {
   const out: Finding[] = [];

@@ -7,7 +7,7 @@ entries:
       - packages/core/src/index.ts
     s:
       - 批注 ai_hint 是人给 AI 的指令，AI 不得写
-    source_sha256: f597269a4645ceafdb6f0759aaf0ab999dfa5045f698347dab6e2e76bb82890c
+    source_sha256: c0199c151ffa19e9ff5c43edd1d1abfdda97bff631078d849871265e4fddad30
   - file: packages/core/src/parse.ts
     f: YAML 解析（CORE_SCHEMA）与锚点禁令
     r:
@@ -46,7 +46,7 @@ entries:
       - packages/patch/src/index.ts
     s:
       - 'L2 通配与 tag: 选择器不做精确 id 校验'
-    source_sha256: 60aa2332f1b7dccaf06331110d3de1d4733f9c7b299e3d276bd10f6b482a2952
+    source_sha256: b6b8e89903f8e49606226cbccb843ddaae4d1b6ecd4034d14d2ec95046596a3f
   - file: packages/layout/src/index.ts
     f: 分层布局、barycenter 交叉最小化、长边通道、视图选择器
     r:
@@ -66,7 +66,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 渲染必须确定性：同输入逐字节一致
-    source_sha256: e7f3736f4e6c3a6be90770115fde5fa2b79553c0c02d7f03177515b584c02016
+    source_sha256: 5a30fe02316b152ad1926f9ad5c403f1bc1079a78e6f9a400e1231c66fef0308
   - file: packages/render/src/html.ts
     f: 可标注自包含 HTML：内联 SVG/JSON + 多小窗查看器（悬停/固定/钉住、引导线）
     r:
@@ -77,7 +77,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: b14f5f1c459ce6a55d5c635a5b7210c3400bd9eb0771fea8f517223b842f8ce4
+    source_sha256: 403a4d3b93328efe5058a8a511672c2f6bd1e60d2b48afe5121b6bd0c426557d
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
@@ -91,7 +91,7 @@ entries:
     s:
       - 只做文本块插入，不重排 YAML（为了保留注释）
       - AI 不得改状态、不得写 ai_hint
-    source_sha256: ee95dd7a642bcde0379894e2e2f4973ebea97660c5344949242d66bd9847f100
+    source_sha256: 95c7f50565e8d2aa1650dc9343613dc05e051bf86c879656f4476f7be32cbc34
   - file: packages/diff/src/index.ts
     f: 语义 diff：cosmetic / material / breaking 三分类
     r:
@@ -129,7 +129,7 @@ entries:
     a: []
     s:
       - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
-    source_sha256: f2cf93332c17c5e62b76127c2e049af8ca5a0999a8659c4e9965537a1d3296ae
+    source_sha256: e8b3d0ffe4f453e6d3e10a9b8a5fcf035b04d1225bc5f9a2f01178feaf0c2b78
   - file: scripts/svg-to-png.mjs
     f: 开发期视觉核对：SVG→PNG
     r: []
@@ -291,7 +291,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
-    source_sha256: 88e3c070785f31a3a451d62235d61233823ae5d93dcd82f26c28d22752c7aece
+    source_sha256: f8f0375c5cb3f17d38002d995aafa0099e7c4bd74dcdb0a89e51a96e90889bfd
   - file: packages/patch/src/apply.ts
     f: 应用补丁：保留注释的文本插入/替换 + rev+1
     r:

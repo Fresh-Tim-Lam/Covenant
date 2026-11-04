@@ -16,6 +16,7 @@ import {
   parsePatch,
 } from "./index";
 import type { Patch } from "./index";
+import { validateTypedObjectFields } from "./gate";
 
 const firstValue = (p: Patch): Record<string, unknown> =>
   p.ops[0]!.value as Record<string, unknown>;
@@ -524,5 +525,87 @@ describe("编辑批注内容（replace /annotations/<id> 整块）", () => {
     expect(text).toContain('author: "human:lily"');
     expect(text).toContain("这条注释必须被保留");
     expect(text).toContain("rev: 4");
+  });
+});
+
+describe("validateTypedObjectFields（impl_status / evidence / segment 通用字段校验）", () => {
+  it("合法元素/关系 → 0 findings", () => {
+    expect(
+      validateTypedObjectFields("element", {
+        id: "e.a",
+        impl_status: "partial",
+        evidence: [{ kind: "code", path: "packages/render/src/html.ts", lines: "12-34" }],
+      }),
+    ).toEqual([]);
+    expect(
+      validateTypedObjectFields("relation", {
+        id: "r.ab",
+        impl_status: "planned",
+        evidence: [{ kind: "doc", path: "docs/design/format-spec-v0.md" }],
+      }),
+    ).toEqual([]);
+    expect(validateTypedObjectFields("element", { id: "e.b" })).toEqual([]);
+  });
+
+  it("impl_status 非法枚举 → gate/impl-status", () => {
+    const codes = validateTypedObjectFields("element", { impl_status: "done" }).map((f) => f.code);
+    expect(codes).toEqual(["gate/impl-status"]);
+  });
+
+  it("evidence 缺 kind / 缺 path / 非数组 → gate/evidence", () => {
+    expect(
+      validateTypedObjectFields("element", { evidence: [{ path: "a.ts" }] }).map((f) => f.code),
+    ).toEqual(["gate/evidence"]);
+    expect(
+      validateTypedObjectFields("relation", { evidence: [{ kind: "doc" }] }).map((f) => f.code),
+    ).toEqual(["gate/evidence"]);
+    expect(
+      validateTypedObjectFields("element", { evidence: "nope" }).map((f) => f.code),
+    ).toEqual(["gate/evidence"]);
+  });
+
+  it("evidence.kind 非 doc|code → gate/evidence", () => {
+    expect(
+      validateTypedObjectFields("element", { evidence: [{ kind: "url", path: "a.ts" }] }).map(
+        (f) => f.code,
+      ),
+    ).toEqual(["gate/evidence"]);
+  });
+
+  it("evidence.lines 非法 → gate/evidence-lines；合法区间通过", () => {
+    expect(
+      validateTypedObjectFields("element", {
+        evidence: [{ kind: "code", path: "a.ts", lines: "12,34" }],
+      }).map((f) => f.code),
+    ).toEqual(["gate/evidence-lines"]);
+    expect(
+      validateTypedObjectFields("element", {
+        evidence: [{ kind: "code", path: "a.ts", lines: 12 }],
+      }).map((f) => f.code),
+    ).toEqual(["gate/evidence-lines"]);
+    expect(
+      validateTypedObjectFields("element", {
+        evidence: [{ kind: "code", path: "a.ts", lines: "12-34" }],
+      }),
+    ).toEqual([]);
+  });
+
+  it("非 relation 带 segment → gate/segment-kind；relation 合法", () => {
+    expect(
+      validateTypedObjectFields("element", { segment: 0 }).map((f) => f.code),
+    ).toEqual(["gate/segment-kind"]);
+    expect(
+      validateTypedObjectFields("frame", { segment: 0 }).map((f) => f.code),
+    ).toEqual(["gate/segment-kind"]);
+    expect(validateTypedObjectFields("relation", { segment: 0 })).toEqual([]);
+  });
+
+  it("多个问题一次返回", () => {
+    const codes = validateTypedObjectFields("element", {
+      impl_status: "done",
+      evidence: [{ kind: "doc" }],
+      segment: 2,
+    }).map((f) => f.code);
+    expect(codes).toEqual(["gate/impl-status", "gate/evidence", "gate/segment-kind"]);
   });
 });

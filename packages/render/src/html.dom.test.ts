@@ -1555,3 +1555,143 @@ describe("窗口关闭后高亮与引导线必须彻底清理", () => {
     expect(d.querySelector("svg .node")!.classList.contains("hl")).toBe(false);
   });
 });
+
+/* ------------------- impl_status / evidence 小窗展示（task-18 Step 2） ------------------- */
+
+function docImpl(): CovenantDoc {
+  return {
+    covenant: "0.1",
+    id: "t/impl",
+    profile: "c4-container@1",
+    meta: { title: "实现状态", purpose: "p", non_goals: [] },
+    elements: [
+      {
+        id: "e.a",
+        kind: "container",
+        name: "部分实现 A",
+        summary: "a",
+        tech: "ts",
+        impl_status: "partial",
+        evidence: [
+          { kind: "code", path: "packages/render/src/html.ts", lines: "1-10" },
+          { kind: "doc", path: "docs/design/format-spec-v0.md" },
+        ],
+      },
+      {
+        id: "e.b",
+        kind: "datastore",
+        name: "计划中 B",
+        summary: "b",
+        tech: "pg",
+        props: { storage_kind: "rdbms" },
+        impl_status: "planned",
+      },
+    ],
+    relations: [
+      // 缺省 impl_status → 弱端继承：max(partial, planned) = planned
+      { id: "r.ab", kind: "writes", from: "e.a", to: "e.b", summary: "写" },
+      // 显式 not_connected
+      { id: "r.ba", kind: "reads", from: "e.b", to: "e.a", summary: "读", impl_status: "not_connected" },
+    ],
+  };
+}
+
+describe("小窗实现状态 chip 与证据列表", () => {
+  it("元素窗显示显式 impl_status chip（partial → 蓝色）", () => {
+    const dom = new JSDOM(htmlOf(docImpl()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector('svg .node[data-id="e.a"]')!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+    const chip = win.querySelector(".impl-chip")!;
+    expect(chip).not.toBeNull();
+    expect(chip.getAttribute("class")).toContain("impl-partial");
+    expect(chip.textContent).toBe("partial");
+    // 元素显式声明，不应有"继承"标注
+    expect(win.querySelector(".impl-note")).toBeNull();
+  });
+
+  it("边窗显示继承状态 +（继承自端点）；显式声明的关系不标注", () => {
+    const dom = new JSDOM(htmlOf(docImpl()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+
+    d.querySelector('svg .edge[data-id="r.ab"]')!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    let win = visibleWins(d)[0]!;
+    let chip = win.querySelector(".impl-chip")!;
+    expect(chip.getAttribute("class")).toContain("impl-planned");
+    expect(win.querySelector(".impl-note")!.textContent).toContain("继承自端点");
+
+    // 点空白关窗，再开显式关系窗
+    d.querySelector("svg")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    d.querySelector('svg .edge[data-id="r.ba"]')!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    win = visibleWins(d)[0]!;
+    chip = win.querySelector(".impl-chip")!;
+    expect(chip.getAttribute("class")).toContain("impl-not_connected");
+    expect(win.querySelector(".impl-note")).toBeNull();
+  });
+
+  it("证据列表渲染 [doc|code] path:lines + 复制按钮（不抛错、toast 已复制路径）", () => {
+    const dom = new JSDOM(htmlOf(docImpl()), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector('svg .node[data-id="e.a"]')!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+
+    const items = Array.from(win.querySelectorAll(".evidence li"));
+    expect(items).toHaveLength(2);
+    expect(items[0]!.textContent).toContain("code");
+    expect(items[0]!.textContent).toContain("packages/render/src/html.ts:1-10");
+    expect(items[1]!.textContent).toContain("doc");
+    expect(items[1]!.textContent).toContain("docs/design/format-spec-v0.md");
+    expect(win.textContent).toContain("证据（2）");
+
+    const copyBtn = win.querySelector(".copy-evidence") as HTMLElement;
+    expect(copyBtn).not.toBeNull();
+    // jsdom 无剪贴板：先确认默认路径不抛错（失败 toast 也可接受）
+    expect(() => copyBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }))).not.toThrow();
+    // 模拟浏览器 copy 成功路径 → 成功 toast
+    (d as unknown as { execCommand: () => boolean }).execCommand = () => true;
+    copyBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    expect(d.getElementById("toast")?.textContent).toContain("已复制路径");
+  });
+
+  it("无 evidence 不渲染证据区；无 impl_status 时显示缺省 implemented 且无继承标注", () => {
+    const dom = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const { window } = dom;
+    const d = window.document;
+    d.querySelector("svg .node")!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    const win = visibleWins(d)[0]!;
+    expect(win.querySelector(".evidence")).toBeNull();
+    expect(win.querySelector(".impl-chip")!.textContent).toBe("implemented");
+    expect(win.querySelector(".impl-note")).toBeNull();
+  });
+
+  it("投影：元素/关系带 implStatus/implStatusExplicit/evidence；无字段文档不输出新键", () => {
+    // 有字段文档
+    const domImpl = new JSDOM(htmlOf(docImpl()), { runScripts: "dangerously", url: "https://example.test/" });
+    const rawImpl = domImpl.window.document
+      .getElementById("covenant-data")!.textContent!;
+    const dataImpl = JSON.parse(rawImpl).docs[0];
+    expect(dataImpl.elements[0].implStatus).toBe("partial");
+    expect(dataImpl.elements[0].implStatusExplicit).toBe(true);
+    expect(dataImpl.elements[0].evidence).toHaveLength(2);
+    expect(dataImpl.elements[0].evidence[0].lines).toBe("1-10");
+    expect(dataImpl.elements[0].evidence[1].lines).toBeUndefined();
+    // 关系缺省 → 弱端继承
+    expect(dataImpl.relations[0].implStatus).toBe("planned");
+    expect(dataImpl.relations[0].implStatusExplicit).toBe(false);
+    expect(dataImpl.relations[1].implStatus).toBe("not_connected");
+    expect(dataImpl.relations[1].implStatusExplicit).toBe(true);
+
+    // 无字段文档：DATA 不出现任何新键（老文档 HTML 的 JSON 字节不变）
+    const domBase = new JSDOM(html(), { runScripts: "dangerously", url: "https://example.test/" });
+    const rawBase = domBase.window.document.getElementById("covenant-data")!.textContent!;
+    expect(rawBase).not.toContain('"implStatus"');
+    expect(rawBase).not.toContain('"implStatusExplicit"');
+    expect(rawBase).not.toContain('"evidence"');
+    const dataBase = JSON.parse(rawBase).docs[0];
+    expect(Object.keys(dataBase.elements[0]).sort()).toEqual(["id", "kind", "name", "summary", "tech"]);
+    expect(Object.keys(dataBase.relations[0]).sort()).toEqual(["from", "id", "kind", "summary", "to"]);
+  });
+});

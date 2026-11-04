@@ -2,7 +2,7 @@
  * SVG 渲染器（M1）。纯函数：doc + layout → SVG 字符串，无 DOM、无随机、无时间。
  * 输出确定性：同输入逐字节一致（黄金测试的前提）。
  */
-import type { CovenantDoc, ViewDef } from "@covenant/core";
+import type { CovenantDoc, ImplStatus, ViewDef } from "@covenant/core";
 import { layoutSequence, relationLabelText, segmentMidpoint } from "@covenant/layout";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 
@@ -389,6 +389,111 @@ function isDashed(kind: string): boolean {
   return THEME.dashedKinds.has(kind);
 }
 
+/* ------------------- impl_status 线型映射（P0 格式扩展） ------------------- */
+
+const IMPL_RANK: Record<ImplStatus, number> = {
+  implemented: 0,
+  partial: 1,
+  planned: 2,
+  not_connected: 3,
+  unknown: 4,
+};
+
+interface ImplPaint {
+  /** 覆盖默认描边色；缺省则沿用原色 */
+  stroke?: string;
+  dash: string;
+  opacity?: string;
+}
+
+/** 非 implemented 的线型；implemented 不产生任何新属性（保证旧 SVG 逐字节不变） */
+const IMPL_PAINT: Record<Exclude<ImplStatus, "implemented">, ImplPaint> = {
+  partial: { dash: "7 4" },
+  planned: { dash: "2 3", opacity: ".72" },
+  not_connected: { stroke: "#8b98a5", dash: "5 5", opacity: ".8" },
+  unknown: { stroke: "#9a6a00", dash: "2 3" },
+};
+
+/** 元素有效状态：显式声明优先，缺省 implemented */
+function elementStatus(el: { impl_status?: ImplStatus }): ImplStatus {
+  return el.impl_status ?? "implemented";
+}
+
+/** 关系有效状态：显式优先；否则继承"弱端"（IMPL_RANK 更大的一端） */
+function relationStatus(
+  rel: { impl_status?: ImplStatus; from: string; to: string },
+  elementStatusById: Map<string, ImplStatus>,
+): ImplStatus {
+  if (rel.impl_status) return rel.impl_status;
+  const a = elementStatusById.get(rel.from) ?? "implemented";
+  const b = elementStatusById.get(rel.to) ?? "implemented";
+  return IMPL_RANK[a] >= IMPL_RANK[b] ? a : b;
+}
+
+interface StatusMaps {
+  elements: Map<string, ImplStatus>;
+  relations: Map<string, ImplStatus>;
+  needsMutedMarker: boolean;
+  needsUnknownMarker: boolean;
+}
+
+function statusMaps(doc: CovenantDoc): StatusMaps {
+  const elements = new Map<string, ImplStatus>();
+  for (const el of doc.elements ?? []) elements.set(el.id, elementStatus(el));
+  const relations = new Map<string, ImplStatus>();
+  for (const rel of doc.relations ?? []) relations.set(rel.id, relationStatus(rel, elements));
+  const all = [...relations.values()];
+  return {
+    elements,
+    relations,
+    needsMutedMarker: all.includes("not_connected"),
+    needsUnknownMarker: all.includes("unknown"),
+  };
+}
+
+/**
+ * 元素几何的描边/线型属性。implemented 时返回与旧实现逐字节完全相同的属性串；
+ * 非 implemented 时覆盖 kind-dash（datastore/external 的 6 3 等）。
+ */
+function elementPaintAttrs(eff: ImplStatus, baseDash: string): string {
+  if (eff === "implemented") {
+    return ` stroke="${THEME.nodeStroke}" stroke-width="1.5"${baseDash ? ` stroke-dasharray="${baseDash}"` : ""}`;
+  }
+  const p = IMPL_PAINT[eff];
+  return ` stroke="${p.stroke ?? THEME.nodeStroke}" stroke-width="1.5" stroke-dasharray="${p.dash}"${p.opacity ? ` opacity="${p.opacity}"` : ""}`;
+}
+
+/** junction 圆点：fill 保持，stroke 用状态色（partial/planned 无专用色时用默认描边色让虚线可见） */
+function junctionPaintAttrs(eff: ImplStatus): string {
+  if (eff === "implemented") return ` stroke="${THEME.bg}" stroke-width="1.5"`;
+  const p = IMPL_PAINT[eff];
+  return ` stroke="${p.stroke ?? THEME.nodeStroke}" stroke-width="1.5" stroke-dasharray="${p.dash}"${p.opacity ? ` opacity="${p.opacity}"` : ""}`;
+}
+
+/** 边的描边/线型 + 箭头 marker；implemented 复用默认 #cvn-arrow */
+function edgePaint(eff: ImplStatus, strokeWidth = 1.6): { attrs: string; marker: string } {
+  if (eff === "implemented") {
+    return { attrs: ` stroke="${THEME.edge}" stroke-width="${strokeWidth}"`, marker: "cvn-arrow" };
+  }
+  const p = IMPL_PAINT[eff];
+  const marker =
+    eff === "not_connected" ? "cvn-arrow-muted" : eff === "unknown" ? "cvn-arrow-unknown" : "cvn-arrow";
+  return {
+    attrs: ` stroke="${p.stroke ?? THEME.edge}" stroke-width="${strokeWidth}" stroke-dasharray="${p.dash}"${p.opacity ? ` opacity="${p.opacity}"` : ""}`,
+    marker,
+  };
+}
+
+/** 箭头 marker 定义：只在需要时追加，保证无状态文档的 defs 逐字节不变 */
+function arrowMarkerDefs(needsMuted: boolean, needsUnknown: boolean): string {
+  const one = (id: string, color: string): string =>
+    `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${color}"/></marker>`;
+  let defs = `<defs>${one("cvn-arrow", THEME.edge)}`;
+  if (needsMuted) defs += one("cvn-arrow-muted", "#8b98a5");
+  if (needsUnknown) defs += one("cvn-arrow-unknown", "#9a6a00");
+  return `${defs}</defs>`;
+}
+
 interface AnnotationCounts {
   /** 整条关系的未决批注数（target 无 segment） */
   whole: number;
@@ -463,23 +568,23 @@ export function renderSequenceSvg(
   const W = seq.width;
   const H = seq.height;
   const bottom = H - 24;
+  const status = statusMaps(doc);
 
   out.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="cvn-title cvn-desc" font-family="${THEME.font}">`,
   );
   out.push(`<title id="cvn-title">${esc(title)}</title>`);
   out.push(`<desc id="cvn-desc">${esc(doc.meta?.purpose ?? "")}</desc>`);
-  out.push(
-    `<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${THEME.edge}"/></marker></defs>`,
-  );
+  out.push(arrowMarkerDefs(status.needsMutedMarker, status.needsUnknownMarker));
   out.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="${THEME.bg}"/>`);
 
   // 参与者与生命线
   for (const p of seq.participants) {
     const cx = p.x + p.w / 2;
+    const eff = status.elements.get(p.id) ?? "implemented";
     out.push(`<g class="participant" data-id="${esc(p.id)}">`);
     out.push(
-      `<rect x="${round(p.x)}" y="${round(seq.headerY)}" width="${round(p.w)}" height="${seq.headerH}" rx="6" fill="${THEME.nodeFill.participant ?? "#ffffff"}" stroke="${THEME.nodeStroke}" stroke-width="1.5"/>`,
+      `<rect x="${round(p.x)}" y="${round(seq.headerY)}" width="${round(p.w)}" height="${seq.headerH}" rx="6" fill="${THEME.nodeFill.participant ?? "#ffffff"}"${elementPaintAttrs(eff, "")}/>`,
     );
     out.push(
       `<text x="${round(cx)}" y="${round(seq.headerY + seq.headerH / 2 + 4.5)}" text-anchor="middle" font-size="12.5" font-weight="650" fill="${THEME.text}">${esc(fit(p.name, p.w - 20, 12.5))}</text>`,
@@ -494,19 +599,22 @@ export function renderSequenceSvg(
 
   // 消息
   for (const m of seq.messages) {
-    const dash = m.kind === "reply" ? ' stroke-dasharray="5 3"' : "";
+    const eff = status.relations.get(m.relId) ?? "implemented";
+    const paint = edgePaint(eff, 1.5);
+    // implemented 且 reply → 保留原有 5 3 虚线；非 implemented 由状态线型覆盖
+    const dash = eff === "implemented" && m.kind === "reply" ? ' stroke-dasharray="5 3"' : "";
     out.push(`<g class="message kind-${esc(m.kind)}" data-id="${esc(m.relId)}">`);
     if (m.self) {
       const x = m.fromX;
       out.push(
-        `<path d="M${round(x)},${round(m.y)} h34 v20 h-34" fill="none" stroke="${THEME.edge}" stroke-width="1.5"${dash} marker-end="url(#cvn-arrow)"/>`,
+        `<path d="M${round(x)},${round(m.y)} h34 v20 h-34" fill="none"${paint.attrs}${dash} marker-end="url(#${paint.marker})"/>`,
       );
       out.push(
         `<text x="${round(x + 40)}" y="${round(m.y - 4)}" font-size="10.5" fill="${THEME.edgeLabel}">${esc(`${m.index}. ${m.label}`)}</text>`,
       );
     } else {
       out.push(
-        `<line x1="${round(m.fromX)}" y1="${round(m.y)}" x2="${round(m.toX)}" y2="${round(m.y)}" stroke="${THEME.edge}" stroke-width="1.5"${dash} marker-end="url(#cvn-arrow)"/>`,
+        `<line x1="${round(m.fromX)}" y1="${round(m.y)}" x2="${round(m.toX)}" y2="${round(m.y)}"${paint.attrs}${dash} marker-end="url(#${paint.marker})"/>`,
       );
       const mid = (m.fromX + m.toX) / 2;
       out.push(
@@ -542,15 +650,14 @@ export function renderSvg(
   const out: string[] = [];
   const W = layout.width;
   const H = layout.height;
+  const status = statusMaps(doc);
 
   out.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="cvn-title cvn-desc" font-family="${THEME.font}">`,
   );
   out.push(`<title id="cvn-title">${esc(title)}</title>`);
   out.push(`<desc id="cvn-desc">${esc(doc.meta?.purpose ?? "")}</desc>`);
-  out.push(
-    `<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${THEME.edge}"/></marker></defs>`,
-  );
+  out.push(arrowMarkerDefs(status.needsMutedMarker, status.needsUnknownMarker));
   out.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="${THEME.bg}"/>`);
 
   // frames（先画，作为背景边界）
@@ -617,10 +724,11 @@ export function renderSvg(
       hollowCrossings.push({ x: hit.x, y: hit.y });
     }
     const d = pointsToPath(points);
+    const paint = edgePaint(status.relations.get(edge.id) ?? "implemented");
     edgeParts.push(
       `<g class="edge" data-id="${esc(edge.id)}">` +
         `<path d="${d}" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/>` +
-        `<path d="${d}" fill="none" stroke="${THEME.edge}" stroke-width="1.6" marker-end="url(#cvn-arrow)"/>` +
+        `<path d="${d}" fill="none"${paint.attrs} marker-end="url(#${paint.marker})"/>` +
         `</g>`,
     );
     const p = points;
@@ -710,14 +818,17 @@ export function renderSvg(
     const r = layout.nodes[el.id];
     if (!r) continue;
     const kind = el.kind;
-    const dash = isDashed(kind) ? ' stroke-dasharray="6 3"' : "";
+    const eff = status.elements.get(el.id) ?? "implemented";
+    // implemented 保持原有 kind-dash（datastore/external 6 3）；非 implemented 覆盖之
+    const baseDash = isDashed(kind) ? "6 3" : "";
+    const shapeAttrs = elementPaintAttrs(eff, baseDash);
     const fill = kindFill(kind);
     out.push(`<g class="node kind-${esc(kind)}" data-id="${esc(el.id)}">`);
     if (junction) {
       const cx = r.x + r.w / 2;
       const cy = r.y + r.h / 2;
       out.push(
-        `<circle cx="${round(cx)}" cy="${round(cy)}" r="6" fill="${THEME.junctionDot}" stroke="${THEME.bg}" stroke-width="1.5"/>`,
+        `<circle cx="${round(cx)}" cy="${round(cy)}" r="6" fill="${THEME.junctionDot}"${junctionPaintAttrs(eff)}/>`,
         `<text x="${round(cx)}" y="${round(cy + 22)}" text-anchor="middle" font-size="12" font-weight="650" fill="${THEME.text}">${esc(fit(el.name, 180, 12))}</text>`,
       );
       out.push(`</g>`);
@@ -736,7 +847,7 @@ export function renderSvg(
         `${round(r.x)},${round(cy)}`,
       ].join(" ");
       out.push(
-        `<polygon points="${pts}" fill="${fill}" stroke="${THEME.nodeStroke}" stroke-width="1.5"${dash}/>`,
+        `<polygon points="${pts}" fill="${fill}"${shapeAttrs}/>`,
       );
       out.push(
         `<text x="${round(cx)}" y="${round(cy - 2)}" text-anchor="middle" font-size="12.5" font-weight="650" fill="${THEME.text}">${esc(fit(el.name, r.w * 0.6, 12.5))}</text>`,
@@ -748,7 +859,7 @@ export function renderSvg(
       }
     } else if (kind === "start" || kind === "end" || kind === "initial" || kind === "final") {
       out.push(
-        `<rect x="${round(r.x)}" y="${round(r.y)}" width="${round(r.w)}" height="${round(r.h)}" rx="${Math.round(r.h / 2)}" fill="${fill}" stroke="${THEME.nodeStroke}" stroke-width="1.5"/>`,
+        `<rect x="${round(r.x)}" y="${round(r.y)}" width="${round(r.w)}" height="${round(r.h)}" rx="${Math.round(r.h / 2)}" fill="${fill}"${elementPaintAttrs(eff, "")}/>`,
       );
       out.push(
         `<text x="${round(r.x + r.w / 2)}" y="${round(r.y + r.h / 2 + 4.5)}" text-anchor="middle" font-size="13" font-weight="650" fill="${THEME.text}">${esc(fit(el.name, r.w - 40, 13))}</text>`,
@@ -762,7 +873,7 @@ export function renderSvg(
         `${round(r.x)},${round(r.y + r.h)}`,
       ].join(" ");
       out.push(
-        `<polygon points="${pts}" fill="${fill}" stroke="${THEME.nodeStroke}" stroke-width="1.5"${dash}/>`,
+        `<polygon points="${pts}" fill="${fill}"${shapeAttrs}/>`,
       );
       out.push(
         `<text x="${round(r.x + 12 + skew)}" y="${round(r.y + 26)}" font-size="13" font-weight="650" fill="${THEME.text}">${esc(fit(el.name, r.w - 24 - skew * 2, 13))}</text>`,
@@ -775,7 +886,7 @@ export function renderSvg(
     } else {
       const rx = kind === "attribute" ? Math.round(Math.min(r.h / 2, 30)) : kind === "entity" ? 4 : 8;
       out.push(
-        `<rect x="${round(r.x)}" y="${round(r.y)}" width="${round(r.w)}" height="${round(r.h)}" rx="${rx}" fill="${fill}" stroke="${THEME.nodeStroke}" stroke-width="1.5"${dash}/>`,
+        `<rect x="${round(r.x)}" y="${round(r.y)}" width="${round(r.w)}" height="${round(r.h)}" rx="${rx}" fill="${fill}"${shapeAttrs}/>`,
       );
       out.push(
         `<text x="${round(r.x + 12)}" y="${round(r.y + 24)}" font-size="13" font-weight="650" fill="${THEME.text}">${esc(fit(el.name, r.w - 24, 13))}</text>`,
