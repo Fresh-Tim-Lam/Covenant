@@ -77,7 +77,16 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 9ac2f4521e098287a97c667497022e2d7cae2150e1037b94023434c781aebc04
+    source_sha256: d5ccfda5e270a662d4a5db6ffb3a61a3d0b1109cd4e99379a39f76bafd4962a0
+  - file: packages/render/src/viewer.css.ts
+    f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
+    r: []
+    a:
+      - packages/render/src/html.ts
+    s:
+      - 纯静态字符串：禁止插值（${}）与反引号，否则拆分会破坏模板
+      - 从 html.ts 拆出以满足文件粒度棘轮（L12）
+    source_sha256: 246dd9d6fe4c59bbe670e6e806329559d6c2417e60ed7d1b6fa45dbf1798fccb
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

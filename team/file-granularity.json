@@ -13,7 +13,7 @@
     "packages/patch/src/patch.test.ts": 612,
     "packages/profile/src/index.ts": 921,
     "packages/render/src/html.dom.test.ts": 1697,
-    "packages/render/src/html.ts": 2114,
+    "packages/render/src/html.ts": 1977,
     "packages/render/src/index.ts": 923,
     "packages/render/src/render.test.ts": 732,
     "packages/validate/src/index.ts": 515,

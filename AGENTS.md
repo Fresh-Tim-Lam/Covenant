@@ -142,7 +142,7 @@ $line = '{"ts":"2026-11-04T13:00:00.000Z","actor":"lead","phase":"lead-verdict",
 | 级 | 命令 | 何时必跑 |
 |---|---|---|
 | **L0 静态** | `pnpm typecheck` | 任何 `.ts` 改动 |
-| **L1 单测** | `pnpm test`（当前基线 **358 tests**） | 任何代码改动 |
+| **L1 单测** | `pnpm test`（当前基线 **362 tests**） | 任何代码改动 |
 | **L2 黄金** | `pnpm golden` | 改了 `packages/render` / `packages/layout` 的输出格式 |
 | **L3 索引** | `pnpm verify`（含 index/adr/modules/doctor） | 任何改动提交前；**改文件后必须先 `pnpm index --write`** |
 | **L4 构建** | `pnpm build:html && pnpm run build:bundle` | 改了 render/cli；需确认 `dist/covenant.html` 文档数（当前 **21**） |
@@ -153,7 +153,7 @@ $line = '{"ts":"2026-11-04T13:00:00.000Z","actor":"lead","phase":"lead-verdict",
 1. `pnpm index --write` 之后再跑 `pnpm verify`，否则 doctor 报 FRAS stale（本仓高频踩坑）。
 2. 自报"全绿"必须贴出 `Test Files / Tests` 与 `verify` 的四行输出（index/adr/modules/doctor）。
 3. **jsdom 不等价于浏览器**：交互改动即使 52 个 DOM 测试全绿，仍需用户在真实页面验收。
-4. 358 tests 是当前基线；新增测试后基线数字同步更新本文件。
+4. 362 tests 是当前基线；新增测试后基线数字同步更新本文件。
 
 ---
 
