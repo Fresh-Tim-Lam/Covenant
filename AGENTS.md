@@ -173,9 +173,23 @@ $line = '{"ts":"2026-11-04T13:00:00.000Z","actor":"lead","phase":"lead-verdict",
 ## 6. 漂移审计（机器兜底）
 
 ```bash
-pnpm agent:audit          # 全量检查，非零退出 = 有 FAIL
-pnpm agent:audit --json   # 机器可读
+pnpm agent:audit            # 全量检查，非零退出 = 有 FAIL
+pnpm agent:audit --json     # 机器可读
+pnpm agent:audit:selftest   # 自测：证明基线后新违规仍会 FAIL（防"永久绿灯"）
 ```
+
+**基线机制（`team/audit-baseline.json`）**：字段契约自 `cutoff_ts` 起生效；此前记录是**存量债务**。
+A1/A2/A3 据此三分：
+
+| 情况 | 状态 | 含义 |
+|---|---|---|
+| 基线后**有**违规 | **FAIL**（退出码 1） | 新派发不合契约，必须修 |
+| 基线后无、但存量有 | WARN | 存量债务如实呈现，**不追溯、不回填** |
+| 两者皆无 | PASS | 干净 |
+
+> 没有基线的旧写法会让 A1/A2/A3 **永久 FAIL**，红久了就没人看——那是"绿灯疲劳"，不是治理。
+> 但基线只能降级**历史**，绝不能降级**新违规**：`selftest-audit.mjs` 会注入一条基线后的假违规，
+> 断言 audit 退出码为 1；若审计被改松，自测立刻红。
 
 检查项（实现见 `scripts/agent/team_audit.mjs`）：
 

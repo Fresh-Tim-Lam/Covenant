@@ -1,0 +1,16 @@
+{
+  "schema": "covenant-audit-baseline/v1",
+  "cutoff_ts": "2026-11-04T15:00:00.000Z",
+  "reason": "AGENTS.md §3 派发记录字段契约（mode/task/evidence/verdict）自 2026-11-04 15:00Z 起生效。此前的记录因 dsh-agent-team 插件不捕获这些字段而必然缺失，属存量债务：不追溯补齐、不回填伪造、不豁免，仅在 audit 中以 WARN 呈现。",
+  "legacy": {
+    "records": 168,
+    "spawn": 10,
+    "done": 13
+  },
+  "policy": {
+    "backfill": "forbidden",
+    "legacy_status": "WARN",
+    "new_violation_status": "FAIL",
+    "go_forward": "Lead 在每次派发/收口后按 AGENTS.md §3.1 手写 lead-spawn / lead-verdict 行"
+  }
+}

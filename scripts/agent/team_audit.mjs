@@ -13,13 +13,15 @@
  */
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "../..");
 const argv = process.argv.slice(2);
 const asJson = argv.includes("--json");
 const sinceIdx = argv.indexOf("--since");
 const since = sinceIdx >= 0 ? Number(argv[sinceIdx + 1] ?? 30) : 30;
+const logIdx = argv.indexOf("--log");
+const LOG_PATH = logIdx >= 0 && argv[logIdx + 1] ? argv[logIdx + 1] : "team/dispatch-log.jsonl";
 
 const results = [];
 function record(id, name, invariant, status, detail) {
@@ -27,7 +29,8 @@ function record(id, name, invariant, status, detail) {
 }
 
 function readText(rel) {
-  const p = join(ROOT, rel);
+  // 注意：绝对路径必须原样使用——join(ROOT, "C:\...") 会拼成损坏路径
+  const p = isAbsolute(rel) ? rel : join(ROOT, rel);
   return existsSync(p) ? readFileSync(p, "utf8") : null;
 }
 
@@ -55,50 +58,77 @@ function git(cmd) {
 }
 
 // ---------- 载入数据 ----------
-const log = readJsonl("team/dispatch-log.jsonl");
+const log = readJsonl(LOG_PATH);
 const parseErrors = log.filter((e) => e.__parseError);
 const spawns = log.filter((e) => e.phase === "spawn");
 const dones = log.filter((e) => e.phase === "done");
 
+// ---------- 基线：区分存量债务与新违规 ----------
+// 设计（AGENTS.md §3.1）：字段契约自基线时间起生效；此前的记录是存量债务，
+// 不追溯、不回填、不豁免——但也不应让新违规被历史噪音淹没。
+const BASELINE_PATH = "team/audit-baseline.json";
+let baseline = { cutoff_ts: null, legacy: {} };
+{
+  const bt = readText(BASELINE_PATH);
+  if (bt) {
+    try {
+      baseline = JSON.parse(bt);
+    } catch {
+      /* 基线文件损坏按"无基线"处理，全部记录视为新违规（更严格） */
+    }
+  }
+}
+const cutoff = baseline.cutoff_ts ? new Date(baseline.cutoff_ts) : null;
+const isLegacy = (e) => (cutoff ? new Date(e.ts) < cutoff : false);
+const newSpawns = spawns.filter((e) => !isLegacy(e));
+const legacySpawns = spawns.filter(isLegacy);
+const newDones = dones.filter((e) => !isLegacy(e));
+const legacyDones = dones.filter(isLegacy);
+
+/** 统一判定：新违规 → FAIL；仅存量 → WARN；无 → PASS */
+function judge(code, name, invariant, newItems, legacyItems, detailFn) {
+  if (newItems.length > 0) {
+    record(code, name, invariant, "FAIL", detailFn("fail", newItems, legacyItems));
+  } else if (legacyItems.length > 0) {
+    record(code, name, invariant, "WARN", detailFn("legacy", newItems, legacyItems));
+  } else {
+    record(code, name, invariant, "PASS", detailFn("pass", newItems, legacyItems));
+  }
+}
+
 // ---------- A1：spawn 是否带 mode（L9） ----------
 {
-  const missing = spawns.filter((e) => !e.mode && !e.payload?.mode);
-  record(
-    "A1",
-    "spawn 必须显式传 mode",
-    "L9",
-    missing.length > 0 ? "FAIL" : "PASS",
-    missing.length > 0
-      ? `${missing.length}/${spawns.length} 个 spawn 缺 mode（应记 ${missing.map((e) => e.target).slice(0, 5).join(", ")}${missing.length > 5 ? " …" : ""}）`
-      : `${spawns.length} 个 spawn 均带 mode`,
+  const bad = (arr) => arr.filter((e) => !e.mode && !e.payload?.mode);
+  judge("A1", "spawn 必须显式传 mode（基线后）", "L9", bad(newSpawns), bad(legacySpawns), (st, nv, lg) =>
+    st === "fail"
+      ? `基线后 ${nv.length}/${newSpawns.length} 个 spawn 缺 mode：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
+      : st === "legacy"
+        ? `基线后 0 违规；存量 ${lg.length} 条（${cutoff?.toISOString()} 前，不追溯）`
+        : `${newSpawns.length} 个 spawn 均带 mode`,
   );
 }
 
 // ---------- A2：spawn 是否带任务关联（L1） ----------
 {
-  const missing = spawns.filter((e) => !e.task && !e.task_id);
-  record(
-    "A2",
-    "spawn 前先建任务并关联",
-    "L1",
-    missing.length > 0 ? "FAIL" : "PASS",
-    missing.length > 0
-      ? `${missing.length}/${spawns.length} 个 spawn 无 task 关联，无法验证「先建任务后派发」`
-      : "全部 spawn 有关联任务",
+  const bad = (arr) => arr.filter((e) => !e.task && !e.task_id);
+  judge("A2", "spawn 前先建任务并关联（基线后）", "L1", bad(newSpawns), bad(legacySpawns), (st, nv, lg) =>
+    st === "fail"
+      ? `基线后 ${nv.length}/${newSpawns.length} 个 spawn 无 task 关联：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
+      : st === "legacy"
+        ? `基线后 0 违规；存量 ${lg.length} 条（不追溯）`
+        : "全部 spawn 有关联任务",
   );
 }
 
 // ---------- A3：done 是否带 evidence 与 verdict（L3） ----------
 {
-  const missing = dones.filter((e) => !Array.isArray(e.evidence) || e.evidence.length === 0 || !e.verdict);
-  record(
-    "A3",
-    "done 必须带 evidence + verdict",
-    "L3",
-    missing.length > 0 ? "FAIL" : "PASS",
-    missing.length > 0
-      ? `${missing.length}/${dones.length} 个 done 缺 evidence/verdict（幽灵验收）`
-      : `${dones.length} 个 done 均带证据`,
+  const bad = (arr) => arr.filter((e) => !Array.isArray(e.evidence) || e.evidence.length === 0 || !e.verdict);
+  judge("A3", "done 必须带 evidence + verdict（基线后）", "L3", bad(newDones), bad(legacyDones), (st, nv, lg) =>
+    st === "fail"
+      ? `基线后 ${nv.length}/${newDones.length} 个 done 缺 evidence/verdict：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
+      : st === "legacy"
+        ? `基线后 0 违规；存量 ${lg.length} 条（幽灵验收，不追溯）`
+        : `${newDones.length} 个 done 均带证据`,
   );
 }
 
