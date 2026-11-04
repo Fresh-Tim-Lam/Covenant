@@ -549,7 +549,9 @@ var draggingWin = false;
   function visibleAnns(doc){ var l = localFor(doc.docId); return doc.annotations.filter(function(a){ return l.deleted.indexOf(a.id) < 0; }).map(function(a){ return effAnn(doc, a); }).concat(l.add.map(function(a){ return effAnn(doc, a); })); }
   function effStatus(doc, a){ var ov = localFor(doc.docId).status[a.id]; return ov || a.status; }
   function refreshCheckedBadges(doc){
-    var svg = document.querySelector("#stage svg, main svg");
+    // 在"当前激活文档"的 SVG 上画 ✓ 徽章（多文档结构：每文档一个 .doc section + 一个 svg）
+    var section = document.querySelector('.doc[data-doc="' + doc.docId + '"]:not([hidden])');
+    var svg = section ? section.querySelector("svg") : null;
     if (!svg) return;
     svg.querySelectorAll(".verified-badge").forEach(function(b){ b.remove(); });
     var checked = localFor(doc.docId).checked;
@@ -566,25 +568,7 @@ var draggingWin = false;
       svg.appendChild(g);
     }
   }
-  function refreshCheckedBadges(doc){
-    var svg = document.querySelector("#stage svg, main svg");
-    if (!svg) return;
-    svg.querySelectorAll(".verified-badge").forEach(function(b){ b.remove(); });
-    var checked = localFor(doc.docId).checked;
-    for (var id in checked) {
-      if (!Object.prototype.hasOwnProperty.call(checked, id)) continue;
-      var el = svg.querySelector('[data-id="' + id + '"]');
-      if (!el) continue;
-      var bb = el.getBBox ? el.getBBox() : { x: 0, y: 0, width: 120, height: 40 };
-      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      g.setAttribute("class", "verified-badge");
-      var cx = bb.x + bb.width + 4, cy = bb.y - 4;
-      g.innerHTML = '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="#16a34a" stroke="#fff" stroke-width="1.5"/><path d="M' + (cx-3.5) + ' ' + cy + ' L' + (cx-1) + ' ' + (cy+2.8) + ' L' + (cx+3.5) + ' ' + (cy-2.5) + '" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
-      g.setAttribute("pointer-events", "none");
-      svg.appendChild(g);
-    }
-  }
-  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length + Object.keys(l.checked).length + Object.keys(l.checked).length + Object.keys(l.edited).length; }
+  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length + Object.keys(l.checked).length + Object.keys(l.edited).length; }
 
   function esc(s){
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -1321,7 +1305,6 @@ var draggingWin = false;
     var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + headHint + '</span><span class="insp-actions"><button class="verify-top-btn' + (verified ? " on" : "") + '" data-id="' + esc(id) + '" data-kind="' + esc(kind) + '" title="核验通过：图上显示 ✓ 徽章">' + (verified ? "✓" : "✓") + '</button><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
     w.el.innerHTML = head + '<div class="insp-body">' + html + '</div>';
     refreshCheckedBadges(doc);
-    refreshCheckedBadges(doc);
     w.el.hidden = false;
     if (w.el !== primaryEl) stripIds(w.el);
     bindWin(w);
@@ -1467,33 +1450,18 @@ var draggingWin = false;
       var applyBtn = fieldOf(w, "edit-apply");
       if (applyBtn) applyBtn.addEventListener("click", function(){ applyEditUi(kind, id, w); });
     }
-    // 批注内联编辑态不渲染"新增批注"表单 → f-submit 可能不存在，必须判空
+    // ✓ 核验按钮（顶栏紧凑样式：只切 on 类，文字保持 "✓"）
     var verifyBtns = el.querySelectorAll(".verify-top-btn");
     for (var vi = 0; vi < verifyBtns.length; vi++){
       (function(vb){
         vb.addEventListener("click", function(ev){
           ev.stopPropagation();
-          var vid = vb.getAttribute("data-id"), vkind = vb.getAttribute("data-kind");
+          var vid = vb.getAttribute("data-id");
           var ll = localFor(doc.docId);
           if (ll.checked[vid]) { delete ll.checked[vid]; } else { ll.checked[vid] = true; }
           save();
           vb.classList.toggle("on", !!ll.checked[vid]);
-          vb.textContent = ll.checked[vid] ? "✓ 已核验" : "✓ 核验通过";
-          refreshCheckedBadges(doc);
-        });
-      })(verifyBtns[vi]);
-    }
-    var verifyBtns = el.querySelectorAll(".verify-top-btn");
-    for (var vi = 0; vi < verifyBtns.length; vi++){
-      (function(vb){
-        vb.addEventListener("click", function(ev){
-          ev.stopPropagation();
-          var vid = vb.getAttribute("data-id"), vkind = vb.getAttribute("data-kind");
-          var ll = localFor(doc.docId);
-          if (ll.checked[vid]) { delete ll.checked[vid]; } else { ll.checked[vid] = true; }
-          save();
-          vb.classList.toggle("on", !!ll.checked[vid]);
-          vb.textContent = ll.checked[vid] ? "✓ 已核验" : "✓ 核验通过";
+          vb.textContent = "✓";
           refreshCheckedBadges(doc);
         });
       })(verifyBtns[vi]);
