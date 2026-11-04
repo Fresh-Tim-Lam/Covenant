@@ -1669,6 +1669,7 @@ var draggingWin = false;
       // 悬停 → 预览窗 + 同色高亮；移开（非点击/非钉住）→ 延时关闭。
       // 有段热区的边由各 .seg-hit 自己处理悬停，整边 hover 不再介入。
       el.addEventListener("pointerenter", function(ev){
+        if (draggingWin) return;
         if (isEdge && el.querySelector(".seg-hit")) return;
         var kind = kindOf(), id = idOf();
         if (!id) return;
@@ -1678,6 +1679,7 @@ var draggingWin = false;
         openWindow(kind, id, "hover", { x: ev.clientX, y: ev.clientY });
       });
       el.addEventListener("pointerleave", function(ev){
+        if (draggingWin) return;
         if (isEdge && el.querySelector(".seg-hit")) return;
         if (movedIntoWindow(ev.relatedTarget)) return;
         var w = findWin(kindOf(), idOf(), null);
@@ -1691,6 +1693,7 @@ var draggingWin = false;
   // 未钉住时：点画布空白、画布外空白、工具条之外的区域都应关闭小窗。
   // 命中节点/连线由它们自己的 click 处理（会 stopPropagation），此处不干预。
   document.addEventListener("click", function(ev){
+    if (draggingWin) return;
     var t = ev.target;
     if (!t || !t.closest || !t.isConnected) return;
     if (t.closest(".cvn-win, #toast, header, #views")) return;
