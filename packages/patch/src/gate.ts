@@ -10,7 +10,7 @@
  * 纯函数：只吃文档/补丁/actor，不碰文件系统，也不做任何文本编辑。
  */
 import type { CovenantDoc, Finding } from "@covenant/core";
-import { finding, REMOVE_PATH, STATUS_PATH } from "./parse";
+import { finding, ELEMENT_PATH, RELATION_PATH, REMOVE_PATH, STATUS_PATH } from "./parse";
 import type { Patch } from "./parse";
 
 export interface Actor {
@@ -245,11 +245,51 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
         }
         continue;
       }
+      // ---- 元素操作 ----
+      const em = ELEMENT_PATH.exec(op.path ?? "");
+      if (op.op === "remove" && em) {
+        const elId = em[1]!;
+        if (!(doc.elements ?? []).some((e) => e.id === elId)) {
+          out.push(finding("gate/element-exists", `元素 ${elId} 不存在`));
+        }
+        continue;
+      }
+      if (op.op === "add" && op.path === "/elements/-") {
+        const ev = (op.value ?? {}) as Record<string, unknown>;
+        const elId = String(ev.id ?? "");
+        if (!elId) out.push(finding("gate/element-id", "元素 id 必填"));
+        else if ((doc.elements ?? []).some((e) => e.id === elId)) out.push(finding("gate/element-exists", `元素 ${elId} 已存在`));
+        if (!ev.name) out.push(finding("gate/element-name", "元素 name 必填"));
+        const sub = validateTypedObjectFields("relation", ev);
+        out.push(...sub);
+        continue;
+      }
+      // ---- 关系操作 ----
+      const rm3 = RELATION_PATH.exec(op.path ?? "");
+      if (op.op === "remove" && rm3) {
+        const relId = rm3[1]!;
+        if (!(doc.relations ?? []).some((r) => r.id === relId)) {
+          out.push(finding("gate/relation-exists", `关系 ${relId} 不存在`));
+        }
+        continue;
+      }
+      if (op.op === "add" && op.path === "/relations/-") {
+        const rv = (op.value ?? {}) as Record<string, unknown>;
+        const fromId = String(rv.from ?? "");
+        const toId = String(rv.to ?? "");
+        if (!(doc.elements ?? []).some((e) => e.id === fromId)) {
+          out.push(finding("gate/relation-endpoints", `关系 from "${fromId}" 不存在`));
+        }
+        if (!(doc.elements ?? []).some((e) => e.id === toId)) {
+          out.push(finding("gate/relation-endpoints", `关系 to "${toId}" 不存在`));
+        }
+        continue;
+      }
       out.push(
         finding(
           "gate/op",
           `不允许的操作 ${op.op} ${op.path}`,
-          "v0 门禁放行 add /annotations/- 与 replace /annotations/<id>/status；改语义必须走人工评审",
+          "v0 门禁放行 annotations + elements/relations 增删；改语义必须走人工评审",
         ),
       );
       continue;

@@ -281,7 +281,7 @@ entries:
       - packages/patch/src/index.ts
     s:
       - 只解析不写盘；路径必须是受支持的 annotations 操作
-    source_sha256: 6a6275fbc316d030ce05d7cdd6b583e5546f93decfd1e977f1c2c823d84191ee
+    source_sha256: 165bf46a541eff251a8d1eeaa1969c0be364ed143520ef423875da18efc9802c
   - file: packages/patch/src/gate.ts
     f: 补丁门禁：AI 信任边界（作者/状态/ai_hint/base_rev）
     r:
@@ -291,7 +291,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
-    source_sha256: f8f0375c5cb3f17d38002d995aafa0099e7c4bd74dcdb0a89e51a96e90889bfd
+    source_sha256: 41f5c760893433bda920b3bbe668e63777ef26923feceac811ea153c34114204
   - file: packages/patch/src/apply.ts
     f: 应用补丁：保留注释的文本插入/替换 + rev+1
     r:

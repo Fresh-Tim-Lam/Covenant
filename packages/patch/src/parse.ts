@@ -35,6 +35,8 @@ export const finding = (
 
 export const STATUS_PATH = /^\/annotations\/([^/]+)\/status$/;
 export const REMOVE_PATH = /^\/annotations\/([^/]+)$/;
+export const ELEMENT_PATH = /^\/elements\/([^/]+)$/;
+export const RELATION_PATH = /^\/relations\/([^/]+)$/;
 
 /** 把补丁操作分成：新增批注 / 状态流转 / 未知 */
 export interface AnnotationEdit {
@@ -47,16 +49,42 @@ export function classifyOps(ops: PatchOp[]): {
   statuses: StatusOp[];
   removes: string[];
   edits: AnnotationEdit[];
+  elementAdds: PatchOp[];
+  elementRemoves: string[];
+  relationAdds: PatchOp[];
+  relationRemoves: string[];
   unknown: PatchOp[];
 } {
   const adds: PatchOp[] = [];
   const statuses: StatusOp[] = [];
   const removes: string[] = [];
   const edits: AnnotationEdit[] = [];
+  const elementAdds: PatchOp[] = [];
+  const elementRemoves: string[] = [];
+  const relationAdds: PatchOp[] = [];
+  const relationRemoves: string[] = [];
   const unknown: PatchOp[] = [];
   for (const op of ops ?? []) {
     if (op.op === "add" && op.path === "/annotations/-") {
       adds.push(op);
+      continue;
+    }
+    if (op.op === "add" && op.path === "/elements/-") {
+      elementAdds.push(op);
+      continue;
+    }
+    if (op.op === "add" && op.path === "/relations/-") {
+      relationAdds.push(op);
+      continue;
+    }
+    const em = ELEMENT_PATH.exec(op.path ?? "");
+    if (op.op === "remove" && em) {
+      elementRemoves.push(em[1]!);
+      continue;
+    }
+    const rm2 = RELATION_PATH.exec(op.path ?? "");
+    if (op.op === "remove" && rm2) {
+      relationRemoves.push(rm2[1]!);
       continue;
     }
     const m = STATUS_PATH.exec(op.path ?? "");
@@ -75,7 +103,7 @@ export function classifyOps(ops: PatchOp[]): {
     }
     unknown.push(op);
   }
-  return { adds, statuses, removes, edits, unknown };
+  return { adds, statuses, removes, edits, elementAdds, elementRemoves, relationAdds, relationRemoves, unknown };
 }
 
 export function parsePatch(text: string, file = "patch.json"): { patch?: Patch; findings: Finding[] } {

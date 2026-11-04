@@ -354,15 +354,16 @@ function statusPatch(id: string, status: string, baseRev = 3): Patch {
 }
 
 describe("批注状态流转", () => {
-  it("classifyOps 区分新增/流转/未知", () => {
+  it("classifyOps 区分新增/流转/元素删除", () => {
     const r = classifyOps([
       { op: "add", path: "/annotations/-", value: {} },
       { op: "replace", path: `/annotations/${EXISTING}/status`, value: "ack" },
-      { op: "remove", path: "/elements/0", value: {} },
+      { op: "remove", path: "/elements/e.old", value: {} },
     ]);
     expect(r.adds).toHaveLength(1);
     expect(r.statuses).toEqual([{ id: EXISTING, status: "ack" }]);
-    expect(r.unknown).toHaveLength(1);
+    expect(r.elementRemoves).toEqual(["e.old"]);
+    expect(r.unknown).toHaveLength(0);
   });
 
   it("open→ack：文本更新 status/updated，注释保留", () => {
