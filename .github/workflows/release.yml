@@ -19,6 +19,18 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # 版本单一事实源 = 根 package.json；tag 必须与之一致，否则拒绝发版
+      - name: Resolve + assert version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "tag=$GITHUB_REF_NAME package.json=$PKG_VERSION"
+          if [ "$VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag 版本 $VERSION 与 package.json $PKG_VERSION 不一致"
+            exit 1
+          fi
+
       - name: Install
         run: pnpm install --frozen-lockfile
 
@@ -31,14 +43,28 @@ jobs:
       - name: Package zip + checksum
         run: |
           cd dist
-          zip -r covenant-kit-0.1.0.zip covenant-kit-0.1.0
-          sha256sum covenant-kit-0.1.0.zip > covenant-kit-0.1.0.zip.sha256
+          test -d "covenant-kit-${VERSION}" || { echo "::error::未找到 dist/covenant-kit-${VERSION}"; ls -la; exit 1; }
+          zip -r "covenant-kit-${VERSION}.zip" "covenant-kit-${VERSION}"
+          sha256sum "covenant-kit-${VERSION}.zip" > "covenant-kit-${VERSION}.zip.sha256"
+          cat "covenant-kit-${VERSION}.zip.sha256"
+
+      # 发布说明：docs/releases/<tag>.md 存在则用；否则生成最小说明（不再因缺文件失败）
+      - name: Release notes
+        run: |
+          if [ -f "docs/releases/${GITHUB_REF_NAME}.md" ]; then
+            cp "docs/releases/${GITHUB_REF_NAME}.md" RELEASE_BODY.md
+            echo "使用 docs/releases/${GITHUB_REF_NAME}.md"
+          else
+            printf 'Covenant %s\n\n交付物：`covenant-kit-%s.zip`（含 viewer/bin/schema/templates）。\n' \
+              "$GITHUB_REF_NAME" "$VERSION" > RELEASE_BODY.md
+            echo "::warning::未找到 docs/releases/${GITHUB_REF_NAME}.md，已生成最小说明"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: docs/releases/${{ github.ref_name }}.md
+          body_path: RELEASE_BODY.md
           files: |
-            dist/covenant-kit-0.1.0.zip
-            dist/covenant-kit-0.1.0.zip.sha256
+            dist/covenant-kit-${{ env.VERSION }}.zip
+            dist/covenant-kit-${{ env.VERSION }}.zip.sha256
           fail_on_unmatched_files: true
