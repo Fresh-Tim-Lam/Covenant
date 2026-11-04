@@ -124,7 +124,7 @@ relations:
     impl_status: unknown
 
 annotations:
-  - id: a.01JAY1MPLSTATUS00000001
+  - id: a.01JAY2MPLSTATUS00000001
     target: { kind: element, id: e.fraud }
     type: risk
     severity: medium
