@@ -541,6 +541,11 @@ function badge(x: number, y: number, n: number): string {
   ].join("");
 }
 
+/** 用户核验通过的绿色 ✓ 徽章 */
+function verifiedBadge(x: number, y: number): string {
+  return `<g class="verified-badge" pointer-events="none"><circle cx="${round(x)}" cy="${round(y)}" r="8" fill="#16a34a" stroke="#fff" stroke-width="1.5"/><path d="M${round(x - 3.5)} ${round(y)} L${round(x - 1)} ${round(y + 2.8)} L${round(x + 3.5)} ${round(y - 2.5)}" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
 function frameBox(rects: Rect[]): Rect | null {
   if (rects.length === 0) return null;
   const pad = 18;
@@ -834,6 +839,7 @@ export function renderSvg(
       out.push(`</g>`);
       const jn = openAnnotations(doc, "element", el.id);
       if (jn > 0 && options.showBadges !== false) out.push(badge(r.x + r.w - 12, r.y + 12, jn));
+      if (el.props?.user_verified) out.push(verifiedBadge(r.x + r.w + 4, r.y));
       continue;
     }
 
@@ -907,6 +913,7 @@ export function renderSvg(
       }
     }
     out.push(`</g>`);
+    if (el.props?.user_verified) out.push(verifiedBadge(r.x + r.w + 4, r.y));
     const n = openAnnotations(doc, "element", el.id);
     if (n > 0 && options.showBadges !== false) out.push(badge(r.x + r.w - 12, r.y + 12, n));
   }

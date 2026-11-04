@@ -420,6 +420,14 @@ svg text{user-select:none}
 .insp-actions{display:flex;gap:6px;align-items:center}
 .copy-btn{font:inherit;font-size:11.5px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
 .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.verify-row{margin-top:8px}
+.verify-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 14px;border:1.5px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font:inherit;font-size:12.5px;color:#64748b;transition:all .15s}
+.verify-btn.on{background:#dcfce7;border-color:#16a34a;color:#16a34a;font-weight:600}
+.verify-btn:not(.on):hover{border-color:#16a34a;color:#16a34a}
+.verify-row{margin-top:8px}
+.verify-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 14px;border:1.5px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font:inherit;font-size:12.5px;color:#64748b;transition:all .15s}
+.verify-btn.on{background:#dcfce7;border-color:#16a34a;color:#16a34a;font-weight:600}
+.verify-btn:not(.on):hover{border-color:#16a34a;color:#16a34a}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);background:#0f172a;color:#fff;padding:7px 14px;border-radius:8px;font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:50}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .edit-box{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
@@ -503,9 +511,9 @@ const SCRIPT = `
   var hoverColorMemo = {};
 
   function normalize(v){
-    if (Array.isArray(v)) return { add: v, status: {}, deleted: [], edited: {} };
-    if (v && typeof v === "object") return { add: v.add || [], status: v.status || {}, deleted: v.deleted || [], edited: v.edited || {} };
-    return { add: [], status: {}, deleted: [], edited: {} };
+    if (Array.isArray(v)) return { add: v, status: {}, deleted: [], edited: {}, checked: {} };
+    if (v && typeof v === "object") return { add: v.add || [], status: v.status || {}, deleted: v.deleted || [], edited: v.edited || {}, checked: v.checked || {} };
+    return { add: [], status: {}, deleted: [], edited: {}, checked: {} };
   }
   function load(){
     try {
@@ -528,7 +536,7 @@ const SCRIPT = `
   }
   function currentEditOps(){ return editOpsFor(currentDoc()); }
   function localFor(id){
-    if (!local[id]) local[id] = { add: [], status: {}, deleted: [], edited: {} };
+    if (!local[id]) local[id] = { add: [], status: {}, deleted: [], edited: {}, checked: {} };
     return local[id];
   }
   function allAnns(doc){ return doc.annotations.concat(localFor(doc.docId).add); }
@@ -543,7 +551,43 @@ const SCRIPT = `
   }
   function visibleAnns(doc){ var l = localFor(doc.docId); return doc.annotations.filter(function(a){ return l.deleted.indexOf(a.id) < 0; }).map(function(a){ return effAnn(doc, a); }).concat(l.add.map(function(a){ return effAnn(doc, a); })); }
   function effStatus(doc, a){ var ov = localFor(doc.docId).status[a.id]; return ov || a.status; }
-  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length + Object.keys(l.edited).length; }
+  function refreshCheckedBadges(doc){
+    var svg = document.querySelector("#stage svg, main svg");
+    if (!svg) return;
+    svg.querySelectorAll(".verified-badge").forEach(function(b){ b.remove(); });
+    var checked = localFor(doc.docId).checked;
+    for (var id in checked) {
+      if (!Object.prototype.hasOwnProperty.call(checked, id)) continue;
+      var el = svg.querySelector('[data-id="' + id + '"]');
+      if (!el) continue;
+      var bb = el.getBBox ? el.getBBox() : { x: 0, y: 0, width: 120, height: 40 };
+      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "verified-badge");
+      var cx = bb.x + bb.width + 4, cy = bb.y - 4;
+      g.innerHTML = '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="#16a34a" stroke="#fff" stroke-width="1.5"/><path d="M' + (cx-3.5) + ' ' + cy + ' L' + (cx-1) + ' ' + (cy+2.8) + ' L' + (cx+3.5) + ' ' + (cy-2.5) + '" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+      g.setAttribute("pointer-events", "none");
+      svg.appendChild(g);
+    }
+  }
+  function refreshCheckedBadges(doc){
+    var svg = document.querySelector("#stage svg, main svg");
+    if (!svg) return;
+    svg.querySelectorAll(".verified-badge").forEach(function(b){ b.remove(); });
+    var checked = localFor(doc.docId).checked;
+    for (var id in checked) {
+      if (!Object.prototype.hasOwnProperty.call(checked, id)) continue;
+      var el = svg.querySelector('[data-id="' + id + '"]');
+      if (!el) continue;
+      var bb = el.getBBox ? el.getBBox() : { x: 0, y: 0, width: 120, height: 40 };
+      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "verified-badge");
+      var cx = bb.x + bb.width + 4, cy = bb.y - 4;
+      g.innerHTML = '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="#16a34a" stroke="#fff" stroke-width="1.5"/><path d="M' + (cx-3.5) + ' ' + cy + ' L' + (cx-1) + ' ' + (cy+2.8) + ' L' + (cx+3.5) + ' ' + (cy-2.5) + '" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+      g.setAttribute("pointer-events", "none");
+      svg.appendChild(g);
+    }
+  }
+  function pendingCount(doc){ var l = localFor(doc.docId); return l.add.length + Object.keys(l.status).length + l.deleted.length + Object.keys(l.checked).length + Object.keys(l.checked).length + Object.keys(l.edited).length; }
 
   function esc(s){
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -1255,6 +1299,8 @@ const SCRIPT = `
       (w.segment != null ? ' · 段 ' + (w.segment + 1) + '/' + segCount(doc, id) : '');
     var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + headHint + '</span><span class="insp-actions"><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
     w.el.innerHTML = head + '<div class="insp-body">' + html + '</div>';
+    refreshCheckedBadges(doc);
+    refreshCheckedBadges(doc);
     w.el.hidden = false;
     if (w.el !== primaryEl) stripIds(w.el);
     bindWin(w);
@@ -1387,6 +1433,36 @@ const SCRIPT = `
       if (applyBtn) applyBtn.addEventListener("click", function(){ applyEditUi(kind, id, w); });
     }
     // 批注内联编辑态不渲染"新增批注"表单 → f-submit 可能不存在，必须判空
+    var verifyBtns = el.querySelectorAll(".verify-btn");
+    for (var vi = 0; vi < verifyBtns.length; vi++){
+      (function(vb){
+        vb.addEventListener("click", function(ev){
+          ev.stopPropagation();
+          var vid = vb.getAttribute("data-id"), vkind = vb.getAttribute("data-kind");
+          var ll = localFor(doc.docId);
+          if (ll.checked[vid]) { delete ll.checked[vid]; } else { ll.checked[vid] = true; }
+          save();
+          vb.classList.toggle("on", !!ll.checked[vid]);
+          vb.textContent = ll.checked[vid] ? "✓ 已核验" : "✓ 核验通过";
+          refreshCheckedBadges(doc);
+        });
+      })(verifyBtns[vi]);
+    }
+    var verifyBtns = el.querySelectorAll(".verify-btn");
+    for (var vi = 0; vi < verifyBtns.length; vi++){
+      (function(vb){
+        vb.addEventListener("click", function(ev){
+          ev.stopPropagation();
+          var vid = vb.getAttribute("data-id"), vkind = vb.getAttribute("data-kind");
+          var ll = localFor(doc.docId);
+          if (ll.checked[vid]) { delete ll.checked[vid]; } else { ll.checked[vid] = true; }
+          save();
+          vb.classList.toggle("on", !!ll.checked[vid]);
+          vb.textContent = ll.checked[vid] ? "✓ 已核验" : "✓ 核验通过";
+          refreshCheckedBadges(doc);
+        });
+      })(verifyBtns[vi]);
+    }
     var fSubmit = fieldOf(w, "f-submit");
     if (fSubmit) fSubmit.addEventListener("click", function(){ submit(w); });
     var acts = el.querySelectorAll(".acts button");
@@ -1470,7 +1546,14 @@ const SCRIPT = `
       ops.push({ op: "remove", path: "/annotations/" + l.deleted[d2], value: null });
     }
     if (!ops.length) return null;
-    var patch = { covenant: "0.1", doc: doc.docId, base_rev: doc.rev, intent: "人工审查（HTML 导出：新增批注 + 状态流转 + 编辑批注 + 删除批注）", ops: ops };
+    for (var cid in l.checked) {
+      if (!Object.prototype.hasOwnProperty.call(l.checked, cid)) continue;
+      var cel = byId(doc.elements, cid);
+      if (!cel) continue;
+      var newProps = Object.assign({}, cel.props || {}, { user_verified: true });
+      ops.push({ op: "replace", path: "/elements/" + cid, value: Object.assign({}, cel, { props: newProps }) });
+    }
+    var patch = { covenant: "0.1", doc: doc.docId, base_rev: doc.rev, intent: "人工审查（HTML 导出：新增批注 + 状态流转 + 编辑批注 + 删除批注 + 元素核验）", ops: ops };
     return patch;
   }
 
