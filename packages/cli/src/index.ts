@@ -17,7 +17,6 @@ import { renderHtml, renderSvg } from "@covenant/render";
 import type { DocView } from "@covenant/render";
 import { startServer } from "./serve";
 import { runDoctor } from "./doctor";
-import { cmdFmt } from "./fmt";
 
 const VERSION = "0.1.0";
 
@@ -50,8 +49,7 @@ function usage(): string {
     "  covenant adr [dir] [--json]",
     "  covenant serve [dir] [--port 4173] [--host 127.0.0.1]",
     "  covenant edit <doc> <edits.json> [--out <file>] [--diff] [--accept] [--actor human:you]",
-    "  covenant fmt <file.cvn.yaml> [--check] [--json]",
-    "  covenant doctor [--json]",
+      "  covenant doctor [--json]",
     "",
     "退出码: 0 通过 / 1 有 error / 2 仅 warning 且 --strict / 3 工具失败 / 4 门禁自身异常",
   ].join("\n");
@@ -856,7 +854,6 @@ function main(): number {
   const positional: string[] = [];
   let strict = false;
   let json = false;
-  let checkOnly = false;
   let out: string | undefined;
   let by: string | undefined;
   let actor: string | undefined;
@@ -878,7 +875,6 @@ function main(): number {
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i]!;
     if (arg === "--strict") strict = true;
-    else if (arg === "--check") checkOnly = true;
     else if (arg === "--json") json = true;
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--write") writeIndexFlag = true;
@@ -927,8 +923,6 @@ function main(): number {
       return cmdEdit(positional, { actor, out, diff: editDiff, accept: editAccept });
     case "doctor":
       return cmdDoctor(json);
-    case "fmt":
-      return cmdFmt(positional, checkOnly);
     case "serve":
       void cmdServe(positional, { host: serveHost, port: servePort, edit: serveEdit, open: serveOpen }).then((code) => {
         if (code !== EXIT.OK) process.exit(code);
