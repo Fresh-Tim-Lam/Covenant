@@ -12,7 +12,7 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 6
+  rev: 7
   owners: [human:team]
   updated: 2026-11-03T22:20:00+08:00
   ai:
@@ -737,3 +737,20 @@ annotations:
     author: human:team
     created: 2026-11-03T00:00:00+08:00
     ai_hint: 不要基于未经浏览器验证的视觉结论做设计决策。
+  - id: "a.PVV1CY7G0K7HA2FE4GJVPDQ3CR"
+    target: {"kind":"element","id":"e.html"}
+    type: "risk"
+    severity: "medium"
+    title: "没看到打勾按钮；新增批注与编辑态交互冲突；钉到图上未改为右上角保存"
+    body: "没看到打勾的按钮给我交互，小窗的新增批注交互逻辑有问题，\"新增批注\"按钮在进入批注编辑页面后还是没有消失，而且\"钉到图上\"按钮没有改成编辑区域右上角的\"保存\"按钮"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-04T16:28:25+08:00"
+  - id: "a.AC5DP4NHHW7MWJ3N9C7YDWY3H1"
+    target: {"kind":"element","id":"e.html"}
+    type: "risk"
+    severity: "medium"
+    title: "Ã§Âªâ€”Ã¥ÂÂ£Ã§â€ºâ€˜Ã¥ÂÂ¬Ã¥â€°ÂÃ§Â«Â¯Ã¥â€ â„¢Ã¥â€ºÅ¾Ã¦â€°Â¹Ã¦Â³Â¨Ã¥Â¤Â±Ã¨Â´Â¥"
+    status: "open"
+    author: "human:you"
+    created: "2026-11-04T16:28:52+08:00"

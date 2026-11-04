@@ -1428,7 +1428,7 @@ const SCRIPT = `
     if (scopeSel) scopeSel.addEventListener("change", function(){ w.formScope = String(scopeSel.value); });
     var editBtns = el.querySelectorAll(".edit-ann");
     for (var ei = 0; ei < editBtns.length; ei++){
-      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = btn.getAttribute("data-id"); renderWin(w); }); })(editBtns[ei]);
+      (function(btn){ btn.addEventListener("click", function(ev){ ev.stopPropagation(); editingAnn = btn.getAttribute("data-id"); w.formOpen = false; renderWin(w); }); })(editBtns[ei]);
     }
     var saveBtns = el.querySelectorAll(".ann-save");
     for (var si2 = 0; si2 < saveBtns.length; si2++){
