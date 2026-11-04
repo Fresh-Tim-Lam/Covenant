@@ -444,10 +444,10 @@ svg text{user-select:none}
 #insp-guides line{stroke-width:1.5;stroke-dasharray:5 4;stroke-opacity:.85}
 .node.hl rect,.node.hl polygon,.node.hl ellipse,.edge.hl path{stroke:var(--hl)!important;stroke-width:2.5!important}
 .ann-form{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
-.ann-form-toggle{display:flex;align-items:center;gap:6px;width:100%;font:inherit;font-size:12.5px;font-weight:600;padding:6px 9px;border:1px dashed var(--line);border-radius:7px;background:#f8fafc;color:#334155;cursor:pointer;text-align:left}
+.ann-form-head{display:flex;align-items:center;justify-content:space-between;gap:8px}\n.ann-form-toggle{display:flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:4px 0;border:0;background:transparent;color:#334155;cursor:pointer;text-align:left;flex:1}
 .ann-form-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .ann-form-chev{font-size:11px;color:var(--muted);width:10px;display:inline-block}
-.ann-form-body{margin-top:8px}
+.ann-form-actions{display:flex;gap:6px;align-items:center}\n.f-submit-btn{font:inherit;font-size:12px;font-weight:600;padding:3px 12px;border:1px solid #2563eb;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap}\n.f-submit-btn:hover{background:#1d4ed8}\n.f-cancel-btn{font:inherit;font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;color:#64748b;white-space:nowrap}\n.f-cancel-btn:hover{background:#f1f5f9}\n.ann-form-body{margin-top:8px}
 .ann-form-body[hidden]{display:none}
 /* 运行时多段热区：永远透明、不吃 hover/彩色高亮的路径样式，只负责命中 */
 .edge path.seg-hit{stroke:transparent!important;stroke-width:10px!important;stroke-opacity:1!important}
@@ -1297,9 +1297,14 @@ var draggingWin = false;
           '<option value="edge"' + (w.formScope === "edge" ? " selected" : "") + '>整条边</option>' +
           '</select></div></div>';
       }
-      // 「新增批注」默认折叠：只留标题行，点击展开/再点收起（不重建 DOM，展开时保留已输入内容）
+      // 「新增批注」折叠：标题行右侧 [保存] [取消]（展开时可见），底部无提交按钮
       html += '<div class="form ann-form">' +
+        '<div class="ann-form-head">' +
         '<button type="button" class="ann-form-toggle" aria-expanded="' + (w.formOpen ? "true" : "false") + '"><span class="ann-form-chev">' + (w.formOpen ? "▾" : "▸") + '</span>＋ 新增批注</button>' +
+        '<div class="ann-form-actions"' + (w.formOpen ? "" : " hidden") + '>' +
+        '<button id="f-submit" data-field="f-submit" class="f-submit-btn">保存</button>' +
+        '<button type="button" class="f-cancel-btn" data-field="f-cancel">取消</button>' +
+        '</div></div>' +
         '<div class="ann-form-body"' + (w.formOpen ? "" : " hidden") + '>' +
         scopeRow +
         '<div class="row"><div><label>类型</label><select id="f-type" data-field="f-type"><option>risk</option><option>question</option><option>todo</option><option>defect</option><option>smell</option><option>decision</option></select></div>' +
@@ -1307,7 +1312,7 @@ var draggingWin = false;
         '<label>标题（一句话结论）</label><input id="f-title" data-field="f-title" placeholder="例如：这里缺少降级路径">' +
         '<label>正文（证据与背景）</label><textarea id="f-body" data-field="f-body"></textarea>' +
         '<label>给 AI 的指令 ai_hint（祈使句，可留空）</label><textarea id="f-hint" data-field="f-hint" placeholder="例如：优先改为异步；禁止两阶段提交"></textarea>' +
-        '<button id="f-submit" data-field="f-submit" style="position:sticky;bottom:0;width:100%;background:#2563eb;color:#fff;font-weight:600;border-color:#2563eb;z-index:1">钉到图上</button>' +
+        '</div></div>';
         '</div></div>';
     }
     var headHint = (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) +
@@ -1370,10 +1375,23 @@ var draggingWin = false;
       w.formOpen = !w.formOpen;
       var body = el.querySelector(".ann-form-body");
       if (body) body.hidden = !w.formOpen;
+      var actions = el.querySelector(".ann-form-actions");
+      if (actions) actions.hidden = !w.formOpen;
       toggle.setAttribute("aria-expanded", w.formOpen ? "true" : "false");
       var chev = toggle.querySelector(".ann-form-chev");
       if (chev) chev.textContent = w.formOpen ? "▾" : "▸";
       updateGuides();
+    });
+    var cancelBtn = el.querySelector(".f-cancel-btn");
+    if (cancelBtn) cancelBtn.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      w.formOpen = false;
+      var body = el.querySelector(".ann-form-body");
+      if (body) body.hidden = true;
+      var actions = el.querySelector(".ann-form-actions");
+      if (actions) actions.hidden = true;
+      var tg = el.querySelector(".ann-form-toggle");
+      if (tg) { tg.setAttribute("aria-expanded", "false"); var ch = tg.querySelector(".ann-form-chev"); if (ch) ch.textContent = "▸"; }
     });
     if (head) {
       head.addEventListener("pointerdown", function(ev){
