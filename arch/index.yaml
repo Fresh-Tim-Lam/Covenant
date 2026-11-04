@@ -129,7 +129,7 @@ entries:
     a: []
     s:
       - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
-    source_sha256: e8b3d0ffe4f453e6d3e10a9b8a5fcf035b04d1225bc5f9a2f01178feaf0c2b78
+    source_sha256: c0c4124345947e1d08028db0e51382c5742704a337a25eb70b2ecba034fc05e9
   - file: scripts/svg-to-png.mjs
     f: 开发期视觉核对：SVG→PNG
     r: []
