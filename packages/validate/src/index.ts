@@ -150,6 +150,32 @@ export function validateL2(doc: CovenantDoc, file: string): Finding[] {
     }
   }
 
+  // 2.2b impl_status 一致性：显式 implemented 的关系不应挂在 planned/not_connected 元素上
+  // 只对"显式声明 implemented"的关系告警；缺省 implemented 由弱端继承规则自动降级，不告警。
+  const weakStatuses = new Set(["planned", "not_connected"]);
+  const elImplStatus = new Map(elements.map((e) => [e.id, e.impl_status ?? "implemented"]));
+  for (const rel of relations) {
+    if (rel.impl_status !== "implemented") continue;
+    for (const [side, ref] of [
+      ["from", rel.from],
+      ["to", rel.to],
+    ] as const) {
+      const id = baseEndpoint(String(ref ?? ""));
+      const status = elImplStatus.get(id) ?? "implemented";
+      if (weakStatuses.has(status)) {
+        findings.push({
+          code: "impl-status/incoming",
+          level: "L2",
+          severity: "warning",
+          message: `${rel.id} 声明 implemented，但 ${side} 端 ${id} 为 ${status}`,
+          elementId: rel.id,
+          path: file,
+          fixHint: "把关系改为 planned/partial，或更新该元素的 impl_status",
+        });
+      }
+    }
+  }
+
   // 2.3 frame 成员
   for (const frame of frames) {
     for (const m of frame.members ?? []) {

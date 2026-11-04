@@ -105,6 +105,21 @@
         "name": { "type": "string" }
       }
     },
+    "implStatus": {
+      "enum": ["implemented", "partial", "planned", "not_connected", "unknown"],
+      "description": "实现状态；缺省 = implemented。partial/planned 用不同虚线，not_connected 灰虚线，unknown 琥珀点线"
+    },
+    "evidenceItem": {
+      "type": "object",
+      "required": ["kind", "path"],
+      "additionalProperties": false,
+      "patternProperties": { "^x-": true },
+      "properties": {
+        "kind": { "enum": ["doc", "code"] },
+        "path": { "type": "string", "minLength": 1, "description": "仓库相对 POSIX 路径（不校验存在性）" },
+        "lines": { "type": "string", "pattern": "^[0-9]+(-[0-9]+)?$", "description": "可选行号/行号区间，如 12 或 12-34" }
+      }
+    },
     "element": {
       "type": "object",
       "required": ["id", "kind", "name", "summary"],
@@ -120,6 +135,8 @@
         "props": { "type": "object", "additionalProperties": true },
         "constraints": { "type": "array", "items": { "$ref": "#/$defs/elementConstraint" } },
         "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "impl_status": { "$ref": "#/$defs/implStatus" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceItem" } },
         "parent": { "type": "string", "minLength": 1 },
         "ports": { "type": "array", "items": { "$ref": "#/$defs/port" } }
       }
@@ -138,6 +155,8 @@
         "props": { "type": "object", "additionalProperties": true },
         "constraints": { "type": "array", "items": { "$ref": "#/$defs/elementConstraint" } },
         "routing": { "enum": ["orthogonal", "bezier", "straight"] },
+        "impl_status": { "$ref": "#/$defs/implStatus" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceItem" } },
         "waypoints": {
           "type": "array",
           "items": {

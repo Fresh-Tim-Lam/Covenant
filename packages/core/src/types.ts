@@ -35,6 +35,16 @@ export interface Port {
   name?: string;
 }
 
+/** 实现状态：缺省 = implemented（见 format-spec §5.7） */
+export type ImplStatus = "implemented" | "partial" | "planned" | "not_connected" | "unknown";
+
+/** 结构化证据：不校验路径存在性；path 为仓库相对 POSIX 路径 */
+export interface Evidence {
+  kind: "doc" | "code";
+  path: string;
+  lines?: string;
+}
+
 export interface ElementDef {
   id: string;
   kind: string;
@@ -47,6 +57,8 @@ export interface ElementDef {
   links?: Link[];
   parent?: string;
   ports?: Port[];
+  impl_status?: ImplStatus;
+  evidence?: Evidence[];
 }
 
 export interface RelationDef {
@@ -59,6 +71,8 @@ export interface RelationDef {
   constraints?: ElementConstraint[];
   routing?: "orthogonal" | "bezier" | "straight";
   waypoints?: number[][];
+  impl_status?: ImplStatus;
+  evidence?: Evidence[];
 }
 
 export interface FrameDef {

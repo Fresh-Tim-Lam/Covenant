@@ -197,6 +197,8 @@ constraints:                        # 机器可校验的文档级规则（封闭
 | `name` | ✓ | 人读名称 |
 | `summary` | ✓ | 一句话职责（AI 主入口） |
 | `tech` / `props` | | 技术栈与剖面自定义属性（受剖面 schema 约束） |
+| `impl_status` | | 实现状态：`implemented`（缺省）/ `partial` / `planned` / `not_connected` / `unknown`，见 §5.7 |
+| `evidence[]` | | 结构化证据 `{kind: doc|code, path, lines?}`，见 §5.7 |
 | `constraints[]` | | 元素级不变量（`id/text/kind/ref`） |
 | `links[]` | | 外部锚点：`code` / `adr` / `issue` / `doc` / `url` / `metric` |
 | `tags[]` | | 过滤与规则用 |
@@ -213,6 +215,8 @@ constraints:                        # 机器可校验的文档级规则（封闭
 | `from` / `to` | ✓ | 元素 id，或 `e.x:port.y` 形式 |
 | `summary` | ✓ | 这条关系做什么（AI 主入口） |
 | `props` | | `protocol / sync / retries / payload ...` |
+| `impl_status` | | 实现状态（缺省：继承弱端；两端都 implemented 时为 implemented），见 §5.7 |
+| `evidence[]` | | 结构化证据 `{kind: doc|code, path, lines?}`，见 §5.7 |
 | `constraints[]` | | 关系级不变量 |
 | `routing` | | `orthogonal | bezier | straight`（视觉层偏好） |
 | `waypoints` | | 人工折点（唯一进入语义层的路径数据） |
@@ -241,6 +245,39 @@ constraints:                        # 机器可校验的文档级规则（封闭
 | `present` | 记法、主题、批注过滤、编号开关、节点风格（`node_style`） |
 | `layout.pins` / 路由 | 端口按侧分配（每边独立接入点、最小间距 16px、不足时扩框）；pins 人工坐标优先 |
 | `canvas` | 可选的自由层：`ink`（笔迹引用）、`embeds`（图片/嵌入）、`viewport` |
+
+### 5.7 实现状态与证据（v0.2 增补）
+
+**`impl_status`（element / relation 均可选，缺省 = `implemented`）**
+
+| 状态 | 含义 | 元素渲染 | 边渲染 |
+|---|---|---|---|
+| `implemented` | 已实现（缺省） | 现状（kind 决定的实线/虚线不变） | 现状（实线） |
+| `partial` | 部分实现 | `stroke-dasharray:7 4`（保留原描边色） | `stroke-dasharray:7 4` |
+| `planned` | 计划中 | `stroke-dasharray:2 3` + `opacity:.72` | `stroke-dasharray:2 3` |
+| `not_connected` | 已存在但未接入 | `stroke:#8b98a5; stroke-dasharray:5 5; opacity:.8` | 同左 |
+| `unknown` | 未知 | `stroke:#9a6a00; stroke-dasharray:2 3` | 同左 |
+
+规则：
+- **边继承弱端**：关系省略 `impl_status` 时取两端元素有效状态中"较弱"者；强度序 `implemented(0) < partial(1) < planned(2) < not_connected(3) < unknown(4)`（取 max）。关系显式声明时以显式为准。
+- **覆盖 kind 虚线**：`impl_status` 非 `implemented` 时覆盖既有 datastore/external 的 kind 虚线（及序列图 reply 虚线）。
+- **箭头**：`unknown` 用琥珀箭头、`not_connected` 用灰箭头，其余用默认箭头。
+- **L2 warning**：关系显式 `implemented` 但任一端元素为 `planned`/`not_connected` → `impl-status/incoming`（warning，不阻断）。
+
+**`evidence[]`（element / relation 均可选，缺省 = `[]`）**
+
+```yaml
+evidence:
+  - { kind: code, path: packages/render/src/index.ts, lines: "713-800" }
+  - { kind: doc,  path: docs/design/format-spec-v0.md }
+```
+- `kind`: `doc | code`；`path`: **仓库相对 POSIX 路径**；`lines`: 可选 `12` 或 `12-34`。
+- **不校验路径存在性**（可选字段，允许先写证据后补文件）；不参与 L1–L3 的引用检查。
+- 不渲染进 SVG（避免图面噪声）；查看器小窗显示证据列表（点击复制路径）；`ai_hint` 可引用。
+- `covenant check` 输出 `evidence: X/Y elements, Z/W relations (docs: N)` 覆盖统计（JSON 模式含 `evidence` 字段）。
+- 缺省不输出任何新属性/键 → 老文档渲染与 HTML 逐字节不变。
+
+**兼容**：两个字段均为可选；缺省语义等价于旧行为。gate 当前只处理批注补丁，元素/关系字段的非法值由 L1 schema 拦截（`covenant edit` 同样经 checkDocument）；gate 在元素编辑协议开放时再接入同样的校验 helper。
 
 ---
 

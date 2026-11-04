@@ -104,17 +104,31 @@ function cmdCheck(args: string[], flags: { strict: boolean; json: boolean }): nu
   let errors = 0;
   let warnings = 0;
   const report: { file: string; findings: Finding[] }[] = [];
+  // evidence 覆盖统计（impl_status/evidence 是可选字段，不校验路径存在性）
+  const evidence = { elements: 0, elementTotal: 0, relations: 0, relationTotal: 0, docs: 0 };
 
   for (const file of files) {
     const display = relative(process.cwd(), file) || file;
-    let findings: Finding[];
+    let loaded: { doc?: CovenantDoc; findings: Finding[] };
     try {
-      findings = loadDoc(file).findings;
+      loaded = loadDoc(file);
     } catch (e) {
       console.error(`读取失败 ${display}: ${(e as Error).message}`);
       return EXIT.TOOL_FAILURE;
     }
+    const findings = loaded.findings;
     report.push({ file: display, findings });
+    if (loaded.doc) {
+      const els = loaded.doc.elements ?? [];
+      const rels = loaded.doc.relations ?? [];
+      const elWithEvidence = els.filter((el) => (el.evidence ?? []).length > 0).length;
+      const relWithEvidence = rels.filter((rel) => (rel.evidence ?? []).length > 0).length;
+      evidence.elements += elWithEvidence;
+      evidence.elementTotal += els.length;
+      evidence.relations += relWithEvidence;
+      evidence.relationTotal += rels.length;
+      if (elWithEvidence + relWithEvidence > 0) evidence.docs += 1;
+    }
     for (const f of findings) {
       if (f.severity === "error") errors++;
       else if (f.severity === "warning") warnings++;
@@ -122,7 +136,9 @@ function cmdCheck(args: string[], flags: { strict: boolean; json: boolean }): nu
   }
 
   if (flags.json) {
-    console.log(JSON.stringify({ version: VERSION, scanned: files.length, errors, warnings, report }, null, 2));
+    console.log(
+      JSON.stringify({ version: VERSION, scanned: files.length, errors, warnings, evidence, report }, null, 2),
+    );
   } else {
     console.log(`covenant check v${VERSION}`);
     console.log(`scanned: ${files.length} file${files.length === 1 ? "" : "s"}`);
@@ -135,6 +151,9 @@ function cmdCheck(args: string[], flags: { strict: boolean; json: boolean }): nu
       for (const f of findings) console.log(renderFinding(f));
     }
     console.log(`result: ${errors} error${errors === 1 ? "" : "s"}, ${warnings} warning${warnings === 1 ? "" : "s"}`);
+    console.log(
+      `evidence: ${evidence.elements}/${evidence.elementTotal} elements, ${evidence.relations}/${evidence.relationTotal} relations (docs: ${evidence.docs})`,
+    );
   }
 
   if (errors > 0) return EXIT.ERROR;
