@@ -249,6 +249,15 @@ entries:
     s:
       - 门禁只读；缺 README/段落即失败；与 ADR-0003 绑定
     source_sha256: d6b16e1a08a13b14f198508a6244708f3f60c92b995c6ee16719645c9ab98405
+  - file: scripts/check-file-granularity.mjs
+    f: 文件粒度棘轮：新文件源码≤300行/测试≤400行，存量冻结只减不增，子文件夹须有 README
+    r:
+      - team/file-granularity.json
+    a:
+      - package.json
+    s:
+      - 只读检查，--init 才会写基线；接入 pnpm verify，任何行数增长即 FAIL
+    source_sha256: 0301dd0d2c7e94ba26f77241ff566778150bd265dc261763df02c666b39eb514
   - file: packages/cli/src/edit-flow.ts
     f: 编辑落盘共享流程：预览写新文件+diff / accept 备份+审计
     r:

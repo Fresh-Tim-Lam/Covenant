@@ -1,0 +1,22 @@
+{
+  "schema": "covenant-file-granularity/v1",
+  "max_new_file_lines": 300,
+  "max_new_test_lines": 400,
+  "folder_readme_required": true,
+  "grandfathered": {
+    "packages/cli/src/index.ts": 1034,
+    "packages/cli/src/serve.ts": 351,
+    "packages/layout/src/index.ts": 924,
+    "packages/layout/src/layout.test.ts": 533,
+    "packages/mcp/src/index.ts": 421,
+    "packages/patch/src/gate.ts": 410,
+    "packages/patch/src/patch.test.ts": 612,
+    "packages/profile/src/index.ts": 921,
+    "packages/render/src/html.dom.test.ts": 1697,
+    "packages/render/src/html.ts": 2114,
+    "packages/render/src/index.ts": 923,
+    "packages/render/src/render.test.ts": 732,
+    "packages/validate/src/index.ts": 515,
+    "packages/validate/src/validate.test.ts": 592
+  }
+}

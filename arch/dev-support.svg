@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1236" height="746" viewBox="0 0 1236 746" role="img" aria-labelledby="cvn-title cvn-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<title id="cvn-title">开发支撑服务</title>
+<desc id="cvn-desc">说明仓库自身的组件边界、依赖方向与已知缺口，作为人/AI 的共同基线。</desc>
+<defs><marker id="cvn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+<rect x="0" y="0" width="1236" height="746" fill="#ffffff"/>
+<g class="edge" data-id="r.human-gate"><path d="M218 337 L238 337 L278.44 337 L278.44 601 L338 601 L358 601" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 337 L238 337 L278.44 337 L278.44 601 L338 601 L358 601" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-gate"><path d="M218 481 L238 481 L248.44 481 L248.44 617 L338 617 L358 617" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 481 L238 481 L248.44 481 L248.44 617 L338 617 L358 617" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.gate-audit"><path d="M548 593 L568 593 L598.44 593 L598.44 393 L668 393 L688 393" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 593 L568 593 L598.44 593 L598.44 393 L668 393 L688 393" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.gate-granularity"><path d="M548 609 L568 609 L618.44 609 L618.44 537 L668 537 L688 537" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 609 L568 609 L618.44 609 L618.44 537 L668 537 L688 537" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.gate-golden"><path d="M548 625 L568 625 L608.44 625 L608.44 681 L668 681 L688 681" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 625 L568 625 L608.44 625 L608.44 681 L668 681 L688 681" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.audit-dispatch"><path d="M878 393 L898 393 L901.33 393 L901.33 465 L998 465 L1018 465" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M878 393 L898 393 L901.33 393 L901.33 465 L998 465 L1018 465" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.granularity-dispatch"><path d="M878 537 L898 537 L951.33 537 L951.33 481 L998 481 L1018 481" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M878 537 L898 537 L951.33 537 L951.33 481 L998 481 L1018 481" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.editapi-docs"><path d="M878 97 L898 97 L941.33 97 L941.33 305 L998 305 L1018 305" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M878 97 L898 97 L941.33 97 L941.33 305 L998 305 L1018 305" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.editapi-dispatch"><path d="M878 113 L898 113 L931.33 113 L931.33 449 L998 449 L1018 449" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M878 113 L898 113 L931.33 113 L931.33 449 L998 449 L1018 449" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.viewer-editapi"><path d="M548 177 L568 177 L638.44 177 L638.44 105 L668 105 L688 105" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 177 L568 177 L638.44 177 L638.44 105 L668 105 L688 105" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.retrieval-index"><path d="M548 465 L568 465 L628.44 465 L628.44 257 L668 257 L688 257" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 465 L568 465 L628.44 465 L628.44 257 L668 257 L688 257" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-retrieval"><path d="M218 465 L238 465 L258.44 465 L338 465 L358 465" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 465 L238 465 L258.44 465 L338 465 L358 465" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.human-cli"><path d="M218 321 L238 321 L268.44 321 L268.44 313 L338 313 L358 313" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 321 L238 321 L268.44 321 L268.44 313 L338 313 L358 313" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.agent-cli"><path d="M218 449 L238 449 L238.44 449 L238.44 329 L338 329 L358 329" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 449 L238 449 L238.44 449 L238.44 329 L338 329 L358 329" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.human-viewer"><path d="M218 305 L238 305 L288.44 305 L288.44 177 L338 177 L358 177" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M218 305 L238 305 L288.44 305 L288.44 177 L338 177 L358 177" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-docs-read"><path d="M548 321 L568.44 321 L568.44 10 L911.33 10 L911.33 321 L1018 321" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 321 L568.44 321 L568.44 10 L911.33 10 L911.33 321 L1018 321" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-docs-write"><path d="M548 337 L578.44 337 L578.44 20 L921.33 20 L921.33 337 L1018 337" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 337 L578.44 337 L578.44 20 L921.33 20 L921.33 337 L1018 337" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<g class="edge" data-id="r.cli-index-read"><path d="M548 305 L568 305 L588.44 305 L588.44 241 L668 241 L688 241" fill="none" stroke="transparent" stroke-width="10" pointer-events="stroke"/><path d="M548 305 L568 305 L588.44 305 L588.44 241 L668 241 L688 241" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#cvn-arrow)"/></g>
+<circle class="crossing crossing-hollow" cx="598.44" cy="465" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="628.44" cy="393" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="278.44" cy="465" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="568.44" cy="177" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="911.33" cy="97" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="911.33" cy="113" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="931.33" cy="321" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="578.44" cy="177" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="911.33" cy="20" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="921.33" cy="97" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="921.33" cy="113" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="921.33" cy="321" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="931.33" cy="337" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<circle class="crossing crossing-hollow" cx="578.44" cy="305" r="3.2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" pointer-events="none"/>
+<text class="edge-label" x="258.32" y="339.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="240.45" y="483.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="577.53" y="595.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="587.76" y="611.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="582.25" y="627.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="898.69" y="395.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<text class="edge-label" x="919.49" y="539.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<text class="edge-label" x="961.94" y="307.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
+<text class="edge-label" x="931.33" y="358.93" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
+<text class="edge-label" x="601.13" y="179.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="575.92" y="467.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<text class="edge-label" x="243.6" y="467.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="247.53" y="323.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="238.09" y="451.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="257.76" y="307.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">calls</text>
+<text class="edge-label" x="702.16" y="12.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<text class="edge-label" x="782.46" y="22.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">writes</text>
+<text class="edge-label" x="610.23" y="243.5" text-anchor="middle" font-size="10.5" fill="#64748b" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" paint-order="stroke">reads</text>
+<g class="node kind-person" data-id="e.human">
+<rect x="28" y="284" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="308" font-size="13" font-weight="650" fill="#0f172a">人工架构师</text>
+<text x="40" y="344" font-size="10.5" fill="#94a3b8">在 HTML 图上标注问题、审批 br…</text>
+</g>
+<g class="node kind-person" data-id="e.agent">
+<rect x="28" y="428" width="190" height="74" rx="8" fill="#f0f9ff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="40" y="452" font-size="13" font-weight="650" fill="#0f172a">AI Agent</text>
+<text x="40" y="470" font-size="11" fill="#64748b">MCP / CLI</text>
+<text x="40" y="488" font-size="10.5" fill="#94a3b8">读语义副本、提交补丁（受门禁约…</text>
+</g>
+<g class="node kind-container" data-id="e.cli">
+<rect x="358" y="284" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="370" y="308" font-size="13" font-weight="650" fill="#0f172a">covenant CLI</text>
+<text x="370" y="326" font-size="11" fill="#64748b">TypeScript + tsx</text>
+<text x="370" y="344" font-size="10.5" fill="#94a3b8">命令入口：check/render/build…</text>
+</g>
+<g class="node kind-container" data-id="e.viewer">
+<rect x="358" y="140" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="370" y="164" font-size="13" font-weight="650" fill="#0f172a">浏览器查看器</text>
+<text x="370" y="182" font-size="11" fill="#64748b">内联 TS + SVG</text>
+<text x="370" y="200" font-size="10.5" fill="#94a3b8">内联于 dist HTML/bundle 的查…</text>
+</g>
+<g class="node kind-datastore" data-id="e.docs">
+<rect x="1018" y="284" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1030" y="308" font-size="13" font-weight="650" fill="#0f172a">.cvn.yaml 契约文件</text>
+<text x="1030" y="326" font-size="11" fill="#64748b">YAML</text>
+<text x="1030" y="344" font-size="10.5" fill="#94a3b8">唯一权威事实源：项目内 .cvn.y…</text>
+</g>
+<g class="node kind-datastore" data-id="e.index">
+<rect x="688" y="212" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="700" y="236" font-size="13" font-weight="650" fill="#0f172a">FRAS 索引</text>
+<text x="700" y="254" font-size="11" fill="#64748b">YAML</text>
+<text x="700" y="272" font-size="10.5" fill="#94a3b8">arch/index.yaml，记录源码文件…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-gate">
+<rect x="358" y="572" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="370" y="596" font-size="13" font-weight="650" fill="#0f172a">门禁编排（verify）</text>
+<text x="370" y="614" font-size="11" fill="#64748b">pnpm scripts</text>
+<text x="370" y="632" font-size="10.5" fill="#94a3b8">pnpm verify 串起 check→index…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-audit">
+<rect x="688" y="356" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="700" y="380" font-size="13" font-weight="650" fill="#0f172a">派发审计（agent:audit）</text>
+<text x="700" y="398" font-size="11" fill="#64748b">node script</text>
+<text x="700" y="416" font-size="10.5" fill="#94a3b8">A1–A8 检查派发记录字段/幽灵 o…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-granularity">
+<rect x="688" y="500" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="700" y="524" font-size="13" font-weight="650" fill="#0f172a">文件粒度棘轮</text>
+<text x="700" y="542" font-size="11" fill="#64748b">node script</text>
+<text x="700" y="560" font-size="10.5" fill="#94a3b8">新文件 ≤300 行、存量冻结只减…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-golden">
+<rect x="688" y="644" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="700" y="668" font-size="13" font-weight="650" fill="#0f172a">黄金与清洁室回归</text>
+<text x="700" y="686" font-size="11" fill="#64748b">node script</text>
+<text x="700" y="704" font-size="10.5" fill="#94a3b8">golden 快照比对与 clean-room…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-edit-api">
+<rect x="688" y="68" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="700" y="92" font-size="13" font-weight="650" fill="#0f172a">编辑服务 API</text>
+<text x="700" y="110" font-size="11" fill="#64748b">node http</text>
+<text x="700" y="128" font-size="10.5" fill="#94a3b8">/api/edit 预览 diff、/api/pa…</text>
+</g>
+<g class="node kind-container" data-id="e.dev-retrieval">
+<rect x="358" y="428" width="190" height="74" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="370" y="452" font-size="13" font-weight="650" fill="#0f172a">认知检索层</text>
+<text x="370" y="470" font-size="11" fill="#64748b">MCP / FRAS</text>
+<text x="370" y="488" font-size="10.5" fill="#94a3b8">仓内 FRAS 索引 + MCP 工具为法…</text>
+</g>
+<g class="node kind-datastore" data-id="e.dev-dispatch">
+<rect x="1018" y="428" width="190" height="74" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 3"/>
+<text x="1030" y="452" font-size="13" font-weight="650" fill="#0f172a">派发与基线台账</text>
+<text x="1030" y="470" font-size="11" fill="#64748b">JSONL / JSON / MD</text>
+<text x="1030" y="488" font-size="10.5" fill="#94a3b8">dispatch-log.jsonl（append-…</text>
+</g>
+</svg>

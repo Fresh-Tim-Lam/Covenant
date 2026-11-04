@@ -24,6 +24,7 @@
     "golden": "node scripts/update-golden.mjs",
     "modules": "node scripts/check-module-docs.mjs",
     "agent:audit": "node scripts/agent/team_audit.mjs",
+    "granularity": "node scripts/check-file-granularity.mjs",
     "agent:audit:selftest": "node scripts/agent/selftest-audit.mjs",
     "cleanroom": "node scripts/clean-room-verify.mjs",
     "serve": "tsx packages/cli/src/index.ts serve",
@@ -33,7 +34,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify": "pnpm check arch examples && pnpm index && pnpm adr && pnpm modules && pnpm test"
+    "verify": "pnpm check arch examples && pnpm index && pnpm adr && pnpm modules && pnpm granularity && pnpm test"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

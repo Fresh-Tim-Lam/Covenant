@@ -12,7 +12,7 @@ meta:
     - 函数级调用细节（由代码与 FRAS 索引承载）
   audience: [human, ai]
   status: draft
-  rev: 7
+  rev: 8
   owners: [human:team]
   updated: 2026-11-03T22:20:00+08:00
   ai:
@@ -257,7 +257,106 @@ elements:
     name: GitHub（Releases / Issues）
     summary: 公开分发与反馈通道：Release 上传 kit 资产、Issue 收集需求（外部不可信输入）
 
+  # ——— 开发支撑服务（开发过程本身的载体，不属于产品运行时） ———
+  - id: e.dev-gate
+    kind: container
+    name: 门禁编排（verify）
+    summary: pnpm verify 串起 check→index→adr→modules→granularity→test，任一段失败即阻断提交
+    tech: pnpm scripts
+  - id: e.dev-audit
+    kind: container
+    name: 派发审计（agent:audit）
+    summary: A1–A8 检查派发记录字段/幽灵 owner/版本一致性；基线区分存量债务与新违规，配 selftest 防审计被改松
+    tech: node script
+  - id: e.dev-granularity
+    kind: container
+    name: 文件粒度棘轮
+    summary: 新文件 ≤300 行、存量冻结只减不增；子文件夹须有 README 承载高一级语义
+    tech: node script
+  - id: e.dev-golden
+    kind: container
+    name: 黄金与清洁室回归
+    summary: golden 快照比对与 clean-room 干净环境复跑，防「本地绿 CI 红」
+    tech: node script
+  - id: e.dev-edit-api
+    kind: container
+    name: 编辑服务 API
+    summary: /api/edit 预览 diff、/api/patch 写回 .cvn.yaml、/api/rev 返回当前 rev 供写回前 rebase
+    tech: node http
+  - id: e.dev-retrieval
+    kind: container
+    name: 认知检索层
+    summary: 仓内 FRAS 索引 + MCP 工具为法定检索；外部 AOCI 当前绑定 Memoria 仓库，Covenant 尚未接入
+    tech: MCP / FRAS
+  - id: e.dev-dispatch
+    kind: datastore
+    name: 派发与基线台账
+    summary: dispatch-log.jsonl（append-only）、audit-baseline.json、file-granularity.json、cross-workspace-log.md
+    tech: JSONL / JSON / MD
+    props: { storage_kind: file }
+
 relations:
+  - id: r.human-gate
+    kind: calls
+    from: e.human
+    to: e.dev-gate
+    summary: 提交前跑门禁
+  - id: r.agent-gate
+    kind: calls
+    from: e.agent
+    to: e.dev-gate
+    summary: 自检；判决仍以 Lead 亲跑为准（L2）
+  - id: r.gate-audit
+    kind: calls
+    from: e.dev-gate
+    to: e.dev-audit
+    summary: 派发审计作为独立检查接入
+  - id: r.gate-granularity
+    kind: calls
+    from: e.dev-gate
+    to: e.dev-granularity
+    summary: 粒度棘轮接入 verify
+  - id: r.gate-golden
+    kind: calls
+    from: e.dev-gate
+    to: e.dev-golden
+    summary: 输出格式改动时追加黄金回归
+  - id: r.audit-dispatch
+    kind: reads
+    from: e.dev-audit
+    to: e.dev-dispatch
+    summary: 读派发日志与基线，判定存量债务 / 新违规
+  - id: r.granularity-dispatch
+    kind: reads
+    from: e.dev-granularity
+    to: e.dev-dispatch
+    summary: 读冻结基线比对行数
+  - id: r.editapi-docs
+    kind: writes
+    from: e.dev-edit-api
+    to: e.docs
+    summary: 写回 .cvn.yaml（rev+1，写前自动备份）
+  - id: r.editapi-dispatch
+    kind: writes
+    from: e.dev-edit-api
+    to: e.dev-dispatch
+    summary: 写回备份落到 .audit/
+  - id: r.viewer-editapi
+    kind: calls
+    from: e.viewer
+    to: e.dev-edit-api
+    summary: 页面「写回」与「导出全部 JSON」
+  - id: r.retrieval-index
+    kind: reads
+    from: e.dev-retrieval
+    to: e.index
+    summary: FRAS 索引是仓内法定检索源
+  - id: r.agent-retrieval
+    kind: calls
+    from: e.agent
+    to: e.dev-retrieval
+    summary: 开工前先建立系统认知再动手
+
   - id: r.human-cli
     kind: calls
     from: e.human
@@ -700,6 +799,16 @@ views:
       engine: elk
       direction: RIGHT
       spacing: { rank: 120, node: 52 }
+
+  - id: v.dev-support
+    title: 开发支撑服务
+    include:
+      elements: [e.human, e.agent, e.dev-gate, e.dev-audit, e.dev-granularity, e.dev-golden, e.dev-edit-api, e.dev-retrieval, e.dev-dispatch, e.viewer, e.docs, e.index, e.cli]
+      relations: [r.*]
+    layout:
+      engine: elk
+      direction: RIGHT
+      spacing: { rank: 140, node: 70 }
 
 annotations:
   - id: a.01JAYS3KV0001AAAA0001
