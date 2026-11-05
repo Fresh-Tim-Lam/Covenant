@@ -15,7 +15,7 @@
 - 类型：`Patch`、`PatchOp`、`StatusOp`、`Actor`、`GateOptions`、`ApplyOptions`、`ApplyResult`
 
 ## 设计取舍
-- 门禁在代码里而不是提示词里：AI 只能新增批注、不得写 `ai_hint`、不得改状态、不得删除批注、`base_rev` 必须匹配。
+- 门禁在代码里而不是提示词里：批注保护（AI 可新增批注、不得写 `ai_hint`、不得改状态、不得删除批注）+ `base_rev` 必须匹配；元素/关系增删自 0.4 起对 AI 放行（ADR-0005）。
 - 应用采用"注释保留的文本编辑"，避免整文件重写丢注释。
 - 单文件拆分（≤300 行）：`parse.ts`（模型/解析/分类，最底层）→ `text.ts`（文本编辑，不读写文件）→ `audit.ts`（哈希与 write-ahead 审计）→ `gate.ts`（纯函数门禁）→ `apply.ts`（编排 + 复验 + 原子替换）；`index.ts` 只做 re-export。
 - 依赖方向：`gate`/`apply` → `parse`，`apply` → `text`、`audit`；`gate`/`text` 不碰文件系统，无循环依赖。

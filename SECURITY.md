@@ -11,10 +11,9 @@
 Covenant 是**本地单机工具**：没有服务端、没有账号体系、默认不联网。安全边界围绕"AI 与人谁可以改什么"：
 
 1. **`.cvn.yaml` 是唯一事实源**。HTML/SVG 是构建产物，AI 不得直接编辑产物。
-2. **AI 只能新增批注**：
-   - `author` 必须是 `ai:<name>`（`gate/impersonation`）；
-   - 不得写 `ai_hint`（人类给 AI 的指令，`gate/ai-hint`）；
-   - 不得改批注状态（`gate/status-actor`）；
+2. **AI 是架构作者；人的批注受保护**（ADR-0005）：
+   - AI 可增删改元素/关系（补丁或直接编辑 `.cvn.yaml` 后 `check`）；签名与 `.audit/` 承担问责；
+   - 批注：AI 可新增（`author` 必须是 `ai:<name>`，`gate/impersonation`）；不得写 `ai_hint`（`gate/ai-hint`）；不得删除/修改人工批注或流转批注状态（`gate/remove-actor` / `gate/edit-actor` / `gate/status-actor`）；
    - `base_rev` 必须匹配（`gate/base-rev`）。
 3. **门禁在代码里，不在提示词里**：`covenant patch-check` / `apply` 对这些规则做硬校验；门禁失败时 `apply` 不写任何字节。
 4. **写前审计**：`apply` 生成 `.audit/*.jsonl`（intent → rename → commit），记录谁在何时批准了什么。

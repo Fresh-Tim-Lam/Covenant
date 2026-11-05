@@ -147,4 +147,59 @@ describe("关系增删落盘（E9 回归）", () => {
     const gate = gatePatch(base.doc!, patch, { actor: leadActor });
     expect(gate.some((f) => f.code === "gate/impl-status"), JSON.stringify(gate)).toBe(true);
   });
+
+  it("ADR-0005：ai actor 的结构 op（元素/关系 add + 元素 remove）放行；ai 删人工批注仍拒", () => {
+    const { docPath } = setup();
+    const aiActor = parseActor("ai:claude")!;
+    const annotated = DOC.replace(
+      "annotations: []",
+      [
+        "annotations:",
+        "  - id: a.01JAYBNDTEST00000000000A",
+        "    target: { kind: element, id: e.a }",
+        "    type: risk",
+        "    severity: major",
+        "    title: 人工批注",
+        "    body: 人写的判断",
+        "    status: open",
+        "    author: human:you",
+        "    created: 2026-11-05T00:00:00+08:00",
+      ].join("\n"),
+    );
+    const base = parseDocument(annotated, docPath);
+    expect(base.doc).not.toBeNull();
+
+    // AI 的结构补丁（加元素 + 删元素 + 加关系）应整体放行（ADR-0005 作者模式）
+    const structural = parsePatch(
+      JSON.stringify({
+        covenant: "0.1",
+        doc: "t/apply-rel",
+        base_rev: 1,
+        intent: "ai drafts structure",
+        ops: [
+          { op: "add", path: "/elements/-", value: { id: "e.ai", kind: "container", name: "AI 新增", summary: "ai drafted" } },
+          { op: "remove", path: "/elements/e.c", value: null },
+          { op: "add", path: "/relations/-", value: { id: "r.ai1", kind: "calls", from: "e.a", to: "e.b", summary: "ai drafted" } },
+        ],
+      }),
+      "patch.json",
+    ).patch!;
+    // fixture 无 e.c，去掉 remove 使 gate 干净放行
+    (structural.ops as Array<{ path: string }>).splice(1, 1);
+    expect(gatePatch(base.doc!, structural, { actor: aiActor })).toEqual([]);
+
+    // AI 删除人工批注：仍被 gate/remove-actor 拦（批注保护不受 ADR-0005 影响）
+    const delAnn = parsePatch(
+      JSON.stringify({
+        covenant: "0.1",
+        doc: "t/apply-rel",
+        base_rev: 1,
+        intent: "ai must not remove human annotation",
+        ops: [{ op: "remove", path: "/annotations/a.01JAYBNDTEST00000000000A", value: null }],
+      }),
+      "patch.json",
+    ).patch!;
+    const gate2 = gatePatch(base.doc!, delAnn, { actor: aiActor });
+    expect(gate2.some((f) => f.code === "gate/remove-actor"), JSON.stringify(gate2)).toBe(true);
+  });
 });

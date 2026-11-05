@@ -246,7 +246,7 @@ entries:
       - packages/cli/src/index.ts
       - packages/mcp/src/index.ts
     s:
-      - AI 只能新增批注；本包不提供改状态/改语义入口
+      - 本包只构造批注补丁（不构造元素/关系 op）；不提供批注状态流转入口
     source_sha256: e93c2f643b108e808973db350808f9cbe154e92d784882c8087aa039ac11db48
   - file: packages/layout/src/sequence.ts
     f: 序列图专用布局：参与者列 + 消息行
