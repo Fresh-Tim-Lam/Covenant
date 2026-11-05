@@ -6,7 +6,7 @@
 ACCEPTANCE.md[SQ8T]: F:v0.1.0 目标逐条映射到可复现命令与实测结果的验收报告 | R:- | A:- | S:任何人可按 §5 复跑；遗留项必须显式列出而非隐去，本报告不替代人工浏览器验收
 AGENT.md[SG9M]: F:Agent 与人的接入第一站：角色、技术栈、命令、架构、规范、边界、陷阱、参考 | R:code:AGENTS.md,code:README.md | A:- | S:团队协作必读指向 AGENTS.md；边界与禁止行为在此与 AGENTS.md 定义，二者冲突时以 AGENTS.md 为准
 AGENTS.md[SG9M]: F:多 Agent 派发契约：L1–L12 不变量、单一事实源表、验收阶梯 L0–L6、写域隔离、漂移审计 A1–A9 | R:code:AGENT.md,code:team/owns.yaml,code:scripts/agent/team_audit.mjs | A:- | S:执行者自报 PASS 不算验收(L2)；L11 禁止跨工作区写入；L12 粒度棘轮只许减不许增；L1 测试基线数字随新增测试同步 §4（当前 386）；文末 aoci:begin 区块由 aoci init 追加，禁手改
-CHANGELOG.md[SV8T]: F:Keep a Changelog 格式的版本变更记录（Added/Changed/Fixed 分类） | R:- | A:- | S:版本号唯一事实源是根 package.json，本文件只记录不定义版本
+CHANGELOG.md[SV8S]: F:Keep a Changelog 格式的版本变更记录（Added/Changed/Fixed 分类） | R:- | A:- | S:版本号唯一事实源是根 package.json，本文件只记录不定义版本；0.2/0.3 发布时未维护本文件，0.3.0 段为事后补录
 CONTRIBUTING.md[SG7T]: F:贡献指南：环境要求、开发流程、门禁命令、提交与评审约定 | R:code:package.json | A:- | S:Node22+ pnpm11+；提交前 pnpm verify 与 pnpm typecheck 必须双绿，仅单侧通过视为未完成
 LICENSE[FG3T]: F:MIT 许可证正文与版权声明 | R:- | A:- | S:版权方为 ALLELab；变更许可证属人的决策，Agent 不得改动本文件
 README.md[SG9T]: F:项目总览：问题定义、设计决策、快速开始、里程碑状态与上手路径 | R:code:AGENT.md | A:- | S:上手顺序是先读 AGENT.md 再动手；状态段随里程碑更新，不得当作事实源引用
@@ -79,7 +79,7 @@ walkthrough-golden-path.md[SQ7M]: F:黄金路径演练 v0：一个真实场景�
 agent-team-edit-deployment.md[SG7T]: F:在其他 Agent 团队项目里部署编辑态的系统化指引 | R:code:packages/cli/src/serve.ts | A:- | S:写回权限仅 human:*，AI 只能新增批注；部署前先备份，写回自动落 .audit/
 annotation-resolution-2026-11-03.md[SG5T]: F:自举架构图批注处理记录：逐条批注的处置与结论 | R:code:arch/system.cvn.yaml | A:- | S:处理记录只增不改；未处置批注不得标 resolved
 distribution-paradigm.md[SV7T]: F:分发范式：本地可信交付（kit zip）与 GitHub 公开分发是同一产品两套入口 | R:code:scripts/build-kit.mjs,code:.github/workflows/release.yml | A:- | S:两套入口必须同源同版本，禁止分叉代码；公开入口的需求与 bug 以 GitHub Issue 为唯一渠道
-team-onboarding-prompt.md[SG6S]: F:给外部团队的 Covenant 使用指引 Prompt（整段复制发给对方 Lead） | R:code:AGENT.md | A:- | S:对方团队应先跑 check 再 build；不得假设已在用 pnpm workspace
+team-onboarding-prompt.md[SG6S]: F:给外部团队的 Covenant 使用指引 Prompt（整段复制发给对方 Lead），含 5 分钟上手与写回步骤 | R:code:AGENT.md | A:- | S:kit 引用与功能清单随发布版本同步（曾停在 0.1.0）；对方团队应先跑 check 再 build；不得假设已在用 pnpm workspace
 
 ===D:/AAA_Project/Covenant/docs/prompts/===
 README.md[SG5T]: F:可复用范式与提示词模板索引（可复制到其他项目） | R:code:docs/prompts/paradigm-spec-v2.md | A:- | S:模板是契约性文本，复制到彯生项目后需按该项目实际情况重填阈值，不得原样当事实
@@ -93,6 +93,7 @@ hard-constraints.md[SG8S]: F:12 条硬约束 H1–H12：唯一事实源、语义
 ===D:/AAA_Project/Covenant/docs/releases/===
 v0.1.0.md[SV6T]: F:历史发布说明：v0.1.0 交付物、亮点、kit 快速开始、268 tests 质量基线与已知边界 | R:code:package.json | A:- | S:历史版本记录，当前版本以根 package.json 为准；kit 要求 Node >=20 而当前 engines 已到 >=22，勿照抄
 v0.3.0.md[SV6T]: F:v0.3.0 发布说明：交付物、格式/看板/治理三类新增、350 tests 验证基线与已知限制 | R:code:package.json | A:- | S:已知限制写明「图上增删元素 UI 未交付」「covenant fmt 未实现」；交互手感以真实浏览器为准，jsdom 不等价
+v0.4.0.md[SV7T]: F:v0.4.0 发布说明：图上编辑闭环、写回增强、E9 修复与升级指引 | R:code:CHANGELOG.md | A:- | S:交互能力需真实浏览器点检，jsdom 不能替代；升级无迁移项（patch 格式未变）
 
 ===D:/AAA_Project/Covenant/docs/research/===
 landscape-2026-11.md[SA6S]: F:2026-11 同类工作调研：六条技术路线、10 项目对标矩阵、五个空白点与可复用清单 | R:code:docs/design/diagram-taxonomy.md | A:- | S:调研快照（2026-11-03），链接与许可可能变化；对标矩阵中「批注×AI 可消费」一列全空，是产品差异化的核心证据
@@ -160,7 +161,7 @@ package.json[FV5T]: F:@covenant/core 包声明：name/version/type/exports 与�
 index.ts[CG7T]: F:core 包聚合出口：re-export types/parse/version，提供 findRepoRoot（以 schema 文件为锚点）、readTextFile 与 sortFindings 稳定排序 | R:code:packages/core/src/types.ts,code:packages/core/src/parse.ts,code:packages/core/src/version.ts | A:findRepoRoot,readTextFile,sortFindings,COVENANT_VERSION | S:COVENANT_VERSION 为版本唯一事实源（须等于 package.json，A9 强制）；findRepoRoot 以 schema/kernel.schema.json 为锚点，找不到抛错；finding 按 (level,code,elementId,path) 排序
 parse.ts[CG8T]: F:YAML 解析：先按行扫描禁锚点/别名（L0），再用 YAML 1.2 CORE_SCHEMA 解析并校验顶层为映射 | R:code:packages/core/src/types.ts | A:parseDocument | S:必须用 CORE_SCHEMA 而非 DEFAULT_SCHEMA，否则 ISO 时间戳被解析成 Date（GAP-03）；锚点检测只匹配行首/空白后的 &/*，避免误伤 e.*
 types.ts[CG8S]: F:内核类型契约：Finding/Link/ElementDef/RelationDef/FrameDef/ViewDef/AnnotationDef/MetaDef/CovenantDoc 与 ParseResult | R:code:schema/kernel.schema.json | A:- | S:字段权威在 schema/kernel.schema.json 与 format-spec；impl_status 缺省=implemented；LayoutDef.engine 允许 elk 但实现已决策不引入 ELK
-version.ts[CG8T]: F:工具版本唯一事实源：COVENANT_VERSION 常量（"0.3.0"），cli/mcp/render 统一引用，禁止别处再写版本字面量 | R:code:package.json | A:COVENANT_VERSION | S:必须等于根 package.json 的 version，由 pnpm agent:audit 的 A9 检查强制；发版升版本须同时改这里与 package.json；历史事故：三处硬编码停在 0.1.0 而 package.json 已 0.3.0
+version.ts[CG8T]: F:工具版本唯一事实源：COVENANT_VERSION 常量（当前 0.4.0），cli/mcp/render 统一引用，禁止别处再写版本字面量 | R:code:package.json | A:COVENANT_VERSION | S:必须等于根 package.json 的 version，由 pnpm agent:audit 的 A9 检查强制；发版升版本用 scripts/release-bump.mjs 一键同步；历史事故：三处硬编码停在 0.1.0 而 package.json 已 0.3.0
 
 ===D:/AAA_Project/Covenant/packages/diff/===
 README.md[SQ5T]: F:@covenant/diff 包说明：cosmetic/material/breaking 三分类职责、被 cli 依赖与「只看语义不看文本」取舍 | R:code:packages/diff/src/index.ts | A:- | S:重排/改序不算 breaking；工具只报告破坏性变更，批准流程在工具外
@@ -185,7 +186,7 @@ index.ts[LQ7S]: F:FRAS 索引门禁：collectSources 收集受管源文件、che
 
 ===D:/AAA_Project/Covenant/packages/layout/===
 README.md[SG5T]: F:@covenant/layout 包说明：确定性布局管线（破环/分层/barycenter/长边通道）、公共接口与纯函数约束 | R:code:packages/layout/src/index.ts | A:- | S:只依赖 @covenant/core（仅类型）不依赖 profile；不得读写文件、不得依赖 render（避免循环）；pins 优先于自动布局，输出必须逐字节确定性
-package.json[FV5T]: F:@covenant/layout 包声明：name/version/type/exports 与 core 依赖 | R:code:packages/layout/README.md | A:- | S:README 称依赖 profile，实际 package.json 只有 core；main/types 直指 src/index.ts
+package.json[FV5T]: F:@covenant/layout 包声明：name/version/type/exports 与 core 依赖 | R:code:packages/layout/README.md | A:- | S:main/types 直指 src/index.ts；依赖仅 @covenant/core（README 曾误称依赖 profile，已同步修正）
 
 ===D:/AAA_Project/Covenant/packages/layout/src/===
 index.ts[KG9L]: F:确定性分层布局：DFS 破环 → Kahn 分层 → barycenter 交叉最小化 → 长边顶部通道 → 端口分配与正交路由（routePorts/clearPath/routeAbove） | R:code:packages/layout/src/sequence.ts,code:packages/core/src/types.ts | A:layout,selectView,routePorts,clearPath,routeAbove,estimateTextWidth | S:不能 {...DEFAULTS,...options}：显式 undefined 会覆盖默认值导致坐标 NaN；ROUTE_STUB=20 与 ROUTE_MARGIN=12 是黄金图契约；并列按文档序保证确定性
@@ -265,6 +266,7 @@ e2e-html-patch.mjs[TQ6T]: F:端到端演练：jsdom 打开 dist/covenant.html �
 mcp-smoke.mjs[TQ6T]: F:MCP 冒烟：真实拉起 stdio server，走 initialize→tools/list→tools/call(covenant_check)，断言 9 个工具与 0 error | R:code:packages/mcp/src/server.ts | A:- | S:EXPECTED_TOOLS=9 是硬断言，增删 MCP 工具必须同步该常量；用 tsx 导入运行 TS 源码
 svg-to-png.mjs[XV5T]: F:开发期视觉核对：用 @resvg/resvg-js 把 SVG 转 PNG，默认宽 1600、白底 | R:code:scripts/README.md | A:- | S:依赖 devDependency @resvg/resvg-js；产物写 dist/，不得写仓库根
 update-golden.mjs[XQ6T]: F:黄金 SVG 更新入口：置 GOLDEN_UPDATE=1 跑 packages/render/src/golden.test.ts 重写 __golden__ 基线 | R:code:packages/render/src/golden.test.ts,code:package.json | A:- | S:只在视觉改动确认后跑；跑完必须人工看 diff 并把变化纳入提交
+release-bump.mjs[XV6T]: F:发布提版脚本：根与全部包 package.json 的 version 及 COVENANT_VERSION 一键同步 | R:code:packages/core/src/version.ts | A:- | S:一处不落会被 A8/A9 审计拦下；只改版本字段不动依赖；发布说明见 docs/releases/
 
 ===D:/AAA_Project/Covenant/scripts/agent/===
 selftest-audit.mjs[TQ7T]: F:审计自测：复制 dispatch-log 并注入 1 条基线后缺 mode/task 的 spawn，断言 audit 退出码 1 且真实日志退出码 0 | R:code:scripts/agent/team_audit.mjs,code:team/audit-baseline.json | A:- | S:注入记录时间戳 2026-11-05 必须晚于 baseline cutoff 2026-11-04T15:00Z 才算基线后；结论要求同时满足 (bad=1, real=0)
