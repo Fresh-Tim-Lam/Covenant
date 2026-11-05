@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 9177834d9686f41222e4b062650e81316ba50dc598f66c15b334d942c6332ca5
+    source_sha256: eb8b1159961fc01cd0c1d2e021183934d14ee6bceee14851d2cede67ff854cfb
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -105,7 +105,7 @@ entries:
     s:
       - 与其他运行时分片共享同一个 IIFE 作用域，只能整段搬移，禁止改动任何标识符
       - 分片内容不得含反引号或 ${，否则会截断 html.ts 的模板字符串
-    source_sha256: f4dc07d3d8d223efde9a4ee0eabf8e6610e83c558ad62e975afc2d39c9174359
+    source_sha256: 53b75200460e49ba3f6e752c65edb1b9d3fbaba191a242af4371d1d0713d39a4
   - file: packages/render/src/viewer/script-edit-elements.ts
     f: 图上增删元素分片：双击开创建表单、Delete 暂存删除、撤销与 patch ops 生成
     r:

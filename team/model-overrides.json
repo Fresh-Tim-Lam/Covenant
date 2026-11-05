@@ -1,9 +1,17 @@
 {
+  "aoci-scribe": {
+    "model": "allelab/glm-5.3-flash",
+    "reasoningEffort": "high"
+  },
   "arch-owner": {
     "model": "glm-5.3-flash"
   },
   "diagram-owner": {
     "model": "glm-5.3-flash"
+  },
+  "element-editor": {
+    "model": "allelab/glm-5.3-flash",
+    "reasoningEffort": "high"
   },
   "todo-scribe": {
     "model": "glm-5.3-flash"

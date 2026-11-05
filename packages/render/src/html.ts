@@ -402,10 +402,13 @@ ${SCRIPT_STATE}
     path.addEventListener("click", function(ev){
       ev.stopPropagation();
       if (moved) { moved = false; return; }
+      if (pointerSuppressed()) return;
       closeOtherHoverWins("relation", id, k);
       openWindow("relation", id, "clicked", { x: ev.clientX, y: ev.clientY }, k);
     });
     path.addEventListener("pointerenter", function(ev){
+      // 画布平移/小窗拖拽期间指针扫过段热区不得弹悬浮窗（与节点 pointerenter 同一守卫）
+      if (pointerSuppressed()) return;
       closeOtherHoverWins("relation", id, k);
       var w = findWin("relation", id, k);
       if (w){ clearTimeout(w.closeTimer); return; }
@@ -1695,7 +1698,7 @@ ${SCRIPT_STATE}
     wrap.addEventListener("pointermove", function(ev){
       if (!dragging) return;
       var dx = ev.clientX - startX, dy = ev.clientY - startY;
-      if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+      if (Math.abs(dx) + Math.abs(dy) > 4) { moved = true; panning = true; }
       if (moved && !captured) {
         try { wrap.setPointerCapture(ev.pointerId); captured = true; } catch (e) {}
       }
@@ -1703,6 +1706,12 @@ ${SCRIPT_STATE}
     });
     function endDrag(){
       dragging = false; wrap.classList.remove("dragging");
+      // 画布平移结束：解除 panning 封印；真拖过（moved）则再封一小段，
+      // 盖住释放瞬间派发到节点/连线上的残余 pointerenter/click（与小窗拖拽同一策略）。
+      if (panning) {
+        panning = false;
+        if (moved) pointerSuppressedUntil = Date.now() + SUPPRESS_AFTER_DRAG_MS;
+      }
       if (captured && activePointerId !== null) {
         try { wrap.releasePointerCapture(activePointerId); } catch (e) {}
       }

@@ -44,6 +44,15 @@ function boot(): { window: JSDOM["window"]; document: Document } {
   return { window: dom.window, document: dom.window.document };
 }
 
+/**
+ * 可见窗口数（不含预置的隐藏窗口池外壳 #inspector）。
+ * 教训：`.cvn-win` 总数恒 ≥1（外壳常驻），openWindow 只是把它 hidden 翻开——
+ * 用总数做断言会恒真，前面的拖拽回归就是这么空转的。
+ */
+function visibleWins(d: Document): number {
+  return d.querySelectorAll(".cvn-win:not([hidden])").length;
+}
+
 function click(w: JSDOM["window"], el: Element): void {
   el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true }));
 }
@@ -135,7 +144,7 @@ describe("拖拽窗口期间抑制其它元素的悬停/点击", () => {
     click(w, d.querySelector('svg .node[data-id="e.a"]')!);
     const head = d.querySelector(".insp-head") as HTMLElement | null;
     expect(head, "窗口应有可拖拽的 .insp-head").not.toBeNull();
-    const winsBefore = d.querySelectorAll(".cvn-win").length;
+    const winsBefore = visibleWins(d);
     expect(winsBefore).toBeGreaterThan(0);
 
     // 模拟拖拽：按下 → 移动 → 释放
@@ -147,14 +156,14 @@ describe("拖拽窗口期间抑制其它元素的悬停/点击", () => {
     const nodeB = d.querySelector('svg .node[data-id="e.b"]');
     pointer(w, nodeB!, "pointerenter", 80, 90);
 
-    expect(d.querySelectorAll(".cvn-win").length, "拖拽刚结束后不应为其它节点新开悬浮窗").toBe(winsBefore);
+    expect(visibleWins(d), "拖拽刚结束后不应为其它节点新开悬浮窗").toBe(winsBefore);
   });
 
   it("拖拽期间的 click 也不应被当作选中（避免误关窗/误开窗）", () => {
     const { window: w, document: d } = boot();
     click(w, d.querySelector('svg .node[data-id="e.a"]')!);
     const head = d.querySelector(".insp-head") as HTMLElement;
-    const before = d.querySelectorAll(".cvn-win").length;
+    const before = visibleWins(d);
 
     pointer(w, head, "pointerdown", 5, 5);
     pointer(w, w, "pointermove", 60, 60);
@@ -163,6 +172,44 @@ describe("拖拽窗口期间抑制其它元素的悬停/点击", () => {
     // 拖拽结束后立刻点击另一个节点：应被封印拦截，不新增窗口
     const nodeB = d.querySelector('svg .node[data-id="e.b"]');
     click(w, nodeB!);
-    expect(d.querySelectorAll(".cvn-win").length).toBe(before);
+    expect(visibleWins(d)).toBe(before);
+  });
+});
+
+describe("拖拽画布平移期间抑制悬浮（panning 封印）", () => {
+  it("平移过程中指针扫过节点/连线段，不弹悬浮窗", () => {
+    const { window: w, document: d } = boot();
+    const wrap = d.getElementById("stage-wrap") as HTMLElement;
+    expect(wrap).not.toBeNull();
+    const before = visibleWins(d);
+
+    // 按下并移动超过 4px 阈值 → 进入 panning
+    pointer(w, wrap, "pointerdown", 100, 100);
+    pointer(w, wrap, "pointermove", 140, 130);
+
+    // 平移中指针扫过节点与连线段（真实浏览器里画布在指针下滑动就会派发这些事件）
+    pointer(w, d.querySelector('svg .node[data-id="e.b"]')!, "pointerenter", 140, 130);
+    const seg = d.querySelector(".seg-hit");
+    if (seg) pointer(w, seg, "pointerenter", 140, 130);
+
+    expect(visibleWins(d), "平移过程中不得弹悬浮窗").toBe(before);
+  });
+
+  it("平移释放后冷却期内不弹，冷却期结束恢复悬停", async () => {
+    const { window: w, document: d } = boot();
+    const wrap = d.getElementById("stage-wrap") as HTMLElement;
+    const nodeB = d.querySelector('svg .node[data-id="e.b"]')!;
+    const before = visibleWins(d);
+
+    pointer(w, wrap, "pointerdown", 50, 50);
+    pointer(w, wrap, "pointermove", 120, 110);
+    pointer(w, wrap, "pointerup", 120, 110); // endDrag：panning 解除 + 260ms 冷却
+
+    pointer(w, nodeB, "pointerenter", 120, 110);
+    expect(visibleWins(d), "松手瞬间残余 pointerenter 应被封印").toBe(before);
+
+    await new Promise((r) => setTimeout(r, 300));
+    pointer(w, nodeB, "pointerenter", 120, 110);
+    expect(visibleWins(d), "冷却结束后悬停应恢复正常").toBeGreaterThan(before);
   });
 });

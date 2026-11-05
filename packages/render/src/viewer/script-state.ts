@@ -17,10 +17,13 @@ export const SCRIPT_STATE = `  var draggingWin = false;
   //   draggingWin 只在按住时有效，但 pointerenter/click 往往在 pointerup **之后**才落到画布上
   //   （窗口移开 → 指针下方换成别的元素 → 事件在释放瞬间派发），于是"拖完立刻触发别的元素"。
   //   因此释放后再封印一小段时间，覆盖释放瞬间的残余事件。
+  // panning 同理：画布平移时指针不动而画布在动，节点/连线照样派发 pointerenter，
+  // 若只封 draggingWin，"拖画布扫过元素"就会一路弹悬浮窗（实测 bug，见 viewer.verify.test.ts）。
   var SUPPRESS_AFTER_DRAG_MS = 260;
   var pointerSuppressedUntil = 0;
+  var panning = false;
   function pointerSuppressed(){
-    return draggingWin || (pointerSuppressedUntil && Date.now() < pointerSuppressedUntil);
+    return draggingWin || panning || (pointerSuppressedUntil && Date.now() < pointerSuppressedUntil);
   }
   // hover 色忆：同一 (kind,id,segment) 的 hover 窗在 400ms 内重开时复用同一颜色，
   // 避免"窗口盖住元素 → leave → close → enter → 重新分配颜色"的振荡闪色。
