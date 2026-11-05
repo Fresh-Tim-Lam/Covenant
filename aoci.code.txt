@@ -5,12 +5,12 @@
 .gitignore[FG5T]: F:忽略依赖/构建产物/缓存/本地密钥与 AOCI 运行时资产 | R:- | A:- | S:.gh-token、dist/**、.aoci/ledger.jsonl 必须保持忽略，误提交即凭据泄露；dist 是可再生物不得入库
 ACCEPTANCE.md[SQ8T]: F:v0.1.0 目标逐条映射到可复现命令与实测结果的验收报告 | R:- | A:- | S:任何人可按 §5 复跑；遗留项必须显式列出而非隐去，本报告不替代人工浏览器验收
 AGENT.md[SG9M]: F:Agent 与人的接入第一站：角色、技术栈、命令、架构、规范、边界、陷阱、参考 | R:code:AGENTS.md,code:README.md | A:- | S:团队协作必读指向 AGENTS.md；边界与禁止行为在此与 AGENTS.md 定义，二者冲突时以 AGENTS.md 为准
-AGENTS.md[SG9M]: F:多 Agent 派发契约：L1–L12 不变量、单一事实源表、验收阶梯 L0–L6、写域隔离、漂移审计 A1–A9 | R:code:AGENT.md,code:team/owns.yaml,code:scripts/agent/team_audit.mjs | A:- | S:执行者自报 PASS 不算验收(L2)；L11 禁止跨工作区写入；L12 粒度棘轮只许减不许增；L1 测试基线数字随新增测试同步 §4（当前 386）；文末 aoci:begin 区块由 aoci init 追加，禁手改
-CHANGELOG.md[SV8S]: F:Keep a Changelog 格式的版本变更记录（Added/Changed/Fixed 分类） | R:- | A:- | S:版本号唯一事实源是根 package.json，本文件只记录不定义版本；0.2/0.3 发布时未维护本文件，0.3.0 段为事后补录
+AGENTS.md[SG9M]: F:多 Agent 派发契约：L1–L12 不变量、单一事实源表、验收阶梯 L0–L6、写域隔离、漂移审计 A1–A9 | R:code:AGENT.md,code:team/owns.yaml,code:scripts/agent/team_audit.mjs | A:- | S:执行者自报 PASS 不算验收(L2)；L11 禁止跨工作区写入；L12 粒度棘轮只许减不许增；L1 测试基线数字随新增测试同步 §4（当前 387）；文末 aoci:begin 区块由 aoci init 追加，禁手改
+CHANGELOG.md[SV8S]: F:Keep a Changelog 格式的版本变更记录（Added/Changed/Fixed 分类）与 Unreleased 段 | R:- | A:- | S:版本号唯一事实源是根 package.json，本文件只记录不定义版本；0.2/0.3 段为事后补录；发布时把 Unreleased 改为版本号
 CONTRIBUTING.md[SG7T]: F:贡献指南：环境要求、开发流程、门禁命令、提交与评审约定 | R:code:package.json | A:- | S:Node22+ pnpm11+；提交前 pnpm verify 与 pnpm typecheck 必须双绿，仅单侧通过视为未完成
 LICENSE[FG3T]: F:MIT 许可证正文与版权声明 | R:- | A:- | S:版权方为 ALLELab；变更许可证属人的决策，Agent 不得改动本文件
 README.md[SG9T]: F:项目总览：问题定义、设计决策、快速开始、里程碑状态与上手路径 | R:code:AGENT.md | A:- | S:上手顺序是先读 AGENT.md 再动手；状态段随里程碑更新，不得当作事实源引用
-SECURITY.md[SS8T]: F:安全策略：支持版本、信任边界（AI 只能新增批注、产物不得手改）、漏洞上报流程 | R:code:docs/design/ai-trust-boundary.md | A:- | S:.cvn.yaml 是唯一事实源，HTML/SVG 是构建产物不得直接编辑；工具默认不联网、无服务端；越界写入属安全问题而非 bug
+SECURITY.md[SS8T]: F:安全策略：支持版本、信任边界（AI 作者模式 ADR-0005 + 人工批注保护）、漏洞上报流程 | R:code:docs/design/ai-trust-boundary.md | A:- | S:.cvn.yaml 唯一事实源，HTML/SVG 构建产物不得手改；AI 可增删改元素/关系但不得删改人工批注/流转状态；默认不联网、无服务端
 covenant.yaml[FG8T]: F:项目清单：启用 profile、documents 列表、FRAS index 路径与 ADR 目录 | R:- | A:code:packages/cli/src/index.ts | S:roots.code 指 packages；增删文档必须同步本清单，否则 check 与 index 会漏扫
 package.json[FV9T]: F:仓库清单：pnpm@11 workspace 根脚本（check/render/build/bundle/verify/golden/agent:audit 等）、devDependencies 与 node>=22 | R:code:pnpm-workspace.yaml | A:- | S:版本号唯一事实源（doctor/A8 校验各包一致）；verify=check+index+adr+modules+granularity+test，只跑单侧不算通过；dist 不手改
 pnpm-lock.yaml[FV6L]: F:pnpm 锁文件：lockfileVersion 9.0，固定全部依赖精确版本与 workspace importers | R:code:pnpm-workspace.yaml,code:package.json | A:- | S:只能由 pnpm install 生成，禁止手改；CI/cleanroom 用 --frozen-lockfile，与 package.json 不一致会直接失败
@@ -34,7 +34,7 @@ verify.yml[OQ8T]: F:push/PR 云端复跑与 pnpm verify 等价的链路 | R:code
 README.md[SG6T]: F:arch/ 自举契约与索引目录说明：文件清单（system.cvn.yaml/index.yaml/dev-support.svg）、不提交 system.svg 的理由、校验命令与 FRAS 维护规则 | R:code:arch/system.cvn.yaml,code:arch/index.yaml | A:- | S:system.svg 已删除且不再提交——与 __golden__/self-arch.svg 同 sha256，双份必然漂移；改代码结构不同步本目录会让 covenant check 失败
 dev-support.svg[ZG2S]: F:v.dev-support（开发支撑服务）视图的渲染产物 | R:code:arch/system.cvn.yaml | A:- | S:生成物禁手改；用 covenant render --view v.dev-support 重新生成
 index.yaml[FG8M]: F:FRAS 索引：每个受管源文件的 F 职责 / R 依赖 / A 上层调用者 / S 隐性约束 + source_sha256 | R:code:packages/indexer/src/index.ts | A:- | S:sha 只由 pnpm index --write 维护，F/R/A/S 由人或 Agent 撰写；新增源文件缺条目会让 I1 直接 FAIL；*.test.ts 与 __golden__ 不建条目
-system.cvn.yaml[FG9L]: F:Covenant 自举契约：仓库自身组件边界、依赖方向与已知缺口批注，含 v.main/v.delivery/v.viewer/v.dev-support 视图 | R:code:covenant.yaml | A:- | S:本图受 covenant check 与 CI 保护，改代码结构须同步改；datastore 必须带 storage_kind，reads 的源不能是 external-system；元素 id 被批注与索引引用，禁随意改名
+system.cvn.yaml[FG9L]: F:Covenant 自举契约：仓库自身组件边界、依赖方向与已知缺口批注，含 v.main/v.delivery/v.viewer/v.dev-support 视图；links 引用 ADR 0001–0005 | R:code:covenant.yaml | A:- | S:本图受 covenant check 与 CI 保护，改代码结构须同步改；datastore 必须带 storage_kind，reads 源不能是 external-system；元素 id 被批注与索引引用，禁随意改名
 
 ===D:/AAA_Project/Covenant/docs/===
 README.md[SG5T]: F:docs/ 文档总索引：子目录职责与唯一落位规则 | R:code:docs/conventions/docs-management.md | A:- | S:任何文档只能落在表中唯一位置，新增/移动必须同步本表；索引禁止写硬计数（必然过期）
@@ -58,13 +58,14 @@ module-ownership.md[SQ7S]: F:模块 Owner 编制与粒度规范：一模块 = �
 0002-typescript-workspace-packages.md[SG7T]: F:ADR-0002：全栈 TypeScript，按 pnpm workspace 拆能力包（core/profile/validate/layout/render/…） | R:code:pnpm-workspace.yaml | A:ADR-0002 | S:包版本必须一致（doctor 校验）；跨包引用走 workspace 依赖，禁止相对路径穿透
 0003-index-first-agent-development.md[SG8T]: F:ADR-0003：采用索引优先的模块化 Agent 协同范式（Index-First Agent Dev） | R:code:docs/conventions/agent-team-development.md | A:ADR-0003 | S:先设计目录与模块边界使产物可索引，再写代码；新模块必修 README 五段否则 modules 门禁 FAIL
 0004-edit-server-short-lived.md[SG8T]: F:ADR-0004：编辑态采用方案 B——短时本地编辑服务，导出 JSON 降为兼底通道 | R:code:packages/cli/src/serve.ts | A:ADR-0004 | S:服务只绑 127.0.0.1 且发 token；写回必过 gatePatch+applyPatch，不得绕过门禁直写 YAML
-README.md[SG6T]: F:ADR 目录规则：只记录不可逆或有代价的设计决策，格式 decision@1 | R:code:docs/design/adr/0001-single-file-self-contained-html.md | A:- | S:ADR 一经 accepted 不改语义，变更需新开编号；accepted ADR 被 .cvn.yaml 引用时删除会导致 check 失败
+README.md[SG6T]: F:ADR 目录规则：只记录不可逆或有代价的设计决策，格式 decision@1；0001–0005 清单 | R:code:docs/design/adr/0001-single-file-self-contained-html.md | A:- | S:ADR 一经 accepted 不改语义，变更需新开编号；accepted ADR 被 .cvn.yaml links 引用时删除会导致 check 失败
+0005-ai-authorship-model.md[SG9T]: F:ADR-0005：AI 是架构作者，人是审阅者与小修者；批注保护保留 | R:code:docs/design/ai-trust-boundary.md,code:todo/decisions.md | A:- | S:supersedes D-006 的作者身份部分；ai:* 可增删改元素/关系；人工批注不可被 AI 删改（gate/remove-actor 等保留）；契约由 apply-relations 测试锁死
 
 ===D:/AAA_Project/Covenant/docs/design/===
-ai-trust-boundary.md[SS8M]: F:AI 信任边界与注入防护 v0：批注进入 AI 上下文路径的 T1–T7 隔离规则 | R:code:docs/design/format-spec-v0.md | A:- | S:AI 只能新增批注（author=ai:*），不得写 ai_hint；批注正文是不可信输入，注入前必须转义与分隔，否则提示词注入可达执行链
+ai-trust-boundary.md[SS8M]: F:AI 信任边界与注入防护 v0：批注进入 AI 上下文路径的 T1–T7 隔离规则；文末含 ADR-0005 作者模式修订节 | R:code:docs/design/format-spec-v0.md | A:- | S:批注保护不变：AI 不得写 ai_hint、不得删改人工批注；批注正文是不可信输入，注入前必须转义与分隔；架构作者身份以 ADR-0005 修订节为准
 diagram-taxonomy.md[SG7M]: F:软件工程图示全景与「够不够用」判据：DFD/ER/流程图/状态/时序/部署等语境的选取规则 | R:code:docs/design/profiles-catalog-v0.md | A:- | S:选图先定受众与问题，不为“一张图表达所有”；剖面能力矩阵是唯一选型依据
 discoverability.md[SG7S]: F:可发现性设计：陌生 Agent 如何在不问人的情况下读懂 .cvn 并找到正确入手点 | R:code:docs/design/format-spec-v0.md,code:AGENT.md | A:- | S:入口必须可从仓库根自行发现（AGENTS/AGENT/README 链），不得依赖口头交接
-editing-and-git-diff-v0.md[SG6S]: F:编辑能力与 git diff 后端 v0 设计：方案 B 已定为短时服务，本文记录取舍与兼底 | R:code:packages/cli/src/serve.ts | A:- | S:导出 JSON 是离线兼底而非主路径；写回必须 rev+1 并留审计备份
+editing-and-git-diff-v0.md[SG6S]: F:编辑能力与 git diff 后端 v0 设计：方案 B 已定为短时服务，本文记录取舍与兼底；人机协同口径见 ADR-0005 | R:code:packages/cli/src/serve.ts | A:- | S:导出 JSON 是离线兼底而非主路径；写回必须 rev+1 并留审计备份
 engine-architecture-v0.md[SG8M]: F:渲染引擎架构 v0：.cvn 文本 → 解析/校验 → 剖面 → 布局 → SVG → HTML/bundle 的完整管线 | R:code:packages/core/src/index.ts,code:packages/layout/src/index.ts,code:packages/render/src/index.ts | A:- | S:管线必须确定性：同输入同输出（黄金 SVG 基线）；网络零依赖；布局与渲染分离，不得在 render 内重算几何
 format-spec-v0.md[FG9L]: F:.cvn 格式权威规范 v0：Tier-0 kernel / Tier-1 profile / Tier-2 文档三层，字段、约束与版本规则 | R:code:schema/kernel.schema.json | A:- | S:YAML 1.2 CORE_SCHEMA，禁锚点/别名；kernel 只允许人改且属 Ask First；改格式必须同步 schema+文档+黄金样例，否则 check 失败
 gate-spec-v0.md[FQ8S]: F:门禁规格 v0：L1 schema / L2 kernel / L3 profile 三层校验的判据、错误码与严重级 | R:code:packages/validate/src/index.ts,code:docs/prompts/paradigm-spec-v2.md | A:- | S:错误码是对外契约，不得静默改名；同一语义不得同时由一个以上层级报错（否则修复后另一层又红）
@@ -74,12 +75,13 @@ open-questions.md[SG6S]: F:决策记录与反方论证：已拍板取舍（含�
 profiles-catalog-v0.md[FG8L]: F:剖面注册表 v0：10 个剖面的元素/关系能力矩阵与共存规则（含 mixed@1 取并集） | R:code:packages/profile/src/index.ts | A:- | S:剖面名带版本后缀（如 c4-container@1），增删类型即改版本；mixed@1 为全类型并集，不得再为混合场景新建剖面
 self-hosting-bootstrap.md[SG7S]: F:自举与迭代计划：先用一种图跑通再自举描述自身，避免一开始铺开全部剖面 | R:code:arch/system.cvn.yaml | A:- | S:自举图受 check 与 CI 保护，改代码结构要同步改，否则自举与实现漂移
 walkthrough-golden-path.md[SQ7M]: F:黄金路径演练 v0：一个真实场景的端到端验收脚本（写契约→校验→出图→标注→补丁→落盘） | R:code:docs/quickstart.md | A:- | S:演练必须可复现且逐步有可粘贴命令；任一步失败即整体不算通过
+interaction-usecases-v0.md[SQ7S]: F:看板交互用例与规范 v0：7 用例域（选择/创建框/连线/增删/三态×编辑/写回/快捷键）+ 9 条 GAP 清单（P1/P2） | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-edit-elements.ts,code:packages/render/src/viewer/script-edit-relations.ts | A:- | S:pending 关系线定位示意线（正交+端口对齐），完整规划器复用为 non-goal；规范条目均可译为 jsdom 断言；评审通过后按 GAP 优先级拆实现
 
 ===D:/AAA_Project/Covenant/docs/guides/===
 agent-team-edit-deployment.md[SG7T]: F:在其他 Agent 团队项目里部署编辑态的系统化指引 | R:code:packages/cli/src/serve.ts | A:- | S:写回权限仅 human:*，AI 只能新增批注；部署前先备份，写回自动落 .audit/
 annotation-resolution-2026-11-03.md[SG5T]: F:自举架构图批注处理记录：逐条批注的处置与结论 | R:code:arch/system.cvn.yaml | A:- | S:处理记录只增不改；未处置批注不得标 resolved
 distribution-paradigm.md[SV7T]: F:分发范式：本地可信交付（kit zip）与 GitHub 公开分发是同一产品两套入口 | R:code:scripts/build-kit.mjs,code:.github/workflows/release.yml | A:- | S:两套入口必须同源同版本，禁止分叉代码；公开入口的需求与 bug 以 GitHub Issue 为唯一渠道
-team-onboarding-prompt.md[SG6S]: F:给外部团队的 Covenant 使用指引 Prompt（整段复制发给对方 Lead），含 5 分钟上手与写回步骤 | R:code:AGENT.md | A:- | S:kit 引用与功能清单随发布版本同步（曾停在 0.1.0）；对方团队应先跑 check 再 build；不得假设已在用 pnpm workspace
+team-onboarding-prompt.md[SG6S]: F:给外部团队的 Covenant 使用指引 Prompt（整段复制发给对方 Lead），含 5 分钟上手、图上编辑与写回步骤 | R:code:AGENT.md | A:- | S:kit 引用与功能清单随发布版本同步（曾停在 0.1.0）；规则口径随 ADR-0005 更新（AI 写架构+批注保护）；对方团队应先跑 check 再 build
 
 ===D:/AAA_Project/Covenant/docs/prompts/===
 README.md[SG5T]: F:可复用范式与提示词模板索引（可复制到其他项目） | R:code:docs/prompts/paradigm-spec-v2.md | A:- | S:模板是契约性文本，复制到彯生项目后需按该项目实际情况重填阈值，不得原样当事实
@@ -144,7 +146,7 @@ package.json[FA4T]: F:@covenant/ai 包声明：name/version/type/exports 与 cor
 index.ts[LA7M]: F:AI 协作能力：buildBrief 生成确定性评审简报、buildAnnotationPatch 生成 gate 可接受的 AI 批注补丁、ULID 形态批注 id | R:code:packages/core/src/types.ts,code:packages/patch/src/index.ts | A:buildBrief,formatBrief,buildAnnotationPatch,newAnnotationId | S:buildBrief 只把 open|ack 视为未决、questions 最多 5 条；AI 补丁 author 必须 ai:*，不写 ai_hint（信任边界）
 
 ===D:/AAA_Project/Covenant/packages/cli/===
-README.md[SG5T]: F:@covenant/cli 包说明：命令入口职责、内部依赖、退出码约定与「命令薄、逻辑在包内」的取舍 | R:code:packages/cli/src/index.ts | A:- | S:约束写明「新命令必须同时更新 usage()、AGENT.md 命令表与至少一条测试」，漏改即文档漂移
+README.md[SG5T]: F:@covenant/cli 包说明：命令入口职责、内部依赖、退出码约定与「命令薄、逻辑在包内」的取舍；语义编辑 AI 与人皆可（ADR-0005） | R:code:packages/cli/src/index.ts | A:- | S:约束写明「新命令必须同时更新 usage()、AGENT.md 命令表与至少一条测试」，漏改即文档漂移
 package.json[FV4T]: F:@covenant/cli 包声明：bin covenant 入口与 11 个 @covenant/* workspace 依赖 | R:code:packages/cli/README.md | A:- | S:bin 与 main 都指向 src/index.ts（tsx 直接跑，无 dist 构建产物）
 
 ===D:/AAA_Project/Covenant/packages/cli/src/===
@@ -201,7 +203,7 @@ index.ts[IN8L]: F:MCP 协议实现：手写 JSON-RPC 2.0 分发（initialize/too
 server.ts[EN6T]: F:MCP stdio 进程入口：readline 逐行读 JSON-RPC、stdout 只写协议 JSON、日志一律走 stderr | R:code:packages/mcp/src/index.ts | A:- | S:stdout 只能输出协议 JSON，任何日志/调试必须走 stderr，否则破坏 JSON-RPC 通道
 
 ===D:/AAA_Project/Covenant/packages/patch/===
-README.md[SQ6T]: F:@covenant/patch 包说明：补丁模型/门禁/文本应用的职责边界、分层拆分（parse→text→audit→gate→apply）与约束 | R:code:packages/patch/src/index.ts | A:- | S:不得改 gate 拒绝条件与 finding code（含 gate/remove-actor）；sha256/audit/finding 保持内部实现不从 barrel 导出
+README.md[SQ6T]: F:@covenant/patch 包说明：补丁模型/门禁/文本应用的职责边界、分层拆分（parse→text→audit→gate→apply）与约束 | R:code:packages/patch/src/index.ts | A:- | S:不得改 gate 拒绝条件与 finding code（含 gate/remove-actor）；批注保护与元素/关系增删放行口径见 ADR-0005；sha256/audit/finding 保持内部实现不从 barrel 导出
 package.json[FV4T]: F:@covenant/patch 包声明：name/version/type/exports 与 core、validate 依赖 | R:code:packages/patch/README.md | A:- | S:main/types 直指 src/index.ts（无构建产物）；只依赖 core 与 validate
 
 ===D:/AAA_Project/Covenant/packages/patch/src/===
@@ -273,7 +275,7 @@ selftest-audit.mjs[TQ7T]: F:审计自测：复制 dispatch-log 并注入 1 条�
 team_audit.mjs[OQ7M]: F:漂移审计 A0–A9：dispatch-log 字段（A1/A2/A3 合并 Lead 自记的 lead-spawn/lead-verdict 行）、tag↔commit、plan 新鲜度、Decision 索引、幽灵 owner、版本一致性、A9 版本单一事实源 | R:code:team/audit-baseline.json,code:team/owns.yaml,code:packages/core/src/version.ts | A:- | S:A1/A2/A3 先按 task 精确匹配、再退 target+24h 窗口合并 lead-* 自记行；A9 要求 COVENANT_VERSION=package.json 且 packages/*/src 无版本字面量；退出码 0=无 FAIL/1=有 FAIL/2=审计自身异常
 
 ===D:/AAA_Project/Covenant/skills/covenant/===
-SKILL.md[SG7S]: F:给陌生 Agent 的 Covenant 使用说明书：三条铁律、MCP 9 工具/CLI 命令、典型任务（回应批注/提交 AI 批注/改结构同步）与常见错误对照 | R:code:packages/mcp/src/index.ts,code:AGENTS.md | A:- | S:AI 只能追加批注、禁写 ai_hint、禁改状态；先 patch-check 再 apply；不要 yaml.load 后 dump 整份文件（会丢注释）
+SKILL.md[SG7S]: F:给陌生 Agent 的 Covenant 使用说明书：作者模式（ADR-0005）、三条铁律、MCP 9 工具/CLI 命令、典型任务与常见错误对照 | R:code:packages/mcp/src/index.ts,code:AGENTS.md | A:- | S:批注保护不变（AI 可新增批注、禁写 ai_hint、禁删改人工批注与状态）；元素/关系可增删改（先 patch-check 再 apply）；不要 yaml.load 后 dump 整份文件（会丢注释）
 
 ===D:/AAA_Project/Covenant/team/===
 README.md[SW7T]: F:团队编制与写域表：Lead/6 owner/3 只读角色、按包划分写域与「共享文件只有 Lead 可写」 | R:code:team/owns.yaml | A:- | S:一个包同一时间只有一个 owner；共享文件（arch/index.yaml、根 package.json、docs/、covenant.yaml）只有 Lead 可写；viz-owner 已由 diagram-owner 接管
@@ -291,7 +293,7 @@ covenant.yaml[FC5T]: F:试点项目清单模板：project team-starter、roots.c
 
 ===D:/AAA_Project/Covenant/todo/===
 README.md[SW7T]: F:todo 目录说明：五件套职责（requests/plan/open-questions/decisions + inbox）、更新规则 7 条与外部需求收件箱约定 | R:code:todo/plan.md,code:todo/requests.md | A:- | S:todo/ 不是产品事实源；requests 只追加不改写、plan 完成项必须有证据、决策变更须新增条目标注取代/受挑战
-decisions.md[SW7S]: F:决策索引 D-001~D-055：交付形态/单一事实源/写回门禁/浏览器不直写/身份隔离，以及编辑通道、bundle、分发、交点语义、段级批注等逐条决策与状态 | R:code:todo/open-questions.md,code:docs/design/open-questions.md | A:- | S:只追加不静默改写；变更须新条目并标「取代 D-xxx」；来源优先级 docs/design/open-questions > AGENT.md > interaction-and-ai-loop > 本文件
+decisions.md[SW7S]: F:决策索引 D-001~D-056：交付形态/单一事实源/写回门禁/浏览器不直写/身份隔离/AI 作者模式（D-056，ADR-0005）等逐条决策与状态 | R:code:todo/open-questions.md,code:docs/design/open-questions.md | A:- | S:只追加不静默改写；变更须新条目并标「取代 D-xxx」（如 D-056 部分取代 D-006 的作者身份假设）；来源优先级 docs/design/open-questions > AGENT.md > interaction-and-ai-loop > 本文件
 open-questions.md[SW7M]: F:待确认问题 Q1–Q16：编号命名空间与项目决策 Q5–Q10 区分、每题选项/默认假设/拍板结论、问题台账与一句话汇总 | R:code:todo/decisions.md,code:todo/plan.md | A:- | S:问题不删除；回答后补结论+日期并同步 decisions/plan；编号须写 todo/Qx 以免与 docs/design 的 Q5-Q10 混淆
 plan.md[SW7M]: F:任务计划表 T0–T49：状态四值、总览表与明细表（验收标准/证据/依赖/负责），由 todo-scribe 维护 | R:code:todo/requests.md,code:todo/open-questions.md | A:- | S:完成项必须写证据（路径/命令/输出摘要），仅静态检查须标「仅静态、未运行」；状态只取 待办/进行中/已完成/阻塞
 requests.md[SW7L]: F:用户原话逐字收集 R-001~R-040：每条含日期/来源/引用块原话/整理/现状核对，只追加 | R:code:todo/plan.md | A:- | S:引用块内标点错别字空格一律不改；整理必须写在引用外；提交时刻未提供时写「时间未提供」
@@ -309,5 +311,5 @@ _TEMPLATE.md[SW5T]: F:需求文件模板：front-matter（id/team/author/date/pr
 ===D:/AAA_Project/Covenant/packages/render/src/viewer/===
 README.md[SG5T]: F:viewer/ 文件夹契约：分片清单、IIFE 拼接纪律与拆分史（E2 教训） | R:code:packages/render/src/html.ts | A:- | S:分片是纯文本搬移不得改标识符；分片内容禁反引号与 ${；拆分后必须 vitest+golden 零 diff
 script-edit-elements.ts[DU8M]: F:图上增删元素：双击空白开创建表单、Delete 暂存删除、撤销、.pending-add/.pending-remove 视觉与 /elements patch ops | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-state.ts | A:pendingElementOps,pushPendingElementOps,elemEditStateFor | S:只进暂存绝不写 DATA.docs；被批注/relation/frame 引用拒删；id 匹配 ^e\.[a-z][a-z0-9-]{0,62}$；分片禁反引号与 ${
-script-edit-relations.ts[DU8M]: F:图上增删关系：连线模式（窗口 ⇒ 按钮 → 点目标 → 表单）、关系删除拦截、虚线 overlay 与 /relations patch ops | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-edit-elements.ts | A:pendingRelationOps,pushPendingRelationOps,relEditStateFor | S:被批注引用的关系禁删（含段级）；暂存新增/待删元素不参与连线；id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；依赖 apply 层 appendRelations（E9）
-script-state.ts[RU7S]: F:看板运行时状态与纯工具：指针封印（draggingWin/panning/260ms 冷却）、localStorage 存取、byId/docByKey/visibleAnns/esc/newId/nowISO | R:code:packages/render/src/html.ts | A:pointerSuppressed | S:画布平移必须计入封印（panning 漏封致拖拽扫过一路弹窗，实测 bug）；冷却盖住 pointerup 后残余事件；分片禁反引号与 ${
+script-edit-relations.ts[DU8M]: F:图上增删关系：连线模式（窗口 ⇒ 按钮 → 点目标 → 表单）、关系删除拦截、pending overlay（正交示意线）与 /relations patch ops | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-edit-elements.ts,code:packages/render/src/viewer/script-state.ts | A:pendingRelationOps,pushPendingRelationOps,relEditStateFor | S:被批注引用的关系禁删（含段级）；暂存新增/待删元素不参与连线；id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；路由几何在 script-state 的 routeOrthogonal（本分片不内联计算）
+script-state.ts[RU7S]: F:看板运行时状态与纯工具：指针封印（draggingWin/panning/260ms 冷却）、localStorage 存取、byId/docByKey/visibleAnns/esc/newId/nowISO、pending 关系正交路由 | R:code:packages/render/src/html.ts | A:pointerSuppressed,routeOrthogonal,nodeRouteBox | S:画布平移必须计入封印（panning 漏封致拖拽扫过一路弹窗，实测 bug）；nodeRouteBox 在无 getBBox 环境（jsdom）退回 positions+名义盒；分片禁反引号与 ${
