@@ -105,7 +105,7 @@ entries:
     s:
       - 与其他运行时分片共享同一个 IIFE 作用域，只能整段搬移，禁止改动任何标识符
       - 分片内容不得含反引号或 ${，否则会截断 html.ts 的模板字符串
-    source_sha256: 53b75200460e49ba3f6e752c65edb1b9d3fbaba191a242af4371d1d0713d39a4
+    source_sha256: 46f31579f352b11b94fc27e080c2ed9883de13386368dd7b6bc7a5c67d65fde9
   - file: packages/render/src/viewer/script-edit-elements.ts
     f: 图上增删元素分片：双击开创建表单、Delete 暂存删除、撤销与 patch ops 生成
     r:
@@ -130,7 +130,7 @@ entries:
       - 被批注引用的关系禁删（含段级批注）；暂存新增/待删元素不参与连线
       - 关系 id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；summary 必填；分片内禁反引号与 ${
       - 依赖 apply 层 appendRelations（E9 修复），patch add 才能落进 relations 块
-    source_sha256: 7840ab8145f248185b055afc99eabcdb9d34a5c9a9d16a775e5aa6f21ee336f7
+    source_sha256: 256f64edc4c5c93820a9fe6afbdb1f6a4c9b21525e697d9f095dd6739b6ea1bb
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

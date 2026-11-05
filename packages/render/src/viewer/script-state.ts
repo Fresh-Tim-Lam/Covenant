@@ -112,4 +112,32 @@ export const SCRIPT_STATE = `  var draggingWin = false;
     var off = -d.getTimezoneOffset(), sign = off >= 0 ? "+" : "-";
     off = Math.abs(off);
     return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()) + sign + p(Math.floor(off/60)) + ":" + p(off%60);
+  }
+  // —— 待新增关系的正交路由（与正式边同一视觉语言：端口出线 + 中间通道三段折线）——
+  // 节点盒：真实浏览器用 getBBox；jsdom 无该 API，退回 positions + 名义盒 150x40
+  function nodeRouteBox(el, doc, id){
+    if (el && typeof el.getBBox === "function") {
+      try { var b = el.getBBox(); if (b && b.width > 0) return b; } catch (e3) {}
+    }
+    var p = doc && doc.positions ? doc.positions[id] : null;
+    if (!p) return null;
+    return { x: p[0] - 75, y: p[1] - 20, width: 150, height: 40 };
+  }
+  function routeOrthogonal(ba, bb){
+    var acx = ba.x + ba.width / 2, acy = ba.y + ba.height / 2;
+    var bcx = bb.x + bb.width / 2, bcy = bb.y + bb.height / 2;
+    if (Math.abs(bcx - acx) >= Math.abs(bcy - acy)) {
+      var ax = bcx >= acx ? ba.x + ba.width : ba.x;
+      var ay = acy;
+      var bx = bcx >= acx ? bb.x : bb.x + bb.width;
+      var by = bcy;
+      var mx = (ax + bx) / 2;
+      return "M" + ax + " " + ay + " L" + mx + " " + ay + " L" + mx + " " + by + " L" + bx + " " + by;
+    }
+    var ay2 = bcy >= acy ? ba.y + ba.height : ba.y;
+    var ax2 = acx;
+    var by2 = bcy >= acy ? bb.y : bb.y + bb.height;
+    var bx2 = bcx;
+    var my = (ay2 + by2) / 2;
+    return "M" + ax2 + " " + ay2 + " L" + ax2 + " " + my + " L" + bx2 + " " + my + " L" + bx2 + " " + by2;
   }`;

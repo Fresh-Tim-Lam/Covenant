@@ -62,17 +62,21 @@ export const SCRIPT_EDIT_RELATIONS = `
     var doc = currentDoc();
     for (var i = 0; i < st.adds.length; i++){
       var a = st.adds[i];
-      var p1 = doc && doc.positions ? doc.positions[a.from] : null;
-      var p2 = doc && doc.positions ? doc.positions[a.to] : null;
-      if (!p1 || !p2) continue;
-      var ln = document.createElementNS(SVGNS, "line");
+      var ga = svg.querySelector('.node[data-id="' + a.from + '"]');
+      var gb = svg.querySelector('.node[data-id="' + a.to + '"]');
+      if (!ga || !gb) continue;
+      // 正交路由（与正式边同一视觉语言）：几何计算在 script-state 的 routeOrthogonal
+      var ba = nodeRouteBox(ga, doc, a.from), bb = nodeRouteBox(gb, doc, a.to);
+      if (!ba || !bb) continue;
+      var ln = document.createElementNS(SVGNS, "path");
       ln.setAttribute("class", "pending-add-rel");
       ln.setAttribute("data-id", a.id);
-      ln.setAttribute("x1", String(p1[0])); ln.setAttribute("y1", String(p1[1]));
-      ln.setAttribute("x2", String(p2[0])); ln.setAttribute("y2", String(p2[1]));
+      ln.setAttribute("d", routeOrthogonal(ba, bb));
       ln.setAttribute("stroke", "#2563eb");
       ln.setAttribute("stroke-width", "2");
+      ln.setAttribute("fill", "none");
       ln.setAttribute("stroke-dasharray", "6 4");
+      ln.setAttribute("marker-end", "url(#cvn-arrow)");
       ln.setAttribute("pointer-events", "none");
       var tip = document.createElementNS(SVGNS, "title");
       tip.textContent = "待新增关系 " + a.kind + "：" + a.summary;

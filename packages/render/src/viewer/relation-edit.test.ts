@@ -169,6 +169,11 @@ describe("图上增删关系：连线模式创建", () => {
     expect(counter.textContent).toContain("关系暂存 1");
     const overlay = d.querySelector('.pending-add-rel[data-id^="r."]');
     expect(overlay, "图上应出现虚线 overlay").not.toBeNull();
+    // 正交路由：必须是 path 且折线段轴对齐（复用正式边视觉语言，非两点直连）
+    expect(overlay!.tagName.toLowerCase()).toBe("path");
+    const dAttr = overlay!.getAttribute("d") ?? "";
+    expect(dAttr).toMatch(/^M[\d.\- ]+ L[\d.\- ]+ L[\d.\- ]+ L/);
+    expect(overlay!.getAttribute("marker-end")).toContain("cvn-arrow");
 
     const raw = JSON.parse(d.getElementById("covenant-data")!.textContent ?? "{}").docs[0];
     expect(raw.relations.length, "DATA.docs 只读语义：relations 不得被改").toBe(1);
