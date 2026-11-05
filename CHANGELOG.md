@@ -2,6 +2,38 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)；版本遵循语义化版本。
 
+## [0.4.0] — 2026-11-05
+
+图上编辑闭环 + 写回增强 + 治理机械化。
+
+### Added — 图上编辑
+- 图上增删元素：双击空白开创建表单，选中 Delete 暂存删除，可撤销；被批注/关系/框引用的元素拒绝删除（防 `kernel/dangling-ref`）。
+- 图上增删关系：元素窗口「⇒ 连线」进入连线模式，点目标元素建关系（kind/summary）；选中关系 Delete 暂存删除。
+- 两类暂存均接入补丁通道：「导出补丁 JSON」「导出全部补丁」「本地写回」自动带上 add/remove ops。
+
+### Added — 写回与分发
+- 本地编辑服务写回前先 `GET /api/rev` 取服务端真实 rev 并 rebase（连续写回不再被 `patch/stale` 拒绝）。
+- `covenant apply-bundle` + 看板「导出全部补丁」（`covenant-all.patches.json`）批量落盘多文档。
+
+### Added — 治理与认知
+- 文件粒度棘轮（`pnpm granularity`）：新文件源码 ≤300 行/测试 ≤400 行，存量只减不增。
+- 派发漂移审计 `pnpm agent:audit`（A1–A9）：版本单一事实源、派发记录合并判定、审计基线与自测。
+- AOCI 仓库认知层：独立 MCP 实例 + 全量 194 文件认知索引（F/R/A/S + source_sha256，verify aligned）。
+- 自身架构新增 `v.dev-support`（开发支撑服务视图）。
+
+### Fixed
+- 画布平移/小窗拖拽期间误触发其它元素悬浮窗（指针封印状态机补 `panning`）。
+- ✓ 核验按钮静默失效（作用域 `doc` 未定义 + `docId`/`key` 选择器失配）。
+- E9：`covenant apply` 关系 add 被追加进 elements 块（改走 `appendRelations`）；门禁元素 add 误用 relation 词表校验。
+- CLI 版本号三处硬编码 0.1.0 与 package.json 漂移（收敛到 `COVENANT_VERSION`，A9 审计强制）。
+
+### Changed
+- 测试基线 362 → 386；`html.ts` 拆分出 viewer/ 运行时分片（1977 → 1892 行，棘轮只减不增）。
+
+## [0.3.0] — 2026-11-04
+
+发布管理修复与治理基线（发布工作流版本派生、审计基线、粒度检查、dev-support 视图）；详见 `docs/releases/v0.3.0.md`。
+
 ## [0.1.0] — 2026-11-03
 
 首个可用版本：格式 + 渲染引擎 + 人机协作闭环 + 自举 + 可发现性。

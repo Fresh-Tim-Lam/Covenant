@@ -10,4 +10,4 @@
  *   2. 由 `pnpm agent:audit` 的 A9 检查强制，漂移即 FAIL；
  *   3. 其它包一律 `import { COVENANT_VERSION } from "@covenant/core"`，禁止再写版本字面量。
  */
-export const COVENANT_VERSION = "0.3.0";
+export const COVENANT_VERSION = "0.4.0";

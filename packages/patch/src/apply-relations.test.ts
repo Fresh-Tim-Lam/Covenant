@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyPatch, parsePatch } from "./index";
+import { applyPatch, parseActor, parsePatch } from "./index";
 import { parseDocument } from "@covenant/core";
 import { gatePatch } from "./gate";
 import type { Patch } from "./index";
@@ -71,13 +71,15 @@ function relPatch(): Patch {
   ).patch!;
 }
 
+const leadActor = parseActor("human:lead")!;
+
 describe("关系增删落盘（E9 回归）", () => {
   it("add /relations/- 落在 relations 块内而非 elements；remove 生效；rev+1", () => {
     const { docPath } = setup();
     const patch = relPatch();
     const base = parseDocument(DOC, docPath);
     expect(base.doc, "DOC fixture 应可解析").not.toBeNull();
-    const gate = gatePatch(base.doc!, patch, { actor: "human:lead" });
+    const gate = gatePatch(base.doc!, patch, { actor: leadActor });
     expect(gate, "gate 应放行：" + JSON.stringify(gate)).toEqual([]);
 
     const result = applyPatch(docPath, patch, { by: "human:lead" });
@@ -119,7 +121,7 @@ describe("关系增删落盘（E9 回归）", () => {
       "patch.json",
     ).patch!;
     const base = parseDocument(DOC, docPath);
-    const gate = gatePatch(base.doc!, patch, { actor: "human:lead" });
+    const gate = gatePatch(base.doc!, patch, { actor: leadActor });
     expect(gate.some((f) => f.code === "gate/segment-kind"), JSON.stringify(gate)).toBe(true);
   });
 
@@ -142,7 +144,7 @@ describe("关系增删落盘（E9 回归）", () => {
       "patch.json",
     ).patch!;
     const base = parseDocument(DOC, docPath);
-    const gate = gatePatch(base.doc!, patch, { actor: "human:lead" });
+    const gate = gatePatch(base.doc!, patch, { actor: leadActor });
     expect(gate.some((f) => f.code === "gate/impl-status"), JSON.stringify(gate)).toBe(true);
   });
 });

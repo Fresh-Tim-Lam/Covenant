@@ -6,17 +6,18 @@
 
 ## 你收到了什么
 
-一个可移植工具包 `covenant-kit-0.1.0.zip`，用来**把你的项目架构画成可交互的契约图**：
+一个可移植工具包 `covenant-kit-0.4.0.zip`，用来**把你的项目架构画成可交互的契约图**：
 
 - `.cvn.yaml` = 架构的唯一事实源（声明元素、关系、视图、批注）
 - 渲染出的 HTML = 离线可交互看板（缩放/拖拽/点选/悬浮窗/批注编辑/多窗/彩色引导线）
+- 0.4 新增：图上直接增删元素（双击空白建 / Delete 暂存删）与关系（窗口 ⇒ 连线 / Delete 暂存删），导出补丁或经本地编辑服务写回 .cvn.yaml
 - 不需要 pnpm / 不需要网络 / 只需要 Node ≥ 20
 
 ## 5 分钟上手
 
 ```bash
-# 1. 解压 covenant-kit-0.1.0.zip，进入目录
-cd covenant-kit-0.1.0
+# 1. 解压 covenant-kit-0.4.0.zip，进入目录
+cd covenant-kit-0.4.0
 
 # 2. 校验自带模板（确认工具能跑）
 node bin/covenant.mjs check templates/team-starter
@@ -40,7 +41,9 @@ node bin/covenant.mjs build <你的架构目录> -o out/covenant.html
 
 # 7. 如果想在线编辑并写回 .cvn.yaml：
 node bin/covenant.mjs serve out --edit --open
-#    页面上点元素 → 批注 → 写回批注（自动备份 .audit/）
+#    批注：点元素 → 批注 → 写回批注（自动备份 .audit/）
+#    图上编辑：双击空白建元素；选中按 Delete 暂存删；窗口 ⇒ 连线建关系 →
+#    「写回」或「导出补丁 JSON」→ node bin/covenant.mjs apply <doc> <patch> --by human:你
 
 # 8. 如果想输出一整套文件夹站点（多图）：
 node bin/covenant.mjs bundle <你的架构目录> -o out/site
@@ -97,7 +100,7 @@ views:
 
 1. `.cvn.yaml` 是唯一事实源——HTML/SVG 都是构建产物，不要手改；
 2. **AI 只能加批注**（`author: ai:xxx`），不能改元素/关系/状态——门禁会拒绝；
-3. 改架构（增删元素/关系）直接编辑 `.cvn.yaml`，重新 `build`；
+3. 改架构（增删元素/关系）：可图上操作导出补丁后 `apply`，或直接编辑 `.cvn.yaml` 重新 `build`；
 4. 改批注在页面上操作（写回或导出补丁），不要手改 YAML 里的批注；
 5. 每次提交代码前跑 `node bin/covenant.mjs check <你的架构目录>` 确认 0 error。
 

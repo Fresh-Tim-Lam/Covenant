@@ -35,7 +35,7 @@ entries:
     s:
       - 必须等于根 package.json 的 version，由 pnpm agent:audit 的 A9 检查强制
       - 其它包禁止再写版本字面量（历史事故：三处硬编码停在 0.1.0 而 package.json 已 0.3.0）
-    source_sha256: ad59a10f0d2e6736188429b3a20bf6c7516762cf67db8d086c55022a9bdf18e3
+    source_sha256: e7ffd6318fd933dd05745f87e811cfa7ca71443bf92dbc15dda03668e8e01c7f
   - file: packages/profile/src/index.ts
     f: 剖面注册表：10 个内置剖面的词表、关系矩阵与专有规则
     r:
@@ -188,6 +188,14 @@ entries:
     r: []
     a: []
     source_sha256: 42055f309fe6df22c08b40f74050bf149de36fb742e783b3f347f8249620f6d1
+  - file: scripts/release-bump.mjs
+    f: 发布版本号统一提升：根与全部包 package.json + COVENANT_VERSION
+    r:
+      - packages/core/src/version.ts
+    a: []
+    s:
+      - 一处不落会被 A8/A9 审计拦下；只改版本字段，不动依赖
+    source_sha256: c55b50d6c6511f2f7979c2442deb71a1e198dd8547d2f49ff655349bfd5e479b
   - file: scripts/e2e-html-patch.mjs
     f: 端到端演练：jsdom 操作 HTML 并导出补丁
     r: []
