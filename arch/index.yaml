@@ -26,7 +26,16 @@ entries:
       - 其他所有包
     s:
       - finding 排序保证输出可比对
-    source_sha256: 5cd2d4c5823b0e477373a738474c7e426a3bf51d59655817776252b73e4c980d
+    source_sha256: 5121f143cc39267a58babf353ba8762b2ed03adf6f7932c6cc0d084e3a560460
+  - file: packages/core/src/version.ts
+    f: 工具版本唯一事实源：COVENANT_VERSION 常量，供 cli/mcp/render 引用
+    r: []
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - 必须等于根 package.json 的 version，由 pnpm agent:audit 的 A9 检查强制
+      - 其它包禁止再写版本字面量（历史事故：三处硬编码停在 0.1.0 而 package.json 已 0.3.0）
+    source_sha256: ad59a10f0d2e6736188429b3a20bf6c7516762cf67db8d086c55022a9bdf18e3
   - file: packages/profile/src/index.ts
     f: 剖面注册表：10 个内置剖面的词表、关系矩阵与专有规则
     r:
@@ -77,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: d5ccfda5e270a662d4a5db6ffb3a61a3d0b1109cd4e99379a39f76bafd4962a0
+    source_sha256: 320f79ad2d19ef6887084dfb33efba2e0198078406ebc107629509bddbaa02cf
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -138,7 +147,7 @@ entries:
     a: []
     s:
       - 退出码 0/1/2/3/4 是门禁契约，改动需同步 gate-spec
-    source_sha256: 1f0a8af5f242a0aa7b2d755813e1db3766a9c026a289a8ec408e4b03dc3a8a5f
+    source_sha256: 05a9bf4951bef36b59d6c2c5d4e89ffde721f64f0d6c2b33b19a57de0b77e2b0
   - file: scripts/svg-to-png.mjs
     f: 开发期视觉核对：SVG→PNG
     r: []
@@ -164,7 +173,7 @@ entries:
       - scripts/mcp-smoke.mjs
     s:
       - AI 补丁必须走 patch-check；AI 不得写 ai_hint 或改状态
-    source_sha256: a51f6e7cd4d9f8309f092ec03fa9bf5076e636cf4448c1fd42804ada83b2a29d
+    source_sha256: 4be3ee931d89bb00d253e271b91a2ffbf2488aa6490f5e20765bd0d6d91ff744
   - file: packages/mcp/src/server.ts
     f: stdio 入口：逐行读 JSON-RPC，stdout 只输出协议
     r:
@@ -213,7 +222,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - accepted ADR 必须被文档 links.kind=adr 引用（cli adr 做跨文档校验）
-    source_sha256: e4c352931c934a99e156c41a594bed0c28d00740dfd9cdbf632cb04fa1eabad7
+    source_sha256: 6f9d2d6438ad35388edebff4ebfbff129bcfbb2639368a5fd07ca7bfde085057
   - file: scripts/clean-room-verify.mjs
     f: 干净环境复现：复制仓库排除产物，重装依赖并跑 verify
     r: []

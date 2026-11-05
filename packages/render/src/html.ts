@@ -5,7 +5,7 @@
  *   点选元素/关系 → 新增批注（localStorage）→ 角标实时更新 → 导出 .patch.json。
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
-import type { CovenantDoc, Evidence, ImplStatus, ViewDef } from "@covenant/core";
+import { COVENANT_VERSION, type CovenantDoc, type Evidence, type ImplStatus, type ViewDef } from "@covenant/core";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 import { CSS } from "./viewer.css";
 
@@ -1969,7 +1969,7 @@ export function renderHtml(views: DocView[], options: SiteOptions = {}): string 
     "</main>",
     "</div>",
     '<footer><span>由 covenant 构建</span><span>只读语义 + 本地批注 · 导出后交给 CLI/Agent 校验入库</span><span>语义副本内嵌于 #covenant-data</span></footer>',
-    `<script id="covenant-data" type="application/json">${safeJson({ version: "0.1.0", docs })}</script>`,
+    `<script id="covenant-data" type="application/json">${safeJson({ version: COVENANT_VERSION, docs })}</script>`,
     `<script>${SCRIPT}</script>`,
     "</body>",
     "</html>",

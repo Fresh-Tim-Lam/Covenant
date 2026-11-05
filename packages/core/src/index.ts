@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 export * from "./types";
+export { COVENANT_VERSION } from "./version";
 export { parseDocument } from "./parse";
 
 /** 向上查找仓库根：以 schema/kernel.schema.json 为锚点 */

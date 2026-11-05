@@ -12,8 +12,8 @@
  * 存量债务如实报出，不回填、不豁免、不为绿灯伪造数据。
  */
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "../..");
 const argv = process.argv.slice(2);
@@ -96,12 +96,55 @@ function judge(code, name, invariant, newItems, legacyItems, detailFn) {
   }
 }
 
+// ---------- §3.1 兜底合并：插件行没有字段时，用 Lead 自记行补 ----------
+// dsh-agent-team 插件只写 ts/actor/phase/target/desc，不捕获 mode/task/evidence/verdict。
+// 因此 AGENTS.md §3.1 要求 Lead 另写 phase=lead-spawn / lead-verdict 的行。
+// 判定时必须把同一 target 的两行合并看，否则 A1/A2/A3 会永久 FAIL。
+const leadSpawnRows = log.filter((e) => e.phase === "lead-spawn");
+const leadVerdictRows = log.filter((e) => e.phase === "lead-verdict");
+/** 找对应的 Lead 自记行：优先按 task 精确匹配，退化按 target + 24h 窗口 */
+function findLeadRow(row, pool) {
+  const taskId = row.task ?? row.task_id;
+  if (taskId) {
+    const exact = pool.filter((r) => r.task === taskId);
+    if (exact.length) return exact[exact.length - 1];
+  }
+  const t0 = new Date(row.ts).getTime();
+  let best = null;
+  let bestDt = Infinity;
+  for (const r of pool) {
+    if (r.target !== row.target) continue;
+    const dt = Math.abs(new Date(r.ts).getTime() - t0);
+    if (dt < bestDt && dt <= 24 * 60 * 60 * 1000) {
+      best = r;
+      bestDt = dt;
+    }
+  }
+  return best;
+}
+/** 兼容插件写法：outcome 视同 verdict；evidence 可能是字符串或数组 */
+function normalizeEvidence(v) {
+  if (Array.isArray(v)) return v.filter(Boolean);
+  if (typeof v === "string" && v.trim()) return [v];
+  return [];
+}
+const mergedMode = (e) => e.mode ?? e.payload?.mode ?? findLeadRow(e, leadSpawnRows)?.mode;
+const mergedTask = (e) => e.task ?? e.task_id ?? findLeadRow(e, leadSpawnRows)?.task;
+const mergedVerdict = (e) => {
+  const lead = findLeadRow(e, leadVerdictRows);
+  const own = normalizeEvidence(e.evidence);
+  return {
+    verdict: e.verdict ?? e.outcome ?? lead?.verdict,
+    evidence: own.length > 0 ? own : normalizeEvidence(lead?.evidence),
+  };
+};
+
 // ---------- A1：spawn 是否带 mode（L9） ----------
 {
-  const bad = (arr) => arr.filter((e) => !e.mode && !e.payload?.mode);
+  const bad = (arr) => arr.filter((e) => !mergedMode(e));
   judge("A1", "spawn 必须显式传 mode（基线后）", "L9", bad(newSpawns), bad(legacySpawns), (st, nv, lg) =>
     st === "fail"
-      ? `基线后 ${nv.length}/${newSpawns.length} 个 spawn 缺 mode：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
+      ? `基线后 ${nv.length}/${newSpawns.length} 个 spawn 缺 mode（插件行与 lead-spawn 行都没有）：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
       : st === "legacy"
         ? `基线后 0 违规；存量 ${lg.length} 条（${cutoff?.toISOString()} 前，不追溯）`
         : `${newSpawns.length} 个 spawn 均带 mode`,
@@ -110,7 +153,7 @@ function judge(code, name, invariant, newItems, legacyItems, detailFn) {
 
 // ---------- A2：spawn 是否带任务关联（L1） ----------
 {
-  const bad = (arr) => arr.filter((e) => !e.task && !e.task_id);
+  const bad = (arr) => arr.filter((e) => !mergedTask(e));
   judge("A2", "spawn 前先建任务并关联（基线后）", "L1", bad(newSpawns), bad(legacySpawns), (st, nv, lg) =>
     st === "fail"
       ? `基线后 ${nv.length}/${newSpawns.length} 个 spawn 无 task 关联：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
@@ -122,10 +165,14 @@ function judge(code, name, invariant, newItems, legacyItems, detailFn) {
 
 // ---------- A3：done 是否带 evidence 与 verdict（L3） ----------
 {
-  const bad = (arr) => arr.filter((e) => !Array.isArray(e.evidence) || e.evidence.length === 0 || !e.verdict);
+  const bad = (arr) =>
+    arr.filter((e) => {
+      const m = mergedVerdict(e);
+      return !m.verdict || !Array.isArray(m.evidence) || m.evidence.length === 0;
+    });
   judge("A3", "done 必须带 evidence + verdict（基线后）", "L3", bad(newDones), bad(legacyDones), (st, nv, lg) =>
     st === "fail"
-      ? `基线后 ${nv.length}/${newDones.length} 个 done 缺 evidence/verdict：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
+      ? `基线后 ${nv.length}/${newDones.length} 个 done 缺 evidence/verdict（插件行与 lead-verdict 行都没有）：${nv.map((e) => e.target).slice(0, 5).join(", ")}`
       : st === "legacy"
         ? `基线后 0 违规；存量 ${lg.length} 条（幽灵验收，不追溯）`
         : `${newDones.length} 个 done 均带证据`,
@@ -239,6 +286,50 @@ function judge(code, name, invariant, newItems, legacyItems, detailFn) {
     "L4",
     mismatch.length > 0 ? "FAIL" : "PASS",
     mismatch.length > 0 ? `根 ${rootVer} ≠ ${mismatch.join(", ")}` : `全部 = ${rootVer}`,
+  );
+}
+
+// ---------- A9：版本单一事实源（L4） ----------
+// 版本号曾在三处硬编码且全部停在 0.1.0（cli VERSION / mcp SERVER_INFO / render 内嵌数据），
+// 而 package.json 已 0.3.0 —— 打印版本的路径全在撒谎。现在收敛到 core 的 COVENANT_VERSION，
+// 本检查保证：① 该常量等于 package.json；② packages/*/src 下不再出现版本字面量。
+{
+  const rootVer = (() => {
+    const t = readText("package.json");
+    const m = t ? /"version"\s*:\s*"([^"]+)"/.exec(t) : null;
+    return m ? m[1] : null;
+  })();
+  const verFile = readText("packages/core/src/version.ts");
+  const constVer = verFile ? /COVENANT_VERSION\s*=\s*"([^"]+)"/.exec(verFile)?.[1] : null;
+  const problems = [];
+  if (!constVer) problems.push("packages/core/src/version.ts 缺少 COVENANT_VERSION 常量");
+  else if (constVer !== rootVer) problems.push(`COVENANT_VERSION=${constVer} ≠ package.json=${rootVer}`);
+
+  // 扫描源码里的版本字面量（排除 version.ts 自身与测试）
+  const offenders = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === "node_modules" || e.name === "__golden__" || e.name.startsWith(".")) continue;
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".ts") && !e.name.endsWith(".test.ts")) {
+        const t = readText(p);
+        if (!t) continue;
+        if (/(?:VERSION|version)\s*[:=]\s*"\d+\.\d+\.\d+"/.test(t) && !p.endsWith("version.ts")) {
+          offenders.push(relative(ROOT, p).split("\\").join("/"));
+        }
+      }
+    }
+  };
+  walk(join(ROOT, "packages"));
+  if (offenders.length) problems.push(`源码内硬编码版本字面量：${offenders.join(", ")}`);
+
+  record(
+    "A9",
+    "版本单一事实源（COVENANT_VERSION = package.json，且无硬编码）",
+    "L4",
+    problems.length > 0 ? "FAIL" : "PASS",
+    problems.length > 0 ? problems.join("；") : `全部来自 packages/core/src/version.ts = ${constVer}`,
   );
 }
 

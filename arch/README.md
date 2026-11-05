@@ -11,6 +11,11 @@
 |------|------|
 | `system.cvn.yaml` | 仓库自身的容器视图：组件边界、依赖方向、已知缺口批注；`v.main` 系统结构 / `v.delivery` 交付与发布 |
 | `index.yaml` | FRAS 索引：每个源文件的 File 职责 / 必读依赖 / 上层调用者 / 隐性约束 + `source_sha256` |
+| `dev-support.svg` | `v.dev-support`（开发支撑服务）视图的审阅快照；由 `covenant render --view v.dev-support` 生成 |
+
+> **不提交 `system.svg`**：`v.main` 的渲染产物与 `packages/render/src/__golden__/self-arch.svg`
+> 字节完全相同（同 sha256）。同一产物存两份，改一处忘另一处就会出现两张不一致的"系统结构图"。
+> 需要图时按下方命令现生成；黄金副本由 `pnpm golden` 维护。
 
 ## 校验命令
 

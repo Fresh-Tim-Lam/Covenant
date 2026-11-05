@@ -6,7 +6,7 @@
  */
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { parseDocument } from "@covenant/core";
+import { COVENANT_VERSION, parseDocument } from "@covenant/core";
 import type { CovenantDoc, Finding } from "@covenant/core";
 import { checkDocument } from "@covenant/validate";
 import { layout, selectView } from "@covenant/layout";
@@ -19,7 +19,7 @@ import { checkIndex, writeIndex } from "@covenant/indexer";
 import { buildBrief } from "@covenant/ai";
 
 export const PROTOCOL_VERSION = "2024-11-05";
-export const SERVER_INFO = { name: "covenant", version: "0.1.0" };
+export const SERVER_INFO = { name: "covenant", version: COVENANT_VERSION };
 
 export interface JsonRpcRequest {
   jsonrpc?: string;

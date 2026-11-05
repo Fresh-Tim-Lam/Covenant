@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { appendFileSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import { parseDocument } from "@covenant/core";
+import { COVENANT_VERSION, parseDocument } from "@covenant/core";
 import type { CovenantDoc, Finding } from "@covenant/core";
 import { checkDocument } from "@covenant/validate";
 import { applyPatch, gatePatch, parseActor, parsePatch } from "@covenant/patch";
@@ -19,7 +19,7 @@ import type { DocView } from "@covenant/render";
 import { startServer } from "./serve";
 import { runDoctor } from "./doctor";
 
-const VERSION = "0.1.0";
+const VERSION = COVENANT_VERSION;
 
 /** 门禁退出码（见 docs/design/gate-spec-v0.md §2） */
 const EXIT_SERVE = -1;

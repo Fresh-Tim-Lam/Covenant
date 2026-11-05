@@ -98,6 +98,5 @@ views:
       elements: [e.*]
       relations: [r.*]
     layout:
-      engine: elk
       direction: RIGHT
       spacing: { rank: 140, node: 52 }

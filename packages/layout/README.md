@@ -4,7 +4,7 @@
 确定性布局：DFS 破环 → Kahn 分层 → barycenter 交叉最小化 → 长边"通道 + 侧边走廊"（竖/横段只走列/行间隙，不穿框）；序列图专用 sequencer。
 
 ## 依赖
-- 内部：`@covenant/core`、`@covenant/profile`
+- 内部：`@covenant/core`（仅类型；不依赖 `@covenant/profile`——剖面解析在 core/profile 侧完成，layout 只吃已解析的 `CovenantDoc`）
 - 被依赖：`@covenant/render`、`@covenant/cli`、`@covenant/mcp`
 
 ## 公共接口

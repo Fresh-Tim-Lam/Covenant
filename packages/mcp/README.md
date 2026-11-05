@@ -1,7 +1,7 @@
 # @covenant/mcp
 
 ## 职责
-MCP stdio 服务：把 check/render/build/patch/apply/diff/index/brief 暴露给外部 Agent（9 个工具）。
+MCP stdio 服务：把 check/render/build/patch/apply/diff/index/brief/read_doc 暴露给外部 Agent（9 个工具）。
 
 ## 依赖
 - 内部：core/validate/layout/render/patch/diff/indexer/ai

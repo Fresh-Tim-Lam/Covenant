@@ -3,8 +3,9 @@
  * 文件命名 NNNN-<slug>.md，front-matter 记录编号/状态/日期/决策人/supersedes 链。
  *
  * 已实现：front-matter 解析与字段校验、文件名编号一致、supersedes 目标存在。
- * 未实现（诚实记录）：catalog 的"accepted ADR 必须被文档 links.kind=adr 引用"——
- * 当前 .cvn 格式还没有 links 字段，等格式扩展后再接。
+ * 已实现：catalog 的"accepted ADR 必须被文档 links.kind=adr 引用"——
+ * `checkAcceptedAdrReferenced` 对 accepted 但未被任何文档 `links[]` 引用的 ADR 报错，
+ * 由 CLI catalog 命令调用（见 packages/cli/src/index.ts）。`.cvn` 的 `links` 字段早已存在。
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
