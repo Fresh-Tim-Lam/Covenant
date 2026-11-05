@@ -65,13 +65,15 @@ export const SCRIPT_EDIT_RELATIONS = `
       var ga = svg.querySelector('.node[data-id="' + a.from + '"]');
       var gb = svg.querySelector('.node[data-id="' + a.to + '"]');
       if (!ga || !gb) continue;
-      // 正交路由（与正式边同一视觉语言）：几何计算在 script-state 的 routeOrthogonal
+      // 线路路由底层：与正式边同源——layout 注入的 route() 选端口出线，clearPath() 避开无关框
       var ba = nodeRouteBox(ga, doc, a.from), bb = nodeRouteBox(gb, doc, a.to);
       if (!ba || !bb) continue;
+      var pts = route(ba, bb, i);
+      pts = clearPath(pts, nodesRouteRects(svg, doc), a.from, a.to);
       var ln = document.createElementNS(SVGNS, "path");
       ln.setAttribute("class", "pending-add-rel");
       ln.setAttribute("data-id", a.id);
-      ln.setAttribute("d", routeOrthogonal(ba, bb));
+      ln.setAttribute("d", pts.map(function(p, k){ return (k === 0 ? "M" : "L") + p.x + " " + p.y; }).join(" "));
       ln.setAttribute("stroke", "#2563eb");
       ln.setAttribute("stroke-width", "2");
       ln.setAttribute("fill", "none");

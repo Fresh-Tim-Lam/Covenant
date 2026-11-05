@@ -816,7 +816,7 @@ function sideNormal(side: PortSide): Point {
   return { x: 0, y: 1 };
 }
 
-function dedupe(points: Point[]): Point[] {
+export function dedupe(points: Point[]): Point[] {
   const out: Point[] = [];
   for (const p of points) {
     const last = out[out.length - 1];

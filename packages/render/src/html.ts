@@ -6,11 +6,21 @@
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
 import { COVENANT_VERSION, type CovenantDoc, type Evidence, type ImplStatus, type ViewDef } from "@covenant/core";
+import { clearPath, dedupe, route, ROUTE_MARGIN } from "@covenant/layout";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 import { CSS } from "./viewer.css";
 import { SCRIPT_EDIT_ELEMENTS } from "./viewer/script-edit-elements";
 import { SCRIPT_EDIT_RELATIONS } from "./viewer/script-edit-relations";
 import { SCRIPT_STATE } from "./viewer/script-state";
+
+/**
+ * 运行时路由底层注入（ADR-0005 后编辑板块必须与正式边同源）：
+ * 把 layout 的真实路由函数以源码形式注入 SCRIPT——单一事实源，构建期与运行时共用同一实现，
+ * 禁止在查看器分片里另写简化路由（曾被用户否决：pending 线必须结合线路路由底层）。
+ */
+const SCRIPT_ROUTE_PRELUDE =
+  "var ROUTE_MARGIN=" + ROUTE_MARGIN + ";\n" +
+  [dedupe, route, clearPath].map((f) => f.toString()).join("\n");
 
 export interface DocView {
   doc: CovenantDoc;
@@ -349,6 +359,7 @@ const SCRIPT = `
   var colorSeq = 0;
   var HOVER_CLOSE_MS = 120;
 ${SCRIPT_STATE}
+${SCRIPT_ROUTE_PRELUDE}
 
   // ===== 多小窗 / 同色引导线 / 彩色锚点高亮 =====
   function currentSvg(){
