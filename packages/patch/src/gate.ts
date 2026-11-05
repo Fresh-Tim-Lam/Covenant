@@ -260,7 +260,7 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
         if (!elId) out.push(finding("gate/element-id", "元素 id 必填"));
         else if ((doc.elements ?? []).some((e) => e.id === elId)) out.push(finding("gate/element-exists", `元素 ${elId} 已存在`));
         if (!ev.name) out.push(finding("gate/element-name", "元素 name 必填"));
-        const sub = validateTypedObjectFields("relation", ev);
+        const sub = validateTypedObjectFields("element", ev);
         out.push(...sub);
         continue;
       }
@@ -275,14 +275,13 @@ export function gatePatch(doc: CovenantDoc, patch: Patch, options: GateOptions):
       }
       if (op.op === "add" && op.path === "/relations/-") {
         const rv = (op.value ?? {}) as Record<string, unknown>;
-        const fromId = String(rv.from ?? "");
-        const toId = String(rv.to ?? "");
-        if (!(doc.elements ?? []).some((e) => e.id === fromId)) {
-          out.push(finding("gate/relation-endpoints", `关系 from "${fromId}" 不存在`));
+        const ends: Array<[string, string]> = [["from", String(rv.from ?? "")], ["to", String(rv.to ?? "")]];
+        for (const [label, eid] of ends) {
+          if (!(doc.elements ?? []).some((e) => e.id === eid)) {
+            out.push(finding("gate/relation-endpoints", `关系 ${label} "${eid}" 不存在`));
+          }
         }
-        if (!(doc.elements ?? []).some((e) => e.id === toId)) {
-          out.push(finding("gate/relation-endpoints", `关系 to "${toId}" 不存在`));
-        }
+        out.push(...validateTypedObjectFields("relation", rv));
         continue;
       }
       out.push(

@@ -5,7 +5,7 @@
 .gitignore[FG5T]: F:忽略依赖/构建产物/缓存/本地密钥与 AOCI 运行时资产 | R:- | A:- | S:.gh-token、dist/**、.aoci/ledger.jsonl 必须保持忽略，误提交即凭据泄露；dist 是可再生物不得入库
 ACCEPTANCE.md[SQ8T]: F:v0.1.0 目标逐条映射到可复现命令与实测结果的验收报告 | R:- | A:- | S:任何人可按 §5 复跑；遗留项必须显式列出而非隐去，本报告不替代人工浏览器验收
 AGENT.md[SG9M]: F:Agent 与人的接入第一站：角色、技术栈、命令、架构、规范、边界、陷阱、参考 | R:code:AGENTS.md,code:README.md | A:- | S:团队协作必读指向 AGENTS.md；边界与禁止行为在此与 AGENTS.md 定义，二者冲突时以 AGENTS.md 为准
-AGENTS.md[SG9M]: F:多 Agent 派发契约：L1–L12 不变量、单一事实源表、验收阶梯 L0–L6、写域隔离、漂移审计 A1–A8 | R:code:AGENT.md,code:team/owns.yaml,code:scripts/agent/team_audit.mjs | A:- | S:执行者自报 PASS 不算验收(L2)；L11 禁止跨工作区写入；L12 文件粒度棘轮只许减不许增；文末 aoci:begin 区块由 aoci init 追加，禁手改
+AGENTS.md[SG9M]: F:多 Agent 派发契约：L1–L12 不变量、单一事实源表、验收阶梯 L0–L6、写域隔离、漂移审计 A1–A9 | R:code:AGENT.md,code:team/owns.yaml,code:scripts/agent/team_audit.mjs | A:- | S:执行者自报 PASS 不算验收(L2)；L11 禁止跨工作区写入；L12 粒度棘轮只许减不许增；L1 测试基线数字随新增测试同步 §4（当前 386）；文末 aoci:begin 区块由 aoci init 追加，禁手改
 CHANGELOG.md[SV8T]: F:Keep a Changelog 格式的版本变更记录（Added/Changed/Fixed 分类） | R:- | A:- | S:版本号唯一事实源是根 package.json，本文件只记录不定义版本
 CONTRIBUTING.md[SG7T]: F:贡献指南：环境要求、开发流程、门禁命令、提交与评审约定 | R:code:package.json | A:- | S:Node22+ pnpm11+；提交前 pnpm verify 与 pnpm typecheck 必须双绿，仅单侧通过视为未完成
 LICENSE[FG3T]: F:MIT 许可证正文与版权声明 | R:- | A:- | S:版权方为 ALLELab；变更许可证属人的决策，Agent 不得改动本文件
@@ -204,12 +204,12 @@ README.md[SQ6T]: F:@covenant/patch 包说明：补丁模型/门禁/文本应用�
 package.json[FV4T]: F:@covenant/patch 包声明：name/version/type/exports 与 core、validate 依赖 | R:code:packages/patch/README.md | A:- | S:main/types 直指 src/index.ts（无构建产物）；只依赖 core 与 validate
 
 ===D:/AAA_Project/Covenant/packages/patch/src/===
-apply.ts[AQ8S]: F:补丁应用编排：四道安全网（base_rev 乐观锁、操作白名单、写临时文件复验后原子 rename、write-ahead 审计 intent/commit） | R:code:packages/patch/src/text.ts,code:packages/patch/src/audit.ts,code:packages/patch/src/parse.ts | A:applyPatch | S:门禁失败时不得写入任何字节；dryRun 不写盘只返回 newRev+rendered；写前先审计 intent，rename 后再写 commit
+apply.ts[AQ8S]: F:补丁应用编排：四道安全网（base_rev 乐观锁、操作白名单、写临时文件复验后原子 rename、write-ahead 审计 intent/commit）；关系 add 经 appendRelations 落 relations 块 | R:code:packages/patch/src/text.ts,code:packages/patch/src/audit.ts,code:packages/patch/src/parse.ts | A:applyPatch | S:门禁失败不得写入任何字节；关系 add 曾误用 appendElements 落进 elements 块（E9，patch add 链路首次端到端验证时发现），必须走 appendRelations
 audit.ts[PO6T]: F:write-ahead 审计：同目录 .audit/apply-<day>.jsonl 只追加，提供 sha256 与 audit 记录 | R:code:packages/patch/src/apply.ts | A:sha256,audit | S:审计失败静默吞异常、绝不阻断主流程；按记录 at 的日期分文件；sha256/audit 不从 barrel 导出
-gate.ts[SS9L]: F:补丁门禁（纯函数）：信任边界 T1–T7——AI 不得冒充 human/写 ai_hint/改状态/删改批注，base_rev 与 target 必须存在，状态流转白名单，批注/元素/关系字段校验 | R:code:packages/patch/src/parse.ts,code:docs/design/ai-trust-boundary.md | A:gatePatch,parseActor,validateTypedObjectFields | S:TRANSITIONS 是状态机契约（resolved/wontfix 只能回 open，superseded 终态）；AI 删除得 gate/remove-actor、改状态得 gate/status-actor；segment 上界 gate 无法得知，需渲染层按实际路径段数处理
+gate.ts[SS9L]: F:补丁门禁（纯函数）：信任边界 T1–T7——AI 不得冒充 human/写 ai_hint/改状态/删改批注，base_rev 与 target 必须存在，状态流转白名单，批注/元素/关系字段与端点校验 | R:code:packages/patch/src/parse.ts,code:docs/design/ai-trust-boundary.md | A:gatePatch,parseActor,validateTypedObjectFields | S:TRANSITIONS 是状态机契约（resolved/wontfix 只能回 open，superseded 终态）；元素 add 类型字段用 element（曾误传 relation 放行元素 segment）；关系 add 校验 from/to 存在并同步类型字段校验
 index.ts[LQ6T]: F:@covenant/patch 公共入口：只做 re-export，声明 parse/text/audit/gate/apply 的分层契约 | R:code:packages/patch/src/parse.ts,code:packages/patch/src/gate.ts | A:parsePatch,classifyOps,gatePatch,parseActor,applyPatch,annotationYaml | S:removeAnnotationBlocks 只在模块内导出（由 applyPatch 编排），不对外；sha256/audit/finding 也不导出
 parse.ts[DQ7S]: F:补丁模型与解析：Patch/PatchOp 契约、JSON 校验、classifyOps 把操作分为批注/元素/关系/未知、共用 finding 与路径正则 | R:code:packages/core/src/types.ts | A:parsePatch,classifyOps,finding,STATUS_PATH,REMOVE_PATH | S:路径正则是 gate/apply 共同契约；classifyOps 的 unknown 非空即拒绝；finding 固定 L4/error（补丁模块统一诊断）
-text.ts[DG7M]: F:保留注释的 YAML 文本级编辑：追加/替换/删除批注块、状态流转三行、元素/关系块增删、rev+1；不读写文件 | R:code:packages/patch/src/parse.ts | A:annotationYaml,appendAnnotations,applyStatusChanges,bumpRev,replaceAnnotationBlocks,removeAnnotationBlocks | S:只动目标块的三行/整块，其余字节不变（保注释是唯一手段）；删空批注规范化为 annotations: []；不碰文件系统
+text.ts[DG7M]: F:保留注释的 YAML 文本级编辑：批注块增删改、状态流转、元素/关系块追加、rev+1；不读写文件 | R:code:packages/patch/src/parse.ts | A:appendElements,appendRelations,applyStatusChanges,replaceAnnotationBlocks,removeAnnotationBlocks,relationYaml | S:只动目标块其余字节不变（保注释唯一手段）；appendRelations 曾缺失致关系 add 落 elements 块（E9）；段落定位由 insertUnderSection 统一处理
 
 ===D:/AAA_Project/Covenant/packages/profile/===
 README.md[SG6T]: F:@covenant/profile 包说明：10 个剖面词表/关系矩阵/专有规则、纯函数取舍与「新增剖面必须补示例+黄金图」约束 | R:code:packages/profile/src/index.ts | A:- | S:新增剖面必须同时补示例文档、黄金图（或渲染测试）与 FRAS 条目；剖面内不得写文档级 I/O
@@ -240,9 +240,9 @@ state.svg[TQ6T]: F:黄金 SVG：order-state 的「订单生命周期」基线（
 topology-junction.svg[TQ6T]: F:黄金 SVG：topology-junction 的「拓扑」基线（806×390，6 节点 4 边，junction 模式节点为圆点），由 pnpm golden 生成 | R:code:examples/topology-junction.cvn.yaml | A:- | S:junction 模式没有矩形框与端口，几何由 view.layout.pins 决定；生成物禁手改
 
 ===D:/AAA_Project/Covenant/packages/render/src/===
-html.ts[AU9L]: F:自包含 HTML 查看器生成：内联 CSS+SCRIPT（多小窗三态/8 色引导线/缩放拖拽/批注表单/编辑导出/侧栏分组）+ 内嵌 #covenant-data 语义 JSON（version=COVENANT_VERSION）+ CSP 头 | R:code:packages/render/src/index.ts,code:packages/layout/src/index.ts | A:renderHtml,DocView,SiteOptions | S:内联 JSON 必须转义 < 防 </script> 提前闭合；CSP default-src 'none' 禁外部资源；#covenant-data.version 取自 COVENANT_VERSION 勿硬编码；侧栏分组优先级 meta.group→来源路径→doc.id
+html.ts[AU9L]: F:自包含 HTML 查看器生成：内联 CSS+SCRIPT 分片拼接（多小窗三态/8 色引导线/缩放拖拽/批注表单/编辑导出/图上增删元素与关系接线/侧栏分组）+ #covenant-data 语义 JSON + CSP | R:code:packages/render/src/index.ts,code:packages/layout/src/index.ts,code:packages/render/src/viewer/script-state.ts,code:packages/render/src/viewer/script-edit-elements.ts,code:packages/render/src/viewer/script-edit-relations.ts,code:packages/render/src/viewer.css.ts | A:renderHtml,DocView,SiteOptions | S:内联 JSON 必须转义 < 防 </script> 提前闭合；CSP default-src 'none'；version 取 COVENANT_VERSION 勿硬编码；分片注入点增删后必须跑 DOM 测试与 golden
 index.ts[DU8L]: F:SVG 渲染：形状语义与配色、边路由/交点圆点、标签贴线避让（placeLabels/fallback）、impl_status 线型继承、junction 模式与序列图分支、renderSvg/renderSequenceSvg | R:code:packages/layout/src/index.ts,code:packages/render/src/html.ts | A:renderSvg,renderSequenceSvg,placeLabels,labelCandidates,solidJoinPoints | S:非 implemented 才加线型属性（保证旧 SVG 逐字节不变）；关系 impl_status 缺省继承弱端；sequence@1 走专用 renderSequenceSvg 不走通用图
-viewer.css.ts[ZU6S]: F:查看器内联 CSS：布局变量、多小窗三态、侧栏分组、缩放条、批注表单/角标等全部样式 | R:code:packages/render/src/html.ts | A:CSS | S:以 CSS 字符串导出、由 html.ts 注入 style；禁 @import/外部字体（CSP default-src 'none' 会拦）
+viewer.css.ts[ZU6S]: F:查看器内联 CSS：布局变量、多小窗三态、侧栏分组、缩放条、批注表单/角标、图上增删元素与关系的 pending/连线样式 | R:code:packages/render/src/html.ts | A:CSS | S:类名 .pending-add/.pending-remove/.pending-add-rel/.pending-remove-rel/.connecting 由 element/relations 分片引用，改名需同步；禁 @import/外部字体
 
 ===D:/AAA_Project/Covenant/packages/validate/===
 README.md[SQ6T]: F:@covenant/validate 包说明：L1/L2/L3 三层校验职责、finding 统一排序与「不得依赖 layout/render」约束 | R:code:packages/validate/src/index.ts | A:- | S:存储/网络类规则按 hasStoreIo 能力开关启用，避免通用图种误报；新增规则必须有正例+反例测试
@@ -278,7 +278,7 @@ README.md[SW7T]: F:团队编制与写域表：Lead/6 owner/3 只读角色、按�
 audit-baseline.json[FQ7T]: F:审计基线：字段契约自 2026-11-04T15:00Z 生效，此前 168 条记录（spawn 10/done 13）为存量债务仅 WARN | R:code:scripts/agent/team_audit.mjs | A:- | S:backfill forbidden、legacy WARN、新违规 FAIL；改 cutoff_ts 会把存量变成新违规（或反之），必须有理由
 cross-workspace-log.md[SW7T]: F:跨工作区留痕（append-only）：Covenant 与 ALLELab 的边界规则、2026-11-04 已发生的 5+ 条越界写入与处置 | R:code:AGENTS.md | A:- | S:ALLELab 为只读工作区，跨区写入需三件套（当轮授权/逐文件回报/改他人团队产物前先问）；本文件只追加不改写
 file-granularity.json[FQ7T]: F:文件粒度棘轮基线：新文件上限 300/测试 400 行、folder README 必须、14 个存量超标文件冻结当前行数 | R:code:scripts/check-file-granularity.mjs | A:- | S:grandfathered 是棘轮基线：只能由 --init 重建且需人工确认；行数只许降，涨了 granularity/grew 直接 FAIL
-model-overrides.json[FW6T]: F:成员模型覆盖：arch-owner/diagram-owner/todo-scribe/viewer-owner 四个成员指定 glm-5.3-flash | R:code:team/owns.yaml | A:- | S:键是成员名、值是 {model}；是 team_set_model 的持久化载体，重建成员时按此恢复
+model-overrides.json[FW6T]: F:成员模型覆盖持久化（team_set_model 载体）：键为成员名、值为模型配置 | R:code:team/owns.yaml | A:- | S:两成员已同步 allelab/glm-5.3-flash；重建成员按此文件恢复
 owns.yaml[FW8T]: F:机器可读团队编制（covenant-team/v0）：7 个组/owner/包写域、共享文件清单（仅 lead 可写）与规则（单 owner、300 行阈值、owner 预算 1500-3000、合并后由 lead 写索引） | R:code:team/README.md,code:docs/conventions/module-ownership.md | A:- | S:shared_files 含 team/** 与 docs/**，即成员不得改自己的编制文件；governance/interaction/planning 组 packages 为空、只有 write_scope
 
 ===D:/AAA_Project/Covenant/templates/team-starter/arch/===
@@ -303,3 +303,9 @@ README.md[SW6T]: F:ALLELab 试点收件箱说明：其组织事实源/看板/交
 ===D:/AAA_Project/Covenant/todo/inbox/===
 README.md[SW7T]: F:外部需求收件箱规范：目录约定、需求 front-matter 字段、状态机 new→triaged→planned→done、归并节奏（每周或 >=5 条）与 ALLELab 桥接 | R:code:todo/inbox/_TEMPLATE.md,code:todo/README.md | A:- | S:append-only：团队只写自己的新文件、只写 status:new；不写方案/设计；wontfix 必须写理由；归并后不删原文件只加已归并标注
 _TEMPLATE.md[SW5T]: F:需求文件模板：front-matter（id/team/author/date/project/kind/severity/status:new/title/evidence）+ 原话/场景/期望/现状证据/影响面五段 | R:code:todo/inbox/README.md | A:- | S:status 团队只写 new；原话必须逐字保留标点错别字；证据用 path:line 不贴大段日志
+
+===D:/AAA_Project/Covenant/packages/render/src/viewer/===
+README.md[SG5T]: F:viewer/ 文件夹契约：分片清单、IIFE 拼接纪律与拆分史（E2 教训） | R:code:packages/render/src/html.ts | A:- | S:分片是纯文本搬移不得改标识符；分片内容禁反引号与 ${；拆分后必须 vitest+golden 零 diff
+script-edit-elements.ts[DU8M]: F:图上增删元素：双击空白开创建表单、Delete 暂存删除、撤销、.pending-add/.pending-remove 视觉与 /elements patch ops | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-state.ts | A:pendingElementOps,pushPendingElementOps,elemEditStateFor | S:只进暂存绝不写 DATA.docs；被批注/relation/frame 引用拒删；id 匹配 ^e\.[a-z][a-z0-9-]{0,62}$；分片禁反引号与 ${
+script-edit-relations.ts[DU8M]: F:图上增删关系：连线模式（窗口 ⇒ 按钮 → 点目标 → 表单）、关系删除拦截、虚线 overlay 与 /relations patch ops | R:code:packages/render/src/html.ts,code:packages/render/src/viewer/script-edit-elements.ts | A:pendingRelationOps,pushPendingRelationOps,relEditStateFor | S:被批注引用的关系禁删（含段级）；暂存新增/待删元素不参与连线；id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；依赖 apply 层 appendRelations（E9）
+script-state.ts[RU7S]: F:看板运行时状态与纯工具：指针封印（draggingWin/panning/260ms 冷却）、localStorage 存取、byId/docByKey/visibleAnns/esc/newId/nowISO | R:code:packages/render/src/html.ts | A:pointerSuppressed | S:画布平移必须计入封印（panning 漏封致拖拽扫过一路弹窗，实测 bug）；冷却盖住 pointerup 后残余事件；分片禁反引号与 ${

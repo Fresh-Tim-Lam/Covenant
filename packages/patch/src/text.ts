@@ -226,8 +226,35 @@ export function elementYaml(value: Record<string, unknown>): string {
 export function appendElements(text: string, values: Record<string, unknown>[]): string {
   if (values.length === 0) return text;
   const block = values.map(elementYaml).join("\n");
+  return insertUnderSection(text, "elements", block);
+}
+
+/** 关系条目 YAML：relation 必填 id/kind/from/to/summary（schema 顺序），可选 impl_status/props */
+export function relationYaml(value: Record<string, unknown>): string {
+  const lines: string[] = [];
+  lines.push(`  - id: ${value.id}`);
+  lines.push(`    kind: ${value.kind}`);
+  lines.push(`    from: ${value.from}`);
+  lines.push(`    to: ${value.to}`);
+  if (value.summary) lines.push(`    summary: ${value.summary}`);
+  if (value.impl_status) lines.push(`    impl_status: ${value.impl_status}`);
+  if (value.props && typeof value.props === "object" && Object.keys(value.props).length > 0) {
+    lines.push(`    props: ${JSON.stringify(value.props)}`);
+  }
+  return lines.join("\n");
+}
+
+/** 追加到 relations: 段。此前关系 add 被误用 appendElements 落进 elements 块（E9） */
+export function appendRelations(text: string, values: Record<string, unknown>[]): string {
+  if (values.length === 0) return text;
+  const block = values.map(relationYaml).join("\n");
+  return insertUnderSection(text, "relations", block);
+}
+
+/** 在顶层 `section:` 段内插入预序列化的块（保留段尾空行风格） */
+function insertUnderSection(text: string, section: string, block: string): string {
   const lines = text.split(/\r?\n/);
-  const idx = lines.findIndex((l) => /^elements:\s*$/.test(l));
+  const idx = lines.findIndex((l) => new RegExp("^" + section + ":\\s*$").test(l));
   if (idx < 0) return text;
   let end = idx + 1;
   while (end < lines.length && (lines[end] === "" || /^\s/.test(lines[end]!) || /^\s*#/.test(lines[end]!))) end++;

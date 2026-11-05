@@ -9,6 +9,7 @@ import { COVENANT_VERSION, type CovenantDoc, type Evidence, type ImplStatus, typ
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 import { CSS } from "./viewer.css";
 import { SCRIPT_EDIT_ELEMENTS } from "./viewer/script-edit-elements";
+import { SCRIPT_EDIT_RELATIONS } from "./viewer/script-edit-relations";
 import { SCRIPT_STATE } from "./viewer/script-state";
 
 export interface DocView {
@@ -732,7 +733,7 @@ ${SCRIPT_STATE}
     ensureSegHits(doc);
     drawBadges(doc);
     updateHeader();
-    updateEditPending(); refreshElemPendingUi();
+    updateEditPending(); refreshElemPendingUi(); refreshRelPendingUi();
     fitView();
   }
 
@@ -1068,7 +1069,8 @@ ${SCRIPT_STATE}
     var headHint = (kind === "element" ? "元素" : "关系") + ' · ' + esc(id) +
       (w.segment != null ? ' · 段 ' + (w.segment + 1) + '/' + segCount(doc, id) : '');
     var verified = !!localFor(doc.docId).checked[id];
-    var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + headHint + '</span><span class="insp-actions"><button class="verify-top-btn' + (verified ? " on" : "") + '" data-id="' + esc(id) + '" data-kind="' + esc(kind) + '" title="核验通过：图上显示 ✓ 徽章">' + (verified ? "✓" : "✓") + '</button><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
+    var connectBtnHtml = kind === "element" ? '<button class="connect-top-btn" data-id="' + esc(id) + '" title="连线：创建到目标元素的关系">⇒</button>' : '';
+    var head = '<div class="insp-head" id="insp-drag"><span class="grip" aria-hidden="true" title="按住拖动窗口"></span><button class="pin-btn" id="insp-pin" aria-pressed="false" title="钉住：点击别处不关闭">📌</button><span class="win-dot" style="background:' + w.color + '"></span><span class="hint">' + headHint + '</span><span class="insp-actions">' + connectBtnHtml + '<button class="verify-top-btn' + (verified ? " on" : "") + '" data-id="' + esc(id) + '" data-kind="' + esc(kind) + '" title="核验通过：图上显示 ✓ 徽章">' + (verified ? "✓" : "✓") + '</button><button class="copy-btn" id="insp-copy" title="复制该对象的语义与批注 JSON">复制</button><button class="insp-close" id="insp-close" title="关闭">×</button></span></div>';
     w.el.innerHTML = head + '<div class="insp-body">' + html + '</div>';
     refreshCheckedBadges(doc);
     w.el.hidden = false;
@@ -1239,6 +1241,17 @@ ${SCRIPT_STATE}
         });
       })(verifyBtns[vi]);
     }
+    var connectBtns = el.querySelectorAll(".connect-top-btn");
+    for (var ci = 0; ci < connectBtns.length; ci++){
+      (function(cb){
+        cb.addEventListener("click", function(ev){
+          ev.stopPropagation();
+          var cid = cb.getAttribute("data-id");
+          if (!cid) return;
+          startConnecting(cid);
+        });
+      })(connectBtns[ci]);
+    }
     var fSubmit = fieldOf(w, "f-submit");
     if (fSubmit) fSubmit.addEventListener("click", function(){ submit(w); });
     var acts = el.querySelectorAll(".acts button");
@@ -1320,7 +1333,8 @@ ${SCRIPT_STATE}
   for (var d2 = 0; d2 < l.deleted.length; d2++){
       ops.push({ op: "remove", path: "/annotations/" + l.deleted[d2], value: null });
     }
-    if (!ops.length && !pushPendingElementOps(doc, ops)) return null;
+    var pushed = pushPendingElementOps(doc, ops) + pushPendingRelationOps(doc, ops);
+    if (!ops.length && !pushed) return null;
     for (var cid in l.checked) {
       if (!Object.prototype.hasOwnProperty.call(l.checked, cid) || isPendingElementRemove(doc, cid)) continue;
       var cel = byId(doc.elements, cid);
@@ -1445,6 +1459,8 @@ ${SCRIPT_STATE}
         ev.stopPropagation();
         if (moved) { moved = false; return; }
         if (pointerSuppressed()) return;
+        // 连线模式：点到的元素是目标 → 进关系表单；点到的不是元素（窗口等）→ 交由各自处理器
+        if (connectingFrom && kindOf() === "element") { completeConnecting(ev); return; }
         // 段热区（.seg-hit）自己 stopPropagation 处理；命中则整边 handler 不重复开窗
         var segEl = ev.target && ev.target.closest ? ev.target.closest("[data-seg]") : null;
         if (segEl) return;
@@ -1483,6 +1499,8 @@ ${SCRIPT_STATE}
   // 命中节点/连线由它们自己的 click 处理（会 stopPropagation），此处不干预。
   document.addEventListener("click", function(ev){
     if (pointerSuppressed()) return;
+    // 连线模式下点空白 = 取消连线（节点点击有自己的处理器，不会到这里）
+    if (connectingFrom) { cancelConnecting(); showToast("已取消连线"); return; }
     var t = ev.target;
     if (!t || !t.closest || !t.isConnected) return;
     if (t.closest(".cvn-win, #toast, header, #views")) return;
@@ -1735,7 +1753,7 @@ ${SCRIPT_STATE}
     if (zf) zf.addEventListener("click", fitView);
     var zr = document.getElementById("zoom-reset");
     if (zr) zr.addEventListener("click", function(){ scale = 1; tx = 0; ty = 0; userZoomed = true; applyTransform(); });
-    window.addEventListener("keydown", function(ev){ if (ev.key === "Escape") { clearSelection(); closeCreateForm(); } else onElementKeydown(ev); });
+    window.addEventListener("keydown", function(ev){ if (ev.key === "Escape") { clearSelection(); closeCreateForm(); cancelConnecting(); } else { onElementKeydown(ev); onRelationKeydown(ev); } });
   }
   var nodeEls = document.querySelectorAll(".node");
   for (var q = 0; q < nodeEls.length; q++) {
@@ -1797,6 +1815,7 @@ ${SCRIPT_STATE}
   var rs = document.getElementById("btn-reset"); if (rs) rs.addEventListener("click", resetLocal);
 
 ${SCRIPT_EDIT_ELEMENTS}
+${SCRIPT_EDIT_RELATIONS}
   if (DATA.docs.length) switchDoc(DATA.docs[0].key);
   setTimeout(fitView, 0);
 })();

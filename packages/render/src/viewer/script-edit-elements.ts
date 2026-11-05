@@ -232,7 +232,9 @@ export const SCRIPT_EDIT_ELEMENTS = `
     if (n) return "该元素被 " + n + " 条批注引用，先处理批注再删除";
     var rels = (doc && doc.relations) || [];
     var m = 0, first = "";
+    var relRemoved = relEditStateFor(doc).removes;
     for (var j = 0; j < rels.length; j++){
+      if (relRemoved.indexOf(String(rels[j].id)) >= 0) continue;
       var from = String(rels[j].from || "").split(":")[0];
       var to = String(rels[j].to || "").split(":")[0];
       if (from === id || to === id) { m++; if (!first) first = String(rels[j].id || ""); }

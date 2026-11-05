@@ -168,6 +168,12 @@ svg text{user-select:none}
 .node.pending-remove,.edge.pending-remove{opacity:.42;filter:grayscale(1)}
 .node.pending-remove text{opacity:.55;text-decoration:line-through}
 #elem-pending{color:#b45309}
+.pending-add-rel{pointer-events:none}
+.edge.pending-remove-rel{opacity:.42;filter:grayscale(1)}
+body.connecting,body.connecting .node{cursor:crosshair}
+#rel-pending{color:#b45309}
+.connect-top-btn{font:inherit;font-size:12px;padding:2px 7px;border-radius:6px;border:1px solid var(--line);background:#fff;color:#334155;cursor:pointer}
+.connect-top-btn:hover{border-color:var(--accent);color:var(--accent)}
 .cvn-create-win{width:340px}
 .ce-form{margin-top:0;border-top:0;padding-top:0}
 .cvn-create-actions{display:flex;gap:8px;margin-top:12px}

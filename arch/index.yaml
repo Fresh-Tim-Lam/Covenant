@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: eb8b1159961fc01cd0c1d2e021183934d14ee6bceee14851d2cede67ff854cfb
+    source_sha256: 8d341a256899a075c2677970aaedf5b959ac0fa6ea93aa50741ebc9cd72fee87
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -95,7 +95,7 @@ entries:
     s:
       - 纯静态字符串：禁止插值（${}）与反引号，否则拆分会破坏模板
       - 从 html.ts 拆出以满足文件粒度棘轮（L12）
-    source_sha256: 46c7dfadf43ecd372681a54b01eb4d97b0316f8fad4d74f42402140654daccca
+    source_sha256: e3256fc776f497a9dde760b35c3b2af2a9980757567385f81d326a138ab334d5
   - file: packages/render/src/viewer/script-state.ts
     f: 看板运行时状态与纯工具分片：指针封印、localStorage 存取、转义/取景/几何
     r:
@@ -118,7 +118,19 @@ entries:
       - 被批注/relation/frame 引用的元素禁止暂存删除，否则 kernel/dangling-ref 拒收
       - 新增 id 必须匹配 ^e\.[a-z][a-z0-9-]{0,62}$；add 走 /elements/-，remove 走 /elements/<id>，两者不得并发 replace
       - 与 editOps 的 set 编辑通道严格分离，不得混用
-    source_sha256: 1cffa0d38266f3c30fc7bf06758138b27af8d10faab6d495d53e2de4d7ea763e
+    source_sha256: 7d9a314b9fd729d4338accd1b0350cf5d32df97489e636345ad3f6637f0a8cdc
+  - file: packages/render/src/viewer/script-edit-relations.ts
+    f: 图上增删关系分片：连线模式、关系表单、暂存删除拦截与 patch ops 生成
+    r:
+      - packages/render/src/html.ts
+      - packages/render/src/viewer/script-edit-elements.ts
+    a:
+      - packages/render/src/html.ts
+    s:
+      - 被批注引用的关系禁删（含段级批注）；暂存新增/待删元素不参与连线
+      - 关系 id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；summary 必填；分片内禁反引号与 ${
+      - 依赖 apply 层 appendRelations（E9 修复），patch add 才能落进 relations 块
+    source_sha256: 7840ab8145f248185b055afc99eabcdb9d34a5c9a9d16a775e5aa6f21ee336f7
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
@@ -322,7 +334,7 @@ entries:
       - 只动目标行/块、不重排 YAML（保注释）
       - '删空时规范化为 annotations: []'
       - 本文件不判断合法性（门禁/复验在 gate/apply）
-    source_sha256: b17006b179a1fefc0098097c0980b8a5caf995740bf16b8fa68a369a4254ad16
+    source_sha256: d99f30be93afbe100fa57ad0cbab3938b02229e31a58108b8771d060198cbfe9
   - file: packages/patch/src/parse.ts
     f: 补丁文件解析与结构校验
     r:
@@ -341,7 +353,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 门禁失败不得写任何字节；ai:* 不得改状态/写 ai_hint
-    source_sha256: 950a594ec3636731d3a1b1e0248dc61adea8273548906b3d3ec601f9f6f3cdf5
+    source_sha256: c442ea406ec65c360ac660656d1ef7f737eb02ae5a2783e146e71e2e485990d7
   - file: packages/patch/src/apply.ts
     f: 应用补丁：保留注释的文本插入/替换 + rev+1
     r:
@@ -350,7 +362,7 @@ entries:
       - packages/patch/src/index.ts
     s:
       - 文本级编辑保注释；幂等性由 base_rev 与调用方校验
-    source_sha256: 0860f3b34c4dce42303c999478917216479b7d8432346ac20d24c5e50be7c4a1
+    source_sha256: 1b80f873ad7b1c01468880f16892ff24eae9ae43cda94225f2f01a1fa55b2509
   - file: packages/patch/src/audit.ts
     f: 写前审计（intent → rename → commit）
     r: []

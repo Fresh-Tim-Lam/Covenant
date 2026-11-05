@@ -17,7 +17,7 @@ import { audit, sha256 } from "./audit";
 import { classifyOps, finding } from "./parse";
 import { replaceAnnotationBlocks } from "./text";
 import type { Patch } from "./parse";
-import { appendAnnotations, appendElements, applyStatusChanges, bumpRev, removeAnnotationBlocks, removeNamedBlocks } from "./text";
+import { appendAnnotations, appendElements, appendRelations, applyStatusChanges, bumpRev, removeAnnotationBlocks, removeNamedBlocks } from "./text";
 
 export interface ApplyOptions {
   /** 操作者标识，写入审计 */
@@ -122,7 +122,7 @@ export function applyPatch(
     next = appendElements(next, classified.elementAdds.map((op) => (op.value ?? {}) as Record<string, unknown>));
   }
   if (classified.relationAdds.length > 0) {
-    next = appendElements(next, classified.relationAdds.map((op) => (op.value ?? {}) as Record<string, unknown>));
+    next = appendRelations(next, classified.relationAdds.map((op) => (op.value ?? {}) as Record<string, unknown>));
   }
   next = replaceAnnotationBlocks(next, classified.edits);
   next = removeAnnotationBlocks(next, classified.removes);
