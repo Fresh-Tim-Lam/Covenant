@@ -60,21 +60,18 @@ export const SCRIPT_EDIT_RELATIONS = `
     for (var m = 0; m < marked.length; m++) marked[m].classList.remove("pending-remove-rel");
     var st = currentRelEditState();
     var doc = currentDoc();
-    var used = usedAnchors(doc, st.removes);
+    var placed = []; // 已排布 pending 线的中段通道坐标（相互错开）
     for (var i = 0; i < st.adds.length; i++){
       var a = st.adds[i];
       var ga = svg.querySelector('.node[data-id="' + a.from + '"]');
       var gb = svg.querySelector('.node[data-id="' + a.to + '"]');
       if (!ga || !gb) continue;
-      // 线路路由底层：与正式边同源——layout 注入的 route() 选端口出线，clearPath() 避开无关框
+      // 线路路由底层（layout 同源管线）：端口空位选点（对称 PORT_GAP 排布避让已有锚点）
+      // → routePorts 端口 stub 引出 → 车道错开已有通道 → clearPath 避开无关框
       var ba = nodeRouteBox(ga, doc, a.from), bb = nodeRouteBox(gb, doc, a.to);
       if (!ba || !bb) continue;
-      var pts = route(ba, bb, i);
-      pts = clearPath(pts, nodesRouteRects(svg, doc), a.from, a.to);
-      // 端口占用避让：pending 起止点避开已有边锚点（±16px 步进找空位，保持正交）
-      pts = shiftAnchorClear(pts, a.from, a.to, used);
-      used.push({ node: a.from, x: pts[0].x, y: pts[0].y });
-      used.push({ node: a.to, x: pts[pts.length - 1].x, y: pts[pts.length - 1].y });
+      var pts = planPendingRoute(ba, bb, a.from, a.to, doc, svg, st.removes, placed);
+      placed.push(pts[1][0]);
       var ln = document.createElementNS(SVGNS, "path");
       ln.setAttribute("class", "pending-add-rel");
       ln.setAttribute("data-id", a.id);

@@ -65,7 +65,7 @@ entries:
       - packages/cli/src/index.ts
     s:
       - 显式 undefined 参数会覆盖默认值导致 NaN，必须逐字段兜底
-    source_sha256: 174ce1b32e3cf72365700fddeb91ca0f6321ecd952434d572a5d29d1f4528cd2
+    source_sha256: 6a2f2b858c51648be3740e2293ffeb8d2b3f41ba435f87bd293f521cd784d734
   - file: packages/render/src/index.ts
     f: SVG 渲染：节点/边/标签/frame/批注角标
     r:
@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 0c41e01f2e2b252b5be52121810496fb6232bb7e00e4b79754efb6b6cdd43f26
+    source_sha256: b602374f9115c126353488b681d8ec20b14fb93a96571f361cf56065bf88c446
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -105,7 +105,7 @@ entries:
     s:
       - 与其他运行时分片共享同一个 IIFE 作用域，只能整段搬移，禁止改动任何标识符
       - 分片内容不得含反引号或 ${，否则会截断 html.ts 的模板字符串
-    source_sha256: ff1c000bf0ff2ebf664828587c065a183defcd61aa4c94a8be1ef99262a54c43
+    source_sha256: 2c86b9df4e9a4d778cf28334a95059b96a2da670877cc66900e84441dc0c1e48
   - file: packages/render/src/viewer/script-edit-elements.ts
     f: 图上增删元素分片：双击开创建表单、Delete 暂存删除、撤销与 patch ops 生成
     r:
@@ -130,7 +130,7 @@ entries:
       - 被批注引用的关系禁删（含段级批注）；暂存新增/待删元素不参与连线
       - 关系 id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；summary 必填；分片内禁反引号与 ${
       - 依赖 apply 层 appendRelations（E9 修复），patch add 才能落进 relations 块
-    source_sha256: 1852f2d11c35d7aef2cfe88d439e4a9ae0f62f7b60d7a2b1fd41085166aac09b
+    source_sha256: 943a93cd77208141cd6a3895d975ef91514fd7e87662a26e2e11a8b861de0547
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

@@ -6,7 +6,7 @@
  * 零外部请求；语义副本内嵌于 #covenant-data，AI 可直接读取。
  */
 import { COVENANT_VERSION, type CovenantDoc, type Evidence, type ImplStatus, type ViewDef } from "@covenant/core";
-import { clearPath, dedupe, route, ROUTE_MARGIN } from "@covenant/layout";
+import { clearPath, dedupe, route, routePorts, sideNormal, ROUTE_MARGIN, ROUTE_STUB } from "@covenant/layout";
 import type { LayoutResult, Point, Rect } from "@covenant/layout";
 import { CSS } from "./viewer.css";
 import { SCRIPT_EDIT_ELEMENTS } from "./viewer/script-edit-elements";
@@ -19,8 +19,8 @@ import { SCRIPT_STATE } from "./viewer/script-state";
  * 禁止在查看器分片里另写简化路由（曾被用户否决：pending 线必须结合线路路由底层）。
  */
 const SCRIPT_ROUTE_PRELUDE =
-  "var ROUTE_MARGIN=" + ROUTE_MARGIN + ";\n" +
-  [dedupe, route, clearPath].map((f) => f.toString()).join("\n");
+  "var ROUTE_MARGIN=" + ROUTE_MARGIN + ",ROUTE_STUB=" + ROUTE_STUB + ";\n" +
+  [dedupe, sideNormal, route, routePorts, clearPath].map((f) => f.toString()).join("\n");
 
 export interface DocView {
   doc: CovenantDoc;

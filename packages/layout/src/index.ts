@@ -809,7 +809,7 @@ export const ROUTE_STUB = 20;
 /** 线与框的最小间距 */
 export const ROUTE_MARGIN = 12;
 
-function sideNormal(side: PortSide): Point {
+export function sideNormal(side: PortSide): Point {
   if (side === "left") return { x: -1, y: 0 };
   if (side === "right") return { x: 1, y: 0 };
   if (side === "top") return { x: 0, y: -1 };

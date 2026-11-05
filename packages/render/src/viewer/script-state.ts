@@ -152,45 +152,91 @@ export const SCRIPT_STATE = `  var draggingWin = false;
       window.addEventListener("pointerup", up);
     });
   }
-  // —— 端口占用避让：收集已有边在框上的出入点（跳过暂存删除的关系）——
-  function usedAnchors(doc, skipIds){
-    var out = [];
+  // —— pending 关系路由规划器：按 layout() 主流程同款约定组装 ——
+  //   ① 端口：同侧按「对端中心排序 + PORT_GAP=16 对称排布」的空位搜索（避开已有边锚点，不越出框）；
+  //   ② routePorts 端口 stub 引出（ROUTE_STUB=20，不贴边平行接入）；
+  //   ③ 车道错开：中段通道避开已有边同向通道坐标（±14 步进找空位）；
+  //   ④ clearPath 避障（避开无关框）。
+  //   route/routePorts/clearPath 来自 SCRIPT_ROUTE_PRELUDE 注入的 layout 真实函数（单一事实源，不自实现）。
+  function planPendingRoute(fromBox, toBox, fromId, toId, doc, svg, skipIds, extraUsed){
+    var fcx = fromBox.x + fromBox.w / 2, fcy = fromBox.y + fromBox.h / 2;
+    var tcx = toBox.x + toBox.w / 2, tcy = toBox.y + toBox.h / 2;
+    var horiz = Math.abs(tcx - fcx) >= Math.abs(tcy - fcy);
+    var fromSide = horiz ? (tcx >= fcx ? "right" : "left") : (tcy >= fcy ? "bottom" : "top");
+    var toSide = horiz ? (tcx >= fcx ? "left" : "right") : (tcy >= fcy ? "top" : "bottom");
     var rels = (doc && doc.relations) || [];
-    for (var i = 0; i < rels.length; i++){
-      var r = rels[i];
-      if (skipIds && skipIds.indexOf(r.id) >= 0) continue;
-      var pts = r.segments && r.segments.points;
-      if (!pts || pts.length === 0) continue;
-      out.push({ node: r.from, x: pts[0][0], y: pts[0][1] });
-      out.push({ node: r.to, x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] });
+    function sideFixed(box, side){
+      return side === "left" ? box.x : side === "right" ? box.x + box.w : side === "top" ? box.y : box.y + box.h;
     }
-    return out;
-  }
-  // —— 锚点冲突平移：pending 线起点/终点若与已用锚点重叠（±12px），沿框边 ±16px 步进找空位
-  //    （保持正交：起点平移时第二点同轴同步；终点对称处理）。双向交替尝试，maxTries 防死循环。
-  function shiftAnchorClear(pts, fromId, toId, used){
-    function clashAt(p, nodeId){
-      for (var i = 0; i < used.length; i++){
-        var u = used[i];
-        if (u.node !== nodeId) continue;
-        if (Math.abs(u.y - p.y) < 12 && Math.abs(u.x - p.x) < 12) return true;
+    function relPts(r){
+      return (r.segments && r.segments.points) || null;
+    }
+    // 某框某侧已被已有边占用的沿边坐标
+    function usedAlong(box, side, nodeId){
+      var arr = [];
+      for (var i = 0; i < rels.length; i++){
+        var r = rels[i];
+        if (skipIds && skipIds.indexOf(r.id) >= 0) continue;
+        var pts = relPts(r);
+        if (!pts || pts.length < 2) continue;
+        var isFrom = r.from === nodeId, isTo = r.to === nodeId;
+        if (!isFrom && !isTo) continue;
+        var p = isFrom ? pts[0] : pts[pts.length - 1];
+        var onL = Math.abs(p[0] - box.x) < 1, onR = Math.abs(p[0] - (box.x + box.w)) < 1;
+        var onT = Math.abs(p[1] - box.y) < 1, onB = Math.abs(p[1] - (box.y + box.h)) < 1;
+        var s = onL ? "left" : onR ? "right" : onT ? "top" : onB ? "bottom" : null;
+        if (s === side) arr.push(side === "left" || side === "right" ? p[1] : p[0]);
       }
+      return arr;
+    }
+    // 在框的 side 边上找空端口位：自边中心向两侧 16px 步进，避开已用锚点、不越出框
+    function pickAlong(box, side, usedArr){
+      var along = (side === "left" || side === "right") ? box.y + box.h / 2 : box.x + box.w / 2;
+      var lo = (side === "left" || side === "right") ? box.y + 10 : box.x + 10;
+      var hi = (side === "left" || side === "right") ? box.y + box.h - 10 : box.x + box.w - 10;
+      for (var k = 0; k <= 8; k++){
+        var offs = k === 0 ? [0] : [k * 16, -k * 16];
+        for (var j = 0; j < offs.length; j++){
+          var cand = along + offs[j];
+          if (cand < lo || cand > hi) continue;
+          var ok = true;
+          for (var u = 0; u < usedArr.length; u++) if (Math.abs(usedArr[u] - cand) < 12) { ok = false; break; }
+          if (ok) return cand;
+        }
+      }
+      return along;
+    }
+    var startPt, endPt;
+    if (horiz) {
+      startPt = { x: sideFixed(fromBox, fromSide), y: pickAlong(fromBox, fromSide, usedAlong(fromBox, fromSide, fromId)) };
+      endPt = { x: sideFixed(toBox, toSide), y: pickAlong(toBox, toSide, usedAlong(toBox, toSide, toId)) };
+    } else {
+      startPt = { x: pickAlong(fromBox, fromSide, usedAlong(fromBox, fromSide, fromId)), y: sideFixed(fromBox, fromSide) };
+      endPt = { x: pickAlong(toBox, toSide, usedAlong(toBox, toSide, toId)), y: sideFixed(toBox, toSide) };
+    }
+    // 车道避让：收集已有边的同向通道坐标，pending 中段 ±14 步进找空位
+    var usedMid = [];
+    for (var r2 = 0; r2 < rels.length; r2++){
+      var rr = rels[r2];
+      var pp = (rr && rr.segments && rr.segments.points) || [];
+      for (var k = 0; k < pp.length - 1; k++){
+        if (Math.abs(pp[k][1] - pp[k + 1][1]) < 0.01) usedMid.push(pp[k][0]);
+        else if (Math.abs(pp[k][0] - pp[k + 1][0]) < 0.01) usedMid.push(pp[k][1]);
+      }
+    }
+    if (extraUsed) for (var e2 = 0; e2 < extraUsed.length; e2++) usedMid.push(extraUsed[e2]);
+    var pts = routePorts(startPt, endPt, fromSide, toSide, 0);
+    // 中段通道落位：routePorts 默认 mid=(stub 端点均值)，与已占通道冲突时 ±14 步进找空位
+    function midBlocked(v){
+      for (var i = 0; i < usedMid.length; i++) if (Math.abs(usedMid[i] - v) < 12) return true;
       return false;
     }
-    var t0 = 0;
-    while (clashAt(pts[0], fromId) && t0 < 10){
-      var dy0 = (t0 % 2 === 0 ? 1 : -1) * 16 * Math.ceil((t0 + 1) / 2);
-      pts[0].y += dy0;
-      if (pts.length > 1 && Math.abs(pts[1].y - pts[0].y) < 0.01) pts[1].y += dy0;
-      t0++;
+    var t = 0;
+    while (midBlocked(horiz ? pts[1].x : pts[1].y) && t < 8){
+      var d = (t % 2 === 0 ? 1 : -1) * 14 * Math.ceil((t + 1) / 2);
+      var axis = horiz ? "x" : "y";
+      pts[1][axis] += d; pts[2][axis] += d;
+      t++;
     }
-    var last = pts.length - 1;
-    var t1 = 0;
-    while (clashAt(pts[last], toId) && t1 < 10){
-      var dy1 = (t1 % 2 === 0 ? 1 : -1) * 16 * Math.ceil((t1 + 1) / 2);
-      pts[last].y += dy1;
-      if (last > 0 && Math.abs(pts[last - 1].y - pts[last].y) < 0.01) pts[last - 1].y += dy1;
-      t1++;
-    }
-    return pts;
+    return clearPath(dedupe(pts), nodesRouteRects(svg, doc), fromId, toId);
   }`;
