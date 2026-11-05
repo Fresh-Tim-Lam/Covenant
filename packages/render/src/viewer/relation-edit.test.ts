@@ -60,6 +60,8 @@ function boot(d: CovenantDoc): {
   w.alert = ((msg?: unknown) => {
     alerts.push(String(msg ?? ""));
   }) as unknown as typeof w.alert;
+  // 结构性编辑（Delete 暂存删等）仅在编辑模式生效（双模式切换，ADR/规范 UC-5）
+  w.document.getElementById("btn-edit")!.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   return { window: w, document: w.document, alerts };
 }
 

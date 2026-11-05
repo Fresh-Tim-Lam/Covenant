@@ -70,6 +70,7 @@ function boot(): Booted {
     alerts.push(String(msg ?? ""));
   }) as unknown as typeof w.alert;
   w.confirm = (() => true) as unknown as typeof w.confirm;
+  w.document.getElementById("btn-edit")!.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   return { window: w, document: w.document, alerts };
 }
 

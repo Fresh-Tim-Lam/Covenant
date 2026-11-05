@@ -60,6 +60,7 @@ export const SCRIPT_EDIT_RELATIONS = `
     for (var m = 0; m < marked.length; m++) marked[m].classList.remove("pending-remove-rel");
     var st = currentRelEditState();
     var doc = currentDoc();
+    var used = usedAnchors(doc, st.removes);
     for (var i = 0; i < st.adds.length; i++){
       var a = st.adds[i];
       var ga = svg.querySelector('.node[data-id="' + a.from + '"]');
@@ -70,6 +71,10 @@ export const SCRIPT_EDIT_RELATIONS = `
       if (!ba || !bb) continue;
       var pts = route(ba, bb, i);
       pts = clearPath(pts, nodesRouteRects(svg, doc), a.from, a.to);
+      // 端口占用避让：pending 起止点避开已有边锚点（±16px 步进找空位，保持正交）
+      pts = shiftAnchorClear(pts, a.from, a.to, used);
+      used.push({ node: a.from, x: pts[0].x, y: pts[0].y });
+      used.push({ node: a.to, x: pts[pts.length - 1].x, y: pts[pts.length - 1].y });
       var ln = document.createElementNS(SVGNS, "path");
       ln.setAttribute("class", "pending-add-rel");
       ln.setAttribute("data-id", a.id);
@@ -197,6 +202,7 @@ export const SCRIPT_EDIT_RELATIONS = `
     main.appendChild(el);
     el.hidden = false;
     el.style.zIndex = "40";
+    makeFormDraggable(el);
     var rect = main.getBoundingClientRect ? main.getBoundingClientRect() : { left: 0, top: 0 };
     var cx = at && isFinite(at.clientX) ? at.clientX : rect.left + 80;
     var cy = at && isFinite(at.clientY) ? at.clientY : rect.top + 80;
@@ -279,6 +285,7 @@ export const SCRIPT_EDIT_RELATIONS = `
     var tag = t && t.tagName ? String(t.tagName).toUpperCase() : "";
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
     if (ev.key !== "Delete" && ev.key !== "Backspace") return;
+    if (!editing) return; /* 关系结构编辑仅限编辑模式（批注/编辑双模式） */
     if (!selected || selected.kind !== "relation") return;
     ev.preventDefault();
     stageToggleRelRemove(selected.id);

@@ -133,4 +133,64 @@ export const SCRIPT_STATE = `  var draggingWin = false;
       if (box) out[id] = box;
     }
     return out;
+  }
+  // —— 表单窗口拖拽（创建元素/关系表单不在 wins 体系里，独立绑定）——
+  function makeFormDraggable(winEl){
+    var head = winEl.querySelector(".insp-head");
+    if (!head || head.getAttribute("data-drag") === "1") return;
+    head.setAttribute("data-drag", "1");
+    head.addEventListener("pointerdown", function(ev){
+      if (ev.button !== 0) return;
+      if (ev.target && ev.target.closest && ev.target.closest("button")) return;
+      ev.preventDefault();
+      var sx = ev.clientX, sy = ev.clientY;
+      var ol = parseFloat(winEl.style.left) || winEl.offsetLeft;
+      var ot = parseFloat(winEl.style.top) || winEl.offsetTop;
+      function mv(e2){ winEl.style.left = (ol + e2.clientX - sx) + "px"; winEl.style.top = (ot + e2.clientY - sy) + "px"; }
+      function up(){ window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); }
+      window.addEventListener("pointermove", mv);
+      window.addEventListener("pointerup", up);
+    });
+  }
+  // —— 端口占用避让：收集已有边在框上的出入点（跳过暂存删除的关系）——
+  function usedAnchors(doc, skipIds){
+    var out = [];
+    var rels = (doc && doc.relations) || [];
+    for (var i = 0; i < rels.length; i++){
+      var r = rels[i];
+      if (skipIds && skipIds.indexOf(r.id) >= 0) continue;
+      var pts = r.segments && r.segments.points;
+      if (!pts || pts.length === 0) continue;
+      out.push({ node: r.from, x: pts[0][0], y: pts[0][1] });
+      out.push({ node: r.to, x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] });
+    }
+    return out;
+  }
+  // —— 锚点冲突平移：pending 线起点/终点若与已用锚点重叠（±12px），沿框边 ±16px 步进找空位
+  //    （保持正交：起点平移时第二点同轴同步；终点对称处理）。双向交替尝试，maxTries 防死循环。
+  function shiftAnchorClear(pts, fromId, toId, used){
+    function clashAt(p, nodeId){
+      for (var i = 0; i < used.length; i++){
+        var u = used[i];
+        if (u.node !== nodeId) continue;
+        if (Math.abs(u.y - p.y) < 12 && Math.abs(u.x - p.x) < 12) return true;
+      }
+      return false;
+    }
+    var t0 = 0;
+    while (clashAt(pts[0], fromId) && t0 < 10){
+      var dy0 = (t0 % 2 === 0 ? 1 : -1) * 16 * Math.ceil((t0 + 1) / 2);
+      pts[0].y += dy0;
+      if (pts.length > 1 && Math.abs(pts[1].y - pts[0].y) < 0.01) pts[1].y += dy0;
+      t0++;
+    }
+    var last = pts.length - 1;
+    var t1 = 0;
+    while (clashAt(pts[last], toId) && t1 < 10){
+      var dy1 = (t1 % 2 === 0 ? 1 : -1) * 16 * Math.ceil((t1 + 1) / 2);
+      pts[last].y += dy1;
+      if (last > 0 && Math.abs(pts[last - 1].y - pts[last].y) < 0.01) pts[last - 1].y += dy1;
+      t1++;
+    }
+    return pts;
   }`;

@@ -420,7 +420,7 @@ ${SCRIPT_ROUTE_PRELUDE}
     });
     path.addEventListener("pointerenter", function(ev){
       // 画布平移/小窗拖拽期间指针扫过段热区不得弹悬浮窗（与节点 pointerenter 同一守卫）
-      if (pointerSuppressed()) return;
+      if (pointerSuppressed() || editing) return;
       closeOtherHoverWins("relation", id, k);
       var w = findWin("relation", id, k);
       if (w){ clearTimeout(w.closeTimer); return; }
@@ -1485,7 +1485,7 @@ ${SCRIPT_ROUTE_PRELUDE}
       // 悬停 → 预览窗 + 同色高亮；移开（非点击/非钉住）→ 延时关闭。
       // 有段热区的边由各 .seg-hit 自己处理悬停，整边 hover 不再介入。
       el.addEventListener("pointerenter", function(ev){
-        if (pointerSuppressed()) return;
+        if (pointerSuppressed() || editing) return; /* 编辑模式抑制悬停预览（GAP-5.1） */
         if (isEdge && el.querySelector(".seg-hit")) return;
         var kind = kindOf(), id = idOf();
         if (!id) return;
@@ -1626,7 +1626,7 @@ ${SCRIPT_ROUTE_PRELUDE}
     updateEditPending();
     // 所有打开的小窗一起切换到/退出编辑态
     for (var i=0;i<wins.length;i++) renderWin(wins[i]);
-    showToast(editing ? "编辑模式：改文本/坐标后点「暂存修改」" : "已退出编辑模式");
+    showToast(editing ? "编辑模式（按 E 切回批注）：双击建元素 / Delete 删 / ⇒ 连线" : "批注模式（按 E 切换）：悬停/点选/加批注");
   }
   function applyEditUi(kind, id, w){
     var doc = currentDoc();
@@ -1764,7 +1764,14 @@ ${SCRIPT_ROUTE_PRELUDE}
     if (zf) zf.addEventListener("click", fitView);
     var zr = document.getElementById("zoom-reset");
     if (zr) zr.addEventListener("click", function(){ scale = 1; tx = 0; ty = 0; userZoomed = true; applyTransform(); });
-    window.addEventListener("keydown", function(ev){ if (ev.key === "Escape") { clearSelection(); closeCreateForm(); cancelConnecting(); } else { onElementKeydown(ev); onRelationKeydown(ev); } });
+    window.addEventListener("keydown", function(ev){
+    if (ev.key === "Escape") { clearSelection(); closeCreateForm(); closeRelationForm(); cancelConnecting(); return; }
+    var kt = ev.target;
+    var ktag = kt && kt.tagName ? String(kt.tagName).toUpperCase() : "";
+    if (ktag === "INPUT" || ktag === "TEXTAREA" || ktag === "SELECT" || (kt && kt.isContentEditable)) return;
+    if (ev.key === "e" || ev.key === "E") { toggleEdit(); return; }
+    onElementKeydown(ev); onRelationKeydown(ev);
+  });
   }
   var nodeEls = document.querySelectorAll(".node");
   for (var q = 0; q < nodeEls.length; q++) {

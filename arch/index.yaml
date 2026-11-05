@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 84646f31d193717d606b953a49c6e27fe1f10de1175af5302ebed751d32a764c
+    source_sha256: 0c41e01f2e2b252b5be52121810496fb6232bb7e00e4b79754efb6b6cdd43f26
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -95,7 +95,7 @@ entries:
     s:
       - 纯静态字符串：禁止插值（${}）与反引号，否则拆分会破坏模板
       - 从 html.ts 拆出以满足文件粒度棘轮（L12）
-    source_sha256: e3256fc776f497a9dde760b35c3b2af2a9980757567385f81d326a138ab334d5
+    source_sha256: d4b8fd9e390958856a03407e39670a9f32cfc97c59d30e5926a8afeb9da8620e
   - file: packages/render/src/viewer/script-state.ts
     f: 看板运行时状态与纯工具分片：指针封印、localStorage 存取、转义/取景/几何
     r:
@@ -105,7 +105,7 @@ entries:
     s:
       - 与其他运行时分片共享同一个 IIFE 作用域，只能整段搬移，禁止改动任何标识符
       - 分片内容不得含反引号或 ${，否则会截断 html.ts 的模板字符串
-    source_sha256: 62a16dd5013ba9486ffdf91bada01314843b9714ec389660d4c6d8b76fe1bd4c
+    source_sha256: ff1c000bf0ff2ebf664828587c065a183defcd61aa4c94a8be1ef99262a54c43
   - file: packages/render/src/viewer/script-edit-elements.ts
     f: 图上增删元素分片：双击开创建表单、Delete 暂存删除、撤销与 patch ops 生成
     r:
@@ -118,7 +118,7 @@ entries:
       - 被批注/relation/frame 引用的元素禁止暂存删除，否则 kernel/dangling-ref 拒收
       - 新增 id 必须匹配 ^e\.[a-z][a-z0-9-]{0,62}$；add 走 /elements/-，remove 走 /elements/<id>，两者不得并发 replace
       - 与 editOps 的 set 编辑通道严格分离，不得混用
-    source_sha256: 7d9a314b9fd729d4338accd1b0350cf5d32df97489e636345ad3f6637f0a8cdc
+    source_sha256: a45aa61b55cb96ed3d01d707fb4a34c3d49b4e6906652d96c342d7a759386c10
   - file: packages/render/src/viewer/script-edit-relations.ts
     f: 图上增删关系分片：连线模式、关系表单、暂存删除拦截与 patch ops 生成
     r:
@@ -130,7 +130,7 @@ entries:
       - 被批注引用的关系禁删（含段级批注）；暂存新增/待删元素不参与连线
       - 关系 id 匹配 ^r\.[a-z][a-z0-9-]{0,62}$；summary 必填；分片内禁反引号与 ${
       - 依赖 apply 层 appendRelations（E9 修复），patch add 才能落进 relations 块
-    source_sha256: d9879a6312fa39b1d9aef203168a9e25f8d14e792218011504d0fc68efad8e22
+    source_sha256: 1852f2d11c35d7aef2cfe88d439e4a9ae0f62f7b60d7a2b1fd41085166aac09b
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:

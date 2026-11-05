@@ -158,6 +158,7 @@ export const SCRIPT_EDIT_ELEMENTS = `
     main.appendChild(el);
     el.hidden = false;
     el.style.zIndex = "40";
+    makeFormDraggable(el);
     var rect = main.getBoundingClientRect ? main.getBoundingClientRect() : { left: 0, top: 0 };
     var cx = at && isFinite(at.clientX) ? at.clientX : rect.left + 80;
     var cy = at && isFinite(at.clientY) ? at.clientY : rect.top + 80;
@@ -281,7 +282,7 @@ export const SCRIPT_EDIT_ELEMENTS = `
   // —— 事件入口（html.ts 只做一行接线：dblclick / keydown）——
   function onCanvasDblclick(ev){
     var t = ev.target;
-    if (t && t.closest && t.closest(".node, .edge, .cvn-win")) { zoomAt(ev.clientX, ev.clientY, 1.35); return; }
+    if (!editing || (t && t.closest && t.closest(".node, .edge, .cvn-win"))) { zoomAt(ev.clientX, ev.clientY, 1.35); return; }
     openCreateForm(ev);
   }
   function onElementKeydown(ev){
@@ -289,6 +290,7 @@ export const SCRIPT_EDIT_ELEMENTS = `
     var tag = t && t.tagName ? String(t.tagName).toUpperCase() : "";
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
     if (ev.key !== "Delete" && ev.key !== "Backspace") return;
+    if (!editing) return; /* 元素结构编辑仅限编辑模式 */
     if (!selected || selected.kind !== "element") return;
     ev.preventDefault();
     stageToggleRemove(selected.id);

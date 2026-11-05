@@ -171,6 +171,9 @@ svg text{user-select:none}
 .pending-add-rel{pointer-events:none}
 .edge.pending-remove-rel{opacity:.42;filter:grayscale(1)}
 body.connecting,body.connecting .node{cursor:crosshair}
+body.editing,body.editing .node,body.editing .edge{cursor:crosshair}
+body:not(.editing) .connect-top-btn{display:none}
+.cvn-create-win .insp-head,.relform-win .insp-head{cursor:grab}
 #rel-pending{color:#b45309}
 .connect-top-btn{font:inherit;font-size:12px;padding:2px 7px;border-radius:6px;border:1px solid var(--line);background:#fff;color:#334155;cursor:pointer}
 .connect-top-btn:hover{border-color:var(--accent);color:var(--accent)}
