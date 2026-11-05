@@ -1,0 +1,4 @@
+docs(adr): ADR-0005 补 front-matter/索引登记 + system.cvn.yaml links 引用 0005
+
+Why: adr 门禁两项要求——front-matter 决策字段（adr/status/deciders）与 accepted ADR 必须被文档 links.kind=adr 引用；引用载体选自举契约图（arch/system.cvn.yaml），与 0001-0004 同位
+Gate: pnpm adr PASS · verify 0 error

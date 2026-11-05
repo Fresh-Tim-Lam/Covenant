@@ -738,6 +738,8 @@ links:
     ref: "0003"
   - kind: adr
     ref: "0004"
+  - kind: adr
+    ref: "0005"
 
 views:
   - id: v.main

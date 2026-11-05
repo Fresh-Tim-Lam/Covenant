@@ -1,3 +1,12 @@
+---
+adr: "0005"
+title: AI 是架构作者，人是审阅者与小修者
+status: accepted
+date: 2026-11-05
+deciders: [human:team]
+supersedes: []
+related: [ai-trust-boundary]
+---
 # ADR-0005：AI 是架构作者，人是审阅者与小修者
 
 - 状态：accepted（2026-11-05）

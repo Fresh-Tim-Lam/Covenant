@@ -39,3 +39,4 @@ pnpm adr --json
 | [0002](0002-typescript-workspace-packages.md) | 全栈 TypeScript，按 pnpm workspace 拆分能力包 | accepted |
 | [0003](0003-index-first-agent-development.md) | 采用索引优先的模块化 Agent 协同开发范式（Index-First Agent Dev） | accepted |
 | [0004](0004-edit-server-short-lived.md) | 编辑态改为方案 B：短时本地编辑服务（导出 JSON 保留为降级通道） | accepted |
+| [0005](0005-ai-authorship-model.md) | AI 是架构作者，人是审阅者与小修者（批注保护保留） | accepted |
