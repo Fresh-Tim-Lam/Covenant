@@ -161,4 +161,16 @@ svg text{user-select:none}
 .ev-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:#334155}
 .copy-evidence{flex:0 0 auto;font:inherit;font-size:11px;padding:1px 7px;border:1px solid var(--line);border-radius:5px;background:#fff;cursor:pointer;color:#475569}
 .copy-evidence:hover{border-color:var(--accent);color:var(--accent)}
+/* —— 图上增删元素（script-edit-elements.ts）：待新增虚线占位 / 待删除降饱和 / 创建表单 —— */
+.pending-add{pointer-events:none}
+.pending-add rect{fill:#f8fafc;stroke:#2563eb;stroke-dasharray:5 4}
+.pending-add text{fill:#2563eb;font-size:12px}
+.node.pending-remove,.edge.pending-remove{opacity:.42;filter:grayscale(1)}
+.node.pending-remove text{opacity:.55;text-decoration:line-through}
+#elem-pending{color:#b45309}
+.cvn-create-win{width:340px}
+.ce-form{margin-top:0;border-top:0;padding-top:0}
+.cvn-create-actions{display:flex;gap:8px;margin-top:12px}
+.cvn-create-actions button{flex:1;width:auto;margin-top:0;font:inherit;font-size:13px;padding:7px;border-radius:6px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff}
+.cvn-create-actions #ce-cancel{background:#fff;color:#334155;border-color:var(--line)}
 `;

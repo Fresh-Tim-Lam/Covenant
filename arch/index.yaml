@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 320f79ad2d19ef6887084dfb33efba2e0198078406ebc107629509bddbaa02cf
+    source_sha256: 9177834d9686f41222e4b062650e81316ba50dc598f66c15b334d942c6332ca5
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -95,7 +95,30 @@ entries:
     s:
       - 纯静态字符串：禁止插值（${}）与反引号，否则拆分会破坏模板
       - 从 html.ts 拆出以满足文件粒度棘轮（L12）
-    source_sha256: 246dd9d6fe4c59bbe670e6e806329559d6c2417e60ed7d1b6fa45dbf1798fccb
+    source_sha256: 46c7dfadf43ecd372681a54b01eb4d97b0316f8fad4d74f42402140654daccca
+  - file: packages/render/src/viewer/script-state.ts
+    f: 看板运行时状态与纯工具分片：指针封印、localStorage 存取、转义/取景/几何
+    r:
+      - packages/render/src/html.ts
+    a:
+      - packages/render/src/html.ts
+    s:
+      - 与其他运行时分片共享同一个 IIFE 作用域，只能整段搬移，禁止改动任何标识符
+      - 分片内容不得含反引号或 ${，否则会截断 html.ts 的模板字符串
+    source_sha256: f4dc07d3d8d223efde9a4ee0eabf8e6610e83c558ad62e975afc2d39c9174359
+  - file: packages/render/src/viewer/script-edit-elements.ts
+    f: 图上增删元素分片：双击开创建表单、Delete 暂存删除、撤销与 patch ops 生成
+    r:
+      - packages/render/src/html.ts
+      - packages/render/src/viewer.css.ts
+    a:
+      - packages/render/src/html.ts
+    s:
+      - 只进暂存，绝不修改 DATA.docs（构建产物副本，只读语义）
+      - 被批注/relation/frame 引用的元素禁止暂存删除，否则 kernel/dangling-ref 拒收
+      - 新增 id 必须匹配 ^e\.[a-z][a-z0-9-]{0,62}$；add 走 /elements/-，remove 走 /elements/<id>，两者不得并发 replace
+      - 与 editOps 的 set 编辑通道严格分离，不得混用
+    source_sha256: 1cffa0d38266f3c30fc7bf06758138b27af8d10faab6d495d53e2de4d7ea763e
   - file: packages/patch/src/index.ts
     f: 补丁包统一导出：解析/门禁/落盘/文本编辑/审计
     r:
