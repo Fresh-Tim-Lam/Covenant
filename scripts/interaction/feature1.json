@@ -1,0 +1,22 @@
+{
+  "name": "feature1-element-edit",
+  "desc": "剧本 F1：单个元素编辑全链路（打开 → 编辑模式 → 点选元素 → 改名 → 暂存修改 → 导出编辑 JSON）",
+  "steps": [
+    { "action": "goto", "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html", "desc": "打开自包含看板" },
+    { "action": "assertExists", "selector": "svg .node", "desc": "看板已渲染出元素节点" },
+    { "action": "screenshot", "tag": "open", "desc": "初始状态截图" },
+    { "action": "click", "selector": "#btn-edit", "desc": "进入编辑模式" },
+    { "action": "assertClass", "selector": "body", "expect": "editing", "desc": "body 带 editing 态" },
+    { "action": "screenshot", "tag": "edit-mode", "desc": "编辑模式截图" },
+    { "action": "click", "selector": "section.doc svg .node:visible", "desc": "点选第一个元素" },
+    { "action": "waitFor", "selector": "#e-name", "state": "visible", "desc": "元素窗口弹出，名称字段可见" },
+    { "action": "screenshot", "tag": "win-open", "desc": "元素窗口截图" },
+    { "action": "fill", "selector": "#e-name", "value": "订单服务·改名E2E", "desc": "修改名称" },
+    { "action": "click", "selector": "#edit-apply", "desc": "暂存修改" },
+    { "action": "assertEval", "fn": "document.getElementById('btn-edit-export') ? document.getElementById('btn-edit-export').hidden === false : false", "expect": true, "desc": "「导出编辑 JSON」按钮出现（有未导出改动）" },
+    { "action": "assertEval", "fn": "Array.from(document.querySelectorAll('section.doc svg text')).some(function(t){ return t.textContent.indexOf('改名E2E') >= 0; })", "expect": true, "desc": "SVG 上节点文字已即时更新" },
+    { "action": "screenshot", "tag": "staged", "desc": "暂存后截图（SVG 名称已变）" },
+    { "action": "download", "selector": "#btn-edit-export", "saveAs": "edits.json", "parseJson": true, "jsonContains": ["订单服务·改名E2E"], "desc": "导出编辑 JSON 并校验包含改名" },
+    { "action": "screenshot", "tag": "exported", "desc": "导出后截图" }
+  ]
+}

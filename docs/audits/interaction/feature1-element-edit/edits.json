@@ -1,0 +1,27 @@
+{
+  "covenant": "0.1",
+  "doc": "covenant/self",
+  "base_rev": 8,
+  "actor": "human:you",
+  "intent": "HTML 编辑（暂存）",
+  "ops": [
+    {
+      "op": "set",
+      "path": "/views/v.main/layout/pins/e.human",
+      "value": [
+        28,
+        621
+      ]
+    },
+    {
+      "op": "set",
+      "path": "/elements/e.human/name",
+      "value": "订单服务·改名E2E"
+    },
+    {
+      "op": "set",
+      "path": "/elements/e.human/summary",
+      "value": "在 HTML 图上标注问题、审批 breaking 变更"
+    }
+  ]
+}

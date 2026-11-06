@@ -1648,6 +1648,14 @@ ${SCRIPT_ROUTE_PRELUDE}
         var x = Number(fieldVal(w, "e-pin-x")), y = Number(fieldVal(w, "e-pin-y"));
         if (isFinite(x) && isFinite(y)) setEditOp("/views/" + viewId + "/layout/pins/" + id, [x, y]);
       }
+      // 图上即时反馈（剧本 F1 步骤 13）：暂存后就地更新该节点名称文字——
+      // 此前只写暂存桶不触 SVG，改完名图上一片沉默（用户判定「编辑板块根本不能用」的直接根因）
+      var svgEl = currentSvg();
+      var nodeEl = svgEl ? svgEl.querySelector('.node[data-id="' + id + '"]') : null;
+      if (nodeEl) {
+        var label = nodeEl.querySelector("text");
+        if (label) label.textContent = name;
+      }
     } else {
       var s = fieldVal(w, "e-summary").trim();
       if (!s) { alert("语义不能为空"); return; }

@@ -42,3 +42,5 @@ team/memory/
 team/trajectory/
 .vite/
 .gh-token
+docs/audits/interaction/**/*.png
+.serve-log.txt

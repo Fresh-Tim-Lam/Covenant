@@ -147,7 +147,8 @@ $line = '{"ts":"2026-11-04T13:00:00.000Z","actor":"lead","phase":"lead-verdict",
 | **L3 索引** | `pnpm verify`（含 index/adr/modules/doctor） | 任何改动提交前；**改文件后必须先 `pnpm index --write`** |
 | **L4 构建** | `pnpm build:html && pnpm run build:bundle` | 改了 render/cli；需确认 `dist/covenant.html` 文档数（当前 **21**） |
 | **L5 包** | `pnpm package:kit` | 发版前；产物 `dist/covenant-kit-*.zip` + sha256 |
-| **L6 人验** | 用户在浏览器点检 | 交互/视觉改动，**Agent 不得替代** |
+| **L5.5 剧本** | `node scripts/interaction/run.mjs <scenario.json>` | 任何交互/视觉改动交付前必跑（真实浏览器 Edge，逐步截图留证，2026-11-06 用户指令） |
+| **L6 人验** | 用户在浏览器点检 | 交互/视觉改动，剧本绿后仍需用户确认，**Agent 不得替代** |
 
 **铁律**：
 1. `pnpm index --write` 之后再跑 `pnpm verify`，否则 doctor 报 FRAS stale（本仓高频踩坑）。
