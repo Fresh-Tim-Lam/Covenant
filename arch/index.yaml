@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: d0969c301dd4b7bb09bb3923121ad866e591865a133010ce43715e96e45f4c3c
+    source_sha256: f6692499f645457faf227a83fa67fc98e9700604ced1d0113b01a7224d8e8ff9
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -118,7 +118,17 @@ entries:
       - 被批注/relation/frame 引用的元素禁止暂存删除，否则 kernel/dangling-ref 拒收
       - 新增 id 必须匹配 ^e\.[a-z][a-z0-9-]{0,62}$；add 走 /elements/-，remove 走 /elements/<id>，两者不得并发 replace
       - 与 editOps 的 set 编辑通道严格分离，不得混用
-    source_sha256: 8422d438d9678d19c52a5cd1b2159cf00b48ce1c6a7b262fc6f982f2319cb46a
+    source_sha256: b95755b392e6d3406b4281f60940cbfd5e9d2ae0b2e59698bea166b3953726b9
+  - file: packages/render/src/viewer/script-elem-toolbar.ts
+    f: 编辑模式元素工具栏与放置模式：c4 五类按钮、placingKind 状态机、占位落点（elemPlacePts）
+    r:
+      - packages/render/src/html.ts
+      - packages/render/src/viewer/script-edit-relations.ts
+    a:
+      - packages/cli/src/index.ts
+    s:
+      - pending 线路由管线在 script-state 的 planPendingRoute；占位落点是运行时视觉，patch 不含坐标
+    source_sha256: 67b5d0a4460b5330f15844cac49abec772a30ff1b0617f33d3094cd966fe08e5
   - file: packages/render/src/viewer/script-edit-relations.ts
     f: 图上增删关系分片：连线模式、关系表单、暂存删除拦截与 patch ops 生成
     r:

@@ -12,6 +12,7 @@ import { CSS } from "./viewer.css";
 import { SCRIPT_EDIT_ELEMENTS } from "./viewer/script-edit-elements";
 import { SCRIPT_EDIT_RELATIONS } from "./viewer/script-edit-relations";
 import { SCRIPT_STATE } from "./viewer/script-state";
+import { SCRIPT_ELEM_TOOLBAR } from "./viewer/script-elem-toolbar";
 
 /**
  * 运行时路由底层注入（ADR-0005 后编辑板块必须与正式边同源）：
@@ -1842,6 +1843,7 @@ ${SCRIPT_ROUTE_PRELUDE}
   var rs = document.getElementById("btn-reset"); if (rs) rs.addEventListener("click", resetLocal);
 
 ${SCRIPT_EDIT_ELEMENTS}
+${SCRIPT_ELEM_TOOLBAR}
 ${SCRIPT_EDIT_RELATIONS}
   if (DATA.docs.length) switchDoc(DATA.docs[0].key);
   setTimeout(fitView, 0);
