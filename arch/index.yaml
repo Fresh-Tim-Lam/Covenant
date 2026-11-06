@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: b602374f9115c126353488b681d8ec20b14fb93a96571f361cf56065bf88c446
+    source_sha256: d0969c301dd4b7bb09bb3923121ad866e591865a133010ce43715e96e45f4c3c
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []
@@ -118,7 +118,7 @@ entries:
       - 被批注/relation/frame 引用的元素禁止暂存删除，否则 kernel/dangling-ref 拒收
       - 新增 id 必须匹配 ^e\.[a-z][a-z0-9-]{0,62}$；add 走 /elements/-，remove 走 /elements/<id>，两者不得并发 replace
       - 与 editOps 的 set 编辑通道严格分离，不得混用
-    source_sha256: a45aa61b55cb96ed3d01d707fb4a34c3d49b4e6906652d96c342d7a759386c10
+    source_sha256: 8422d438d9678d19c52a5cd1b2159cf00b48ce1c6a7b262fc6f982f2319cb46a
   - file: packages/render/src/viewer/script-edit-relations.ts
     f: 图上增删关系分片：连线模式、关系表单、暂存删除拦截与 patch ops 生成
     r:

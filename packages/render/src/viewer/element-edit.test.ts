@@ -314,3 +314,44 @@ describe("图上增删元素：ops 顺序", () => {
     expect(elemOps[1]!.path).toBe("/elements/e.c");
   });
 });
+
+describe("编辑模式元素工具栏", () => {
+  it("工具栏在编辑模式显示；点类型按钮 → 点画布空白 → 表单弹出且 kind 预选", () => {
+    const { window: w, document: d } = boot();
+    // 编辑模式开启（boot 已点 btn-edit）
+    const tb = d.getElementById("elem-toolbar");
+    expect(tb, "编辑模式应显示元素工具栏").not.toBeNull();
+    const btn = tb!.querySelector('.elem-tb-btn[data-kind="datastore"]') as HTMLElement;
+    expect(btn, "工具栏应有 存储类型按钮").not.toBeNull();
+    click(w, btn);
+
+    // 点画布空白（wrap 本身）
+    const wrap = d.getElementById("stage-wrap") as HTMLElement;
+    wrap.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true, clientX: 300, clientY: 200 }));
+
+    const kindEl = d.getElementById("ce-kind") as HTMLSelectElement;
+    expect(kindEl, "点画布后应弹出创建表单").not.toBeNull();
+    expect(kindEl.value, "kind 应预选为工具栏按钮的类型").toBe("datastore");
+    expect(d.body.classList.contains("placing")).toBe(false);
+  });
+
+  it("工具栏创建的元素：占位落在点击处（非固定网格）", async () => {
+    const { window: w, document: d } = boot();
+    click(w, d.querySelector('.elem-tb-btn[data-kind="person"]') as HTMLElement);
+    const wrap = d.getElementById("stage-wrap") as HTMLElement;
+    wrap.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true, clientX: 420, clientY: 260 }));
+    (d.getElementById("ce-name") as HTMLInputElement).value = "外部审计";
+    click(w, d.getElementById("ce-create") as HTMLElement);
+
+    const overlay = d.querySelector('.pending-add[data-id^="e."]');
+    expect(overlay, "占位应出现").not.toBeNull();
+    const rectEl = overlay!.querySelector("rect");
+    const x = parseFloat(rectEl!.getAttribute("x") ?? "0");
+    // 点击处 clientX=420 → SVG 用户坐标应明显偏离默认网格起点 24
+    expect(x, "占位应落在点击处附近而非固定网格").toBeGreaterThan(100);
+    const patch = await exportPatch(w, d);
+    const add = patch.ops.find((o: any) => o.op === "add" && o.path === "/elements/-");
+    expect(add.value.kind).toBe("person");
+    expect(add.value.name).toBe("外部审计");
+  });
+});

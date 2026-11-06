@@ -1470,6 +1470,7 @@ ${SCRIPT_ROUTE_PRELUDE}
         ev.stopPropagation();
         if (moved) { moved = false; return; }
         if (pointerSuppressed()) return;
+        if (placingKind) return; /* 放置模式：点中对象不响应，须点空白 */
         // 连线模式：点到的元素是目标 → 进关系表单；点到的不是元素（窗口等）→ 交由各自处理器
         if (connectingFrom && kindOf() === "element") { completeConnecting(ev); return; }
         // 段热区（.seg-hit）自己 stopPropagation 处理；命中则整边 handler 不重复开窗
@@ -1619,6 +1620,7 @@ ${SCRIPT_ROUTE_PRELUDE}
     updateEditPending();
   }
   function toggleEdit(){
+    cancelPlacing();
     editing = !editing;
     document.body.classList.toggle("editing", editing);
     var b = document.getElementById("btn-edit");
@@ -1753,6 +1755,13 @@ ${SCRIPT_ROUTE_PRELUDE}
     wrap.addEventListener("dblclick", function(ev){ onCanvasDblclick(ev); });
     wrap.addEventListener("click", function(ev){
       if (moved) { moved = false; return; }
+      // 工具栏放置模式：点画布空白 → 在点击处弹创建表单（kind 已预选）
+      if (placingKind && (ev.target === wrap || ev.target === stage)) {
+        var spt = clientToSvg(currentSvg(), ev.clientX, ev.clientY);
+        openCreateForm(ev, placingKind, spt);
+        cancelPlacing();
+        return;
+      }
       if (ev.target === wrap || ev.target === stage) clearSelection();
     });
     window.addEventListener("resize", function(){ if (!userZoomed) fitView(); });
@@ -1765,7 +1774,7 @@ ${SCRIPT_ROUTE_PRELUDE}
     var zr = document.getElementById("zoom-reset");
     if (zr) zr.addEventListener("click", function(){ scale = 1; tx = 0; ty = 0; userZoomed = true; applyTransform(); });
     window.addEventListener("keydown", function(ev){
-    if (ev.key === "Escape") { clearSelection(); closeCreateForm(); closeRelationForm(); cancelConnecting(); return; }
+    if (ev.key === "Escape") { clearSelection(); closeCreateForm(); closeRelationForm(); cancelConnecting(); cancelPlacing(); return; }
     var kt = ev.target;
     var ktag = kt && kt.tagName ? String(kt.tagName).toUpperCase() : "";
     if (ktag === "INPUT" || ktag === "TEXTAREA" || ktag === "SELECT" || (kt && kt.isContentEditable)) return;
