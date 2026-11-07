@@ -1471,7 +1471,7 @@ ${SCRIPT_ROUTE_PRELUDE}
         ev.stopPropagation();
         if (moved) { moved = false; return; }
         if (pointerSuppressed()) return;
-        if (placingKind) return; /* 放置模式：点中对象不响应，须点空白 */
+        if (placingKind) { cancelPlacing(); showToast("已取消放置"); return; } /* 放置模式点中对象：退出放置而非静默吞掉（曾致「点不了图」的死状态） */
         // 连线模式：点到的元素是目标 → 进关系表单；点到的不是元素（窗口等）→ 交由各自处理器
         if (connectingFrom && kindOf() === "element") { completeConnecting(ev); return; }
         // 段热区（.seg-hit）自己 stopPropagation 处理；命中则整边 handler 不重复开窗

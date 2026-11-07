@@ -1,0 +1,169 @@
+{
+  "name": "feature2-single-create",
+  "desc": "剧本 F2：单元素画布上点选诊断 + 工具栏创建一个元素（真实鼠标点击 + CDP 元素检查）",
+  "steps": [
+    {
+      "action": "goto",
+      "url": "file:///D:/AAA_Project/Covenant/.tmp/e2e-single/out/covenant.html",
+      "desc": "打开单元素画布"
+    },
+    {
+      "action": "assertCount",
+      "selector": "svg .node",
+      "count": 1,
+      "desc": "画布只有唯一元素"
+    },
+    {
+      "action": "screenshot",
+      "tag": "open",
+      "desc": "初始状态"
+    },
+    {
+      "action": "click",
+      "selector": "#btn-edit",
+      "desc": "进入编辑模式"
+    },
+    {
+      "action": "assertClass",
+      "selector": "body",
+      "expect": "editing",
+      "desc": "editing 态生效"
+    },
+    {
+      "action": "inspectPoint",
+      "x": 640,
+      "y": 360,
+      "tag": "inspect-node-center",
+      "desc": "CDP：画布中心（节点应在附近）实际命中元素与祖先链"
+    },
+    {
+      "action": "mouseClickAtSelector",
+      "selector": "svg .node",
+      "desc": "真实鼠标点击唯一元素中心"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#e-name",
+      "state": "visible",
+      "desc": "点选元素 → 窗口弹出"
+    },
+    {
+      "action": "screenshot",
+      "tag": "node-selected",
+      "desc": "元素选中截图"
+    },
+    {
+      "action": "press",
+      "key": "Escape",
+      "desc": "Esc 清除选择"
+    },
+    {
+      "action": "click",
+      "selector": ".elem-tb-btn[data-kind=\"datastore\"]",
+      "desc": "工具栏点「存储」进入放置模式"
+    },
+    {
+      "action": "assertClass",
+      "selector": "body",
+      "expect": "placing",
+      "desc": "placing 态生效"
+    },
+    {
+      "action": "inspectPoint",
+      "x": 500,
+      "y": 450,
+      "tag": "inspect-place-point",
+      "desc": "CDP：放置点实际命中元素"
+    },
+    {
+      "action": "clickAt",
+      "x": 500,
+      "y": 450,
+      "desc": "真实鼠标在空白处点击放置"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#ce-kind",
+      "state": "visible",
+      "desc": "创建表单在点击处弹出"
+    },
+    {
+      "action": "assertEval",
+      "fn": "document.getElementById('ce-kind').value",
+      "expect": "datastore",
+      "desc": "kind 已预选 datastore"
+    },
+    {
+      "action": "fill",
+      "selector": "#ce-name",
+      "value": "剧本新建存储",
+      "desc": "填名称"
+    },
+    {
+      "action": "click",
+      "selector": "#ce-create",
+      "desc": "创建（进暂存）"
+    },
+    {
+      "action": "assertExists",
+      "selector": "svg .pending-add",
+      "desc": "虚线占位出现在画布"
+    },
+    {
+      "action": "assertCount",
+      "selector": "svg .node",
+      "count": 1,
+      "desc": "DATA.docs 未被污染（正式节点仍 1 个）"
+    },
+    {
+      "action": "inspectPoint",
+      "x": 500,
+      "y": 450,
+      "tag": "inspect-created",
+      "desc": "CDP：创建后该点的命中元素（应为 .pending-add 占位）"
+    },
+    {
+      "action": "screenshot",
+      "tag": "created",
+      "desc": "创建后截图"
+    },
+    {
+      "action": "click",
+      "selector": ".elem-tb-btn[data-kind=\"person\"]",
+      "desc": "再次进入放置模式"
+    },
+    {
+      "action": "assertClass",
+      "selector": "body",
+      "expect": "placing",
+      "desc": "placing 态生效"
+    },
+    {
+      "action": "mouseClickAtSelector",
+      "selector": "svg .node",
+      "desc": "放置模式中真实点击已有节点"
+    },
+    {
+      "action": "assertEval",
+      "fn": "document.body.classList.contains('placing')",
+      "expect": false,
+      "desc": "点中对象应退出放置（不再吞点击）"
+    },
+    {
+      "action": "mouseClickAtSelector",
+      "selector": "svg .node",
+      "desc": "退出放置后同一节点可正常点选"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#e-name",
+      "state": "visible",
+      "desc": "节点窗口正常弹出（回归确认）"
+    },
+    {
+      "action": "evalStore",
+      "fn": "({ pendingAdd: document.querySelectorAll('svg .pending-add').length, pendingText: (document.querySelector('svg .pending-add text')||{}).textContent, toolbar: !!document.getElementById('elem-toolbar'), bodyClass: document.body.className })",
+      "desc": "CDP 汇总：占位内容/工具栏/模式类"
+    }
+  ]
+}

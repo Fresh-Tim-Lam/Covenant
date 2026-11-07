@@ -1,6 +1,6 @@
 {
   "scenario": "feature1-element-edit",
-  "date": "2026-11-06T04:06:18.549Z",
+  "date": "2026-11-07T03:48:06.709Z",
   "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html",
   "total": 16,
   "passed": 16,
@@ -12,7 +12,7 @@
       "action": "goto",
       "desc": "打开自包含看板",
       "pass": true,
-      "ms": 286,
+      "ms": 275,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\01-goto.png"
     },
     {
@@ -20,7 +20,7 @@
       "action": "assertExists",
       "desc": "看板已渲染出元素节点",
       "pass": true,
-      "ms": 52,
+      "ms": 42,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\02-assertExists.png"
     },
     {
@@ -28,7 +28,7 @@
       "action": "screenshot",
       "desc": "初始状态截图",
       "pass": true,
-      "ms": 34,
+      "ms": 37,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\03-open.png"
     },
     {
@@ -44,7 +44,7 @@
       "action": "assertClass",
       "desc": "body 带 editing 态",
       "pass": true,
-      "ms": 37,
+      "ms": 30,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\05-assertClass.png"
     },
     {
@@ -52,7 +52,7 @@
       "action": "screenshot",
       "desc": "编辑模式截图",
       "pass": true,
-      "ms": 33,
+      "ms": 31,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\06-edit-mode.png"
     },
     {
@@ -60,7 +60,7 @@
       "action": "click",
       "desc": "点选第一个元素",
       "pass": true,
-      "ms": 140,
+      "ms": 134,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\07-click.png"
     },
     {
@@ -68,7 +68,7 @@
       "action": "waitFor",
       "desc": "元素窗口弹出，名称字段可见",
       "pass": true,
-      "ms": 47,
+      "ms": 48,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\08-waitFor.png"
     },
     {
@@ -76,7 +76,7 @@
       "action": "screenshot",
       "desc": "元素窗口截图",
       "pass": true,
-      "ms": 32,
+      "ms": 42,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\09-win-open.png"
     },
     {
@@ -84,7 +84,7 @@
       "action": "fill",
       "desc": "修改名称",
       "pass": true,
-      "ms": 79,
+      "ms": 83,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\10-fill.png"
     },
     {
@@ -92,7 +92,7 @@
       "action": "click",
       "desc": "暂存修改",
       "pass": true,
-      "ms": 47,
+      "ms": 59,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\11-click.png"
     },
     {
@@ -100,7 +100,7 @@
       "action": "assertEval",
       "desc": "「导出编辑 JSON」按钮出现（有未导出改动）",
       "pass": true,
-      "ms": 40,
+      "ms": 39,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\12-assertEval.png"
     },
     {
@@ -108,7 +108,7 @@
       "action": "assertEval",
       "desc": "SVG 上节点文字已即时更新",
       "pass": true,
-      "ms": 37,
+      "ms": 31,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\13-assertEval.png"
     },
     {
@@ -116,7 +116,7 @@
       "action": "screenshot",
       "desc": "暂存后截图（SVG 名称已变）",
       "pass": true,
-      "ms": 34,
+      "ms": 37,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\14-staged.png"
     },
     {
@@ -124,7 +124,7 @@
       "action": "download",
       "desc": "导出编辑 JSON 并校验包含改名",
       "pass": true,
-      "ms": 215,
+      "ms": 262,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\15-download.png"
     },
     {
@@ -132,7 +132,7 @@
       "action": "screenshot",
       "desc": "导出后截图",
       "pass": true,
-      "ms": 34,
+      "ms": 35,
       "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature1-element-edit\\16-exported.png"
     }
   ]

@@ -1,0 +1,213 @@
+{
+  "scenario": "feature3-bigboard-diagnose",
+  "date": "2026-11-07T03:27:26.072Z",
+  "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html",
+  "total": 13,
+  "passed": 13,
+  "failed": 0,
+  "consoleErrors": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "goto",
+      "desc": "打开完整看板",
+      "pass": true,
+      "ms": 282,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\01-goto.png"
+    },
+    {
+      "step": 2,
+      "action": "assertExists",
+      "desc": "看板已渲染",
+      "pass": true,
+      "ms": 49,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\02-assertExists.png"
+    },
+    {
+      "step": 3,
+      "action": "click",
+      "desc": "进入编辑模式",
+      "pass": true,
+      "ms": 58,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\03-click.png"
+    },
+    {
+      "step": 4,
+      "action": "mouseClickAtSelector",
+      "desc": "首文档：真实鼠标点节点",
+      "pass": true,
+      "ms": 135,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\04-mouseClickAtSelector.png"
+    },
+    {
+      "step": 5,
+      "action": "waitFor",
+      "desc": "首文档点选弹窗正常",
+      "pass": true,
+      "ms": 42,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\05-waitFor.png"
+    },
+    {
+      "step": 6,
+      "action": "press",
+      "desc": "关窗",
+      "pass": true,
+      "ms": 32,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\06-press.png"
+    },
+    {
+      "step": 7,
+      "action": "screenshot",
+      "desc": "首文档点选成功截图",
+      "pass": true,
+      "ms": 33,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\07-first-doc-ok.png"
+    },
+    {
+      "step": 7,
+      "action": "evalStore",
+      "desc": "CDP：各 section 显隐 + svg/node pointer-events + stage-wrap 子元素（排查遮挡）",
+      "value": {
+        "sections": 22,
+        "visible": [
+          {
+            "doc": "covenant/self#v.main",
+            "display": "block"
+          },
+          {
+            "doc": "covenant/self#v.delivery",
+            "display": "none"
+          },
+          {
+            "doc": "covenant/self#v.viewer",
+            "display": "none"
+          },
+          {
+            "doc": "covenant/self#v.viewer-flow",
+            "display": "none"
+          },
+          {
+            "doc": "covenant/self#v.dev-support",
+            "display": "none"
+          },
+          {
+            "doc": "covenant/package-graph#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "covenant/self-architecture#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "example/impl-status-demo#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "example/multi-view#v.core",
+            "display": "none"
+          },
+          {
+            "doc": "example/multi-view#v.public",
+            "display": "none"
+          },
+          {
+            "doc": "orders/dfd#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "order/er#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "order/flow#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "order/sequence#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "order/state#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "payments/containers#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "payments/containers#v.data",
+            "display": "none"
+          },
+          {
+            "doc": "payments/components#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "payments/context#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "payments/deployment#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "quickstart/mini#v.main",
+            "display": "none"
+          },
+          {
+            "doc": "topology/junction#v.main",
+            "display": "none"
+          }
+        ],
+        "svgPE": "auto",
+        "nodePE": "auto",
+        "wrapChildren": [
+          "stage",
+          "elem-toolbar"
+        ]
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\08-eval.png",
+      "pass": true
+    },
+    {
+      "step": 9,
+      "action": "click",
+      "desc": "侧栏切换到第二个文档",
+      "pass": true,
+      "ms": 81,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\09-click.png"
+    },
+    {
+      "step": 10,
+      "action": "screenshot",
+      "desc": "切换后截图",
+      "pass": true,
+      "ms": 32,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\10-doc-switched.png"
+    },
+    {
+      "step": 11,
+      "action": "mouseClickAtSelector",
+      "desc": "第二文档：真实鼠标点第一个可见节点",
+      "pass": true,
+      "ms": 86,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\11-mouseClickAtSelector.png"
+    },
+    {
+      "step": 12,
+      "action": "waitFor",
+      "desc": "第二文档点选弹窗",
+      "pass": true,
+      "ms": 40,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\12-waitFor.png"
+    },
+    {
+      "step": 13,
+      "action": "screenshot",
+      "desc": "第二文档选中截图",
+      "pass": true,
+      "ms": 31,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature3-bigboard-diagnose\\13-second-doc-selected.png"
+    }
+  ]
+}

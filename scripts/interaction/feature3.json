@@ -1,0 +1,19 @@
+{
+  "name": "feature3-bigboard-diagnose",
+  "desc": "剧本 F3：大看板（22 docs）切文档后点选诊断——定位「编辑点不了 SVG 本身」",
+  "steps": [
+    { "action": "goto", "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html", "desc": "打开完整看板" },
+    { "action": "assertExists", "selector": "svg .node", "desc": "看板已渲染" },
+    { "action": "click", "selector": "#btn-edit", "desc": "进入编辑模式" },
+    { "action": "mouseClickAtSelector", "selector": "section.doc svg .node:visible", "desc": "首文档：真实鼠标点节点" },
+    { "action": "waitFor", "selector": "#e-name", "state": "visible", "desc": "首文档点选弹窗正常" },
+    { "action": "press", "key": "Escape", "desc": "关窗" },
+    { "action": "screenshot", "tag": "first-doc-ok", "desc": "首文档点选成功截图" },
+    { "action": "evalStore", "fn": "({ sections: document.querySelectorAll('section.doc').length, visible: document.querySelectorAll('section.doc').length ? Array.from(document.querySelectorAll('section.doc')).map(function(s){ return { doc: s.getAttribute('data-doc'), display: getComputedStyle(s).display }; }) : [], svgPE: getComputedStyle(document.querySelector('section.doc svg')).pointerEvents, nodePE: getComputedStyle(document.querySelector('section.doc svg .node')).pointerEvents, wrapChildren: Array.from(document.getElementById('stage-wrap').children).map(function(c){ return c.id || c.className || c.tagName; }) })", "desc": "CDP：各 section 显隐 + svg/node pointer-events + stage-wrap 子元素（排查遮挡）" },
+    { "action": "click", "selector": "#views button[data-doc]", "desc": "侧栏切换到第二个文档" },
+    { "action": "screenshot", "tag": "doc-switched", "desc": "切换后截图" },
+    { "action": "mouseClickAtSelector", "selector": "section.doc svg .node:visible", "desc": "第二文档：真实鼠标点第一个可见节点" },
+    { "action": "waitFor", "selector": "#e-name", "state": "visible", "desc": "第二文档点选弹窗" },
+    { "action": "screenshot", "tag": "second-doc-selected", "desc": "第二文档选中截图" }
+  ]
+}

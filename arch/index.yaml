@@ -86,7 +86,7 @@ entries:
     s:
       - 内联 JSON 必须转义 <，否则 </script> 提前闭合
       - 无外部请求：禁止 CDN/字体/图片
-    source_sha256: 8d7c5e0da4d33bc43b40e57393cc99bcd8c3e7258c5bdafc08aac1de939b04ad
+    source_sha256: 09f1726037837cc80797ddabd4eead524a8ed568c1975e18e00c147ac327cbee
   - file: packages/render/src/viewer.css.ts
     f: 看板样式表：布局/小窗/徽章/侧栏/回收桶的纯静态 CSS（无插值）
     r: []

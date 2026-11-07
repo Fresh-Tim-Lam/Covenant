@@ -1,0 +1,27 @@
+covenant: "0.1"
+id: e2e/single
+profile: c4-container@1
+
+meta:
+  title: 单元素画布（剧本验证）
+  purpose: 交互剧本隔离验证——只有唯一元素，排除多元素干扰
+  non_goals: [不画真实架构]
+  owners: [human:lead]
+  status: draft
+  rev: 1
+
+elements:
+  - id: e.only
+    kind: container
+    name: 唯一元素
+    summary: 剧本验证用容器
+    tech: e2e
+
+relations: []
+
+annotations: []
+
+views:
+  - id: v.main
+    title: 总览
+    layout: { direction: RIGHT }

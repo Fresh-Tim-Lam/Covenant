@@ -1,0 +1,16 @@
+{
+  "name": "feature4-hover-block",
+  "desc": "剧本 F4：悬停预览窗是否挡住节点点击（复现「点不了 SVG 本身」假设）+ 事件流诊断",
+  "steps": [
+    { "action": "goto", "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html", "desc": "打开看板（批注模式=默认）" },
+    { "action": "assertExists", "selector": "svg .node", "desc": "看板渲染" },
+    { "action": "mouseMoveToSelector", "selector": "section.doc svg .node:visible", "desc": "鼠标移到节点上（触发悬停预览）" },
+    { "action": "evalStore", "fn": "new Promise(function(res){ setTimeout(function(){ res('waited'); }, 260); })", "desc": "等待 260ms 让预览窗弹出（hover 120ms 阈值）" },
+    { "action": "screenshot", "tag": "hover-shown", "desc": "悬停预览截图" },
+    { "action": "inspectPointAtSelectorCenter", "selector": "section.doc svg .node:visible", "tag": "inspect-under-cursor", "desc": "CDP：悬停后节点中心实际命中元素（若是 .cvn-win 即被窗挡住）" },
+    { "action": "evalStore", "fn": "(function(){ window.__evlog = []; ['pointerdown','pointerup','click'].forEach(function(t){ document.addEventListener(t, function(ev){ window.__evlog.push({ type: t, target: ev.target.tagName + '.' + (ev.target.getAttribute('class')||'') + '#' + (ev.target.id||''), x: ev.clientX, y: ev.clientY }); }, true); }); return 'listeners-installed'; })()", "desc": "安装捕获阶段事件记录器" },
+    { "action": "mouseClickAtSelector", "selector": "section.doc svg .node:visible", "desc": "悬停状态下真实点击节点中心" },
+    { "action": "evalStore", "fn": "window.__evlog", "desc": "事件流：pointerdown/pointerup/click 的真实目标序列" },
+    { "action": "evalStore", "fn": "(function(){ var w = document.querySelectorAll('.cvn-win:not([hidden])'); var names = Array.from(w).map(function(x){ return x.id || x.className; }); var inp = document.getElementById('e-name'); return { wins: names, hasNameField: !!inp }; })()", "desc": "点击后：窗口状态与是否打开了元素编辑字段" }
+  ]
+}

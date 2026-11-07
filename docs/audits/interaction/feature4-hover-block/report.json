@@ -1,0 +1,223 @@
+{
+  "scenario": "feature4-hover-block",
+  "date": "2026-11-07T03:37:18.485Z",
+  "url": "file:///D:/AAA_Project/Covenant/dist/covenant.html",
+  "total": 10,
+  "passed": 10,
+  "failed": 0,
+  "consoleErrors": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "goto",
+      "desc": "打开看板（批注模式=默认）",
+      "pass": true,
+      "ms": 303,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\01-goto.png"
+    },
+    {
+      "step": 2,
+      "action": "assertExists",
+      "desc": "看板渲染",
+      "pass": true,
+      "ms": 47,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\02-assertExists.png"
+    },
+    {
+      "step": 3,
+      "action": "mouseMoveToSelector",
+      "desc": "鼠标移到节点上（触发悬停预览）",
+      "pass": true,
+      "ms": 166,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\03-mouseMoveToSelector.png"
+    },
+    {
+      "step": 3,
+      "action": "evalStore",
+      "desc": "等待 260ms 让预览窗弹出（hover 120ms 阈值）",
+      "value": "waited",
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\04-eval.png",
+      "pass": true
+    },
+    {
+      "step": 5,
+      "action": "screenshot",
+      "desc": "悬停预览截图",
+      "pass": true,
+      "ms": 33,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\05-hover-shown.png"
+    },
+    {
+      "step": 5,
+      "action": "inspect",
+      "desc": "CDP：悬停后节点中心实际命中元素（若是 .cvn-win 即被窗挡住）",
+      "diag": {
+        "point": [
+          305,
+          383
+        ],
+        "found": {
+          "tag": "rect",
+          "cls": "",
+          "id": ""
+        },
+        "chain": [
+          {
+            "tag": "rect",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              265,
+              367,
+              80,
+              31
+            ]
+          },
+          {
+            "tag": "g",
+            "cls": "node kind-person hl",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              265,
+              367,
+              80,
+              31
+            ]
+          },
+          {
+            "tag": "svg",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              252,
+              103,
+              1000,
+              532
+            ]
+          },
+          {
+            "tag": "SECTION",
+            "cls": "doc",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              252,
+              103,
+              1000,
+              532
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage",
+            "pointerEvents": "auto",
+            "rect": [
+              252,
+              103,
+              1000,
+              532
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage-wrap",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              47,
+              1056,
+              645
+            ]
+          },
+          {
+            "tag": "MAIN",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              47,
+              1056,
+              645
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "shell",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              47,
+              1280,
+              645
+            ]
+          }
+        ]
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\06-inspect-under-cursor.png",
+      "pass": true
+    },
+    {
+      "step": 6,
+      "action": "evalStore",
+      "desc": "安装捕获阶段事件记录器",
+      "value": "listeners-installed",
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\07-eval.png",
+      "pass": true
+    },
+    {
+      "step": 8,
+      "action": "mouseClickAtSelector",
+      "desc": "悬停状态下真实点击节点中心",
+      "pass": true,
+      "ms": 49,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\08-mouseClickAtSelector.png"
+    },
+    {
+      "step": 8,
+      "action": "evalStore",
+      "desc": "事件流：pointerdown/pointerup/click 的真实目标序列",
+      "value": [
+        {
+          "type": "pointerdown",
+          "target": "rect.#",
+          "x": 304.899169921875,
+          "y": 382.63134765625
+        },
+        {
+          "type": "pointerup",
+          "target": "rect.#",
+          "x": 304.899169921875,
+          "y": 382.63134765625
+        },
+        {
+          "type": "click",
+          "target": "rect.#",
+          "x": 304,
+          "y": 382
+        }
+      ],
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\09-eval.png",
+      "pass": true
+    },
+    {
+      "step": 9,
+      "action": "evalStore",
+      "desc": "点击后：窗口状态与是否打开了元素编辑字段",
+      "value": {
+        "wins": [
+          "inspector"
+        ],
+        "hasNameField": false
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature4-hover-block\\10-eval.png",
+      "pass": true
+    }
+  ]
+}

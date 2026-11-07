@@ -96,6 +96,91 @@ async function runStep(step) {
         }
         break;
       }
+      case "mouseClickAtSelector": {
+        // 真实鼠标输入：按元素中心坐标点击（区别于 el.click() 合成事件，可暴露遮挡/命中问题）
+        const box = await page.locator(step.selector).first().boundingBox({ timeout: 8000 });
+        if (!box) throw new Error("无法取得元素位置: " + step.selector);
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        break;
+      }
+      case "dblclickAtSelector": {
+        const box = await page.locator(step.selector).first().boundingBox({ timeout: 8000 });
+        if (!box) throw new Error("无法取得元素位置: " + step.selector);
+        await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+        break;
+      }
+      case "mouseMoveToSelector": {
+        const box = await page.locator(step.selector).first().boundingBox({ timeout: 8000 });
+        if (!box) throw new Error("无法取得元素位置: " + step.selector);
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+        break;
+      }
+      case "inspectPointAtSelectorCenter": {
+        const b2 = await page.locator(step.selector).first().boundingBox({ timeout: 8000 });
+        if (!b2) throw new Error("无法取得元素位置: " + step.selector);
+        const cx = Math.round(b2.x + b2.width / 2), cy = Math.round(b2.y + b2.height / 2);
+        const diag = await page.evaluate(([x, y]) => {
+          const el = document.elementFromPoint(x, y);
+          if (!el) return { point: [x, y], found: null };
+          const chain = [];
+          let cur = el;
+          for (let i = 0; cur && i < 8; i++) {
+            const cs = getComputedStyle(cur);
+            const r = cur.getBoundingClientRect();
+            chain.push({ tag: cur.tagName, cls: String(cur.getAttribute("class") ?? ""), id: cur.id ?? "", pointerEvents: cs.pointerEvents, rect: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)] });
+            cur = cur.parentElement;
+          }
+          return { point: [x, y], found: { tag: el.tagName, cls: String(el.getAttribute("class") ?? ""), id: el.id }, chain };
+        }, [cx, cy]);
+        results.push({ step: stepNo, action: "inspect", desc: step.desc ?? "", diag });
+        console.log(`  ⓘ ${String(stepNo).padStart(2, "0")} inspectCenter(${cx},${cy}) → ${diag.found ? diag.found.tag + "." + diag.found.cls : "null"}`);
+        const shotFile = await shot(step.tag ?? "inspect");
+        const last = results[results.length - 1];
+        last.screenshot = shotFile; last.pass = true;
+        return;
+      }
+      case "clickAt": {
+        await page.mouse.click(step.x, step.y);
+        break;
+      }
+      case "inspectPoint": {
+        // CDP 诊断：该视口坐标上实际命中的元素 + 祖先链（tag/class/pointer-events/矩形）
+        const diag = await page.evaluate(([x, y]) => {
+          const el = document.elementFromPoint(x, y);
+          if (!el) return { point: [x, y], found: null };
+          const chain = [];
+          let cur = el;
+          for (let i = 0; cur && i < 8; i++) {
+            const cs = getComputedStyle(cur);
+            const r = cur.getBoundingClientRect();
+            chain.push({
+              tag: cur.tagName,
+              cls: String(cur.getAttribute("class") ?? ""),
+              id: cur.id ?? "",
+              pointerEvents: cs.pointerEvents,
+              rect: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)],
+            });
+            cur = cur.parentElement;
+          }
+          return { point: [x, y], found: { tag: el.tagName, cls: String(el.getAttribute("class") ?? ""), id: el.id }, chain };
+        }, [step.x, step.y]);
+        results.push({ step: stepNo, action: "inspect", desc: step.desc ?? "", diag });
+        console.log(`  ⓘ ${String(stepNo).padStart(2, "0")} inspect(${step.x},${step.y}) → ${diag.found ? diag.found.tag + "." + diag.found.cls : "null"}`);
+        const shotFile = await shot(step.tag ?? "inspect");
+        const last = results[results.length - 1];
+        last.screenshot = shotFile;
+        last.pass = true;
+        return;
+      }
+      case "evalStore": {
+        const value = await page.evaluate(step.fn);
+        results.push({ step: stepNo, action: "evalStore", desc: step.desc ?? "", value });
+        console.log(`  ⓘ ${String(stepNo).padStart(2, "0")} evalStore ${step.desc ?? ""} → ${JSON.stringify(value).slice(0, 120)}`);
+        const shotFile = await shot(step.tag ?? "eval");
+        results[results.length - 1].screenshot = shotFile;
+        results[results.length - 1].pass = true;
+        return;
+      }
       case "screenshot":
         break;
       default:

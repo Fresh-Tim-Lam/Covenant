@@ -1,0 +1,6 @@
+covenant: "0.1"
+
+project: e2e-single
+profiles: [c4-container@1]
+documents:
+  - arch/system.cvn.yaml

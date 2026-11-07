@@ -1,0 +1,500 @@
+{
+  "scenario": "feature2-single-create",
+  "date": "2026-11-07T03:48:04.501Z",
+  "url": "file:///D:/AAA_Project/Covenant/.tmp/e2e-single/out/covenant.html",
+  "total": 29,
+  "passed": 29,
+  "failed": 0,
+  "consoleErrors": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "goto",
+      "desc": "打开单元素画布",
+      "pass": true,
+      "ms": 221,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\01-goto.png"
+    },
+    {
+      "step": 2,
+      "action": "assertCount",
+      "desc": "画布只有唯一元素",
+      "pass": true,
+      "ms": 37,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\02-assertCount.png"
+    },
+    {
+      "step": 3,
+      "action": "screenshot",
+      "desc": "初始状态",
+      "pass": true,
+      "ms": 25,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\03-open.png"
+    },
+    {
+      "step": 4,
+      "action": "click",
+      "desc": "进入编辑模式",
+      "pass": true,
+      "ms": 55,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\04-click.png"
+    },
+    {
+      "step": 5,
+      "action": "assertClass",
+      "desc": "editing 态生效",
+      "pass": true,
+      "ms": 31,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\05-assertClass.png"
+    },
+    {
+      "step": 5,
+      "action": "inspect",
+      "desc": "CDP：画布中心（节点应在附近）实际命中元素与祖先链",
+      "diag": {
+        "point": [
+          640,
+          360
+        ],
+        "found": {
+          "tag": "rect",
+          "cls": "",
+          "id": ""
+        },
+        "chain": [
+          {
+            "tag": "rect",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              635,
+              324,
+              234,
+              91
+            ]
+          },
+          {
+            "tag": "g",
+            "cls": "node kind-container",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              635,
+              324,
+              234,
+              91
+            ]
+          },
+          {
+            "tag": "svg",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              598,
+              288,
+              308,
+              163
+            ]
+          },
+          {
+            "tag": "SECTION",
+            "cls": "doc",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              598,
+              288,
+              308,
+              163
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage",
+            "pointerEvents": "auto",
+            "rect": [
+              598,
+              288,
+              308,
+              163
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage-wrap",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              47,
+              1056,
+              645
+            ]
+          },
+          {
+            "tag": "MAIN",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              47,
+              1056,
+              645
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "shell",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              47,
+              1280,
+              645
+            ]
+          }
+        ]
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\06-inspect-node-center.png",
+      "pass": true
+    },
+    {
+      "step": 7,
+      "action": "mouseClickAtSelector",
+      "desc": "真实鼠标点击唯一元素中心",
+      "pass": true,
+      "ms": 169,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\07-mouseClickAtSelector.png"
+    },
+    {
+      "step": 8,
+      "action": "waitFor",
+      "desc": "点选元素 → 窗口弹出",
+      "pass": true,
+      "ms": 29,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\08-waitFor.png"
+    },
+    {
+      "step": 9,
+      "action": "screenshot",
+      "desc": "元素选中截图",
+      "pass": true,
+      "ms": 30,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\09-node-selected.png"
+    },
+    {
+      "step": 10,
+      "action": "press",
+      "desc": "Esc 清除选择",
+      "pass": true,
+      "ms": 31,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\10-press.png"
+    },
+    {
+      "step": 11,
+      "action": "click",
+      "desc": "工具栏点「存储」进入放置模式",
+      "pass": true,
+      "ms": 41,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\11-click.png"
+    },
+    {
+      "step": 12,
+      "action": "assertClass",
+      "desc": "placing 态生效",
+      "pass": true,
+      "ms": 22,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\12-assertClass.png"
+    },
+    {
+      "step": 12,
+      "action": "inspect",
+      "desc": "CDP：放置点实际命中元素",
+      "diag": {
+        "point": [
+          500,
+          450
+        ],
+        "found": {
+          "tag": "DIV",
+          "cls": "",
+          "id": "stage-wrap"
+        },
+        "chain": [
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage-wrap",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              65,
+              1056,
+              627
+            ]
+          },
+          {
+            "tag": "MAIN",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              65,
+              1056,
+              627
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "shell",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              65,
+              1280,
+              627
+            ]
+          },
+          {
+            "tag": "BODY",
+            "cls": "editing placing",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              0,
+              1280,
+              720
+            ]
+          },
+          {
+            "tag": "HTML",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              0,
+              1280,
+              720
+            ]
+          }
+        ]
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\13-inspect-place-point.png",
+      "pass": true
+    },
+    {
+      "step": 14,
+      "action": "clickAt",
+      "desc": "真实鼠标在空白处点击放置",
+      "pass": true,
+      "ms": 34,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\14-clickAt.png"
+    },
+    {
+      "step": 15,
+      "action": "waitFor",
+      "desc": "创建表单在点击处弹出",
+      "pass": true,
+      "ms": 34,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\15-waitFor.png"
+    },
+    {
+      "step": 16,
+      "action": "assertEval",
+      "desc": "kind 已预选 datastore",
+      "pass": true,
+      "ms": 31,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\16-assertEval.png"
+    },
+    {
+      "step": 17,
+      "action": "fill",
+      "desc": "填名称",
+      "pass": true,
+      "ms": 31,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\17-fill.png"
+    },
+    {
+      "step": 18,
+      "action": "click",
+      "desc": "创建（进暂存）",
+      "pass": true,
+      "ms": 44,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\18-click.png"
+    },
+    {
+      "step": 19,
+      "action": "assertExists",
+      "desc": "虚线占位出现在画布",
+      "pass": true,
+      "ms": 25,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\19-assertExists.png"
+    },
+    {
+      "step": 20,
+      "action": "assertCount",
+      "desc": "DATA.docs 未被污染（正式节点仍 1 个）",
+      "pass": true,
+      "ms": 25,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\20-assertCount.png"
+    },
+    {
+      "step": 20,
+      "action": "inspect",
+      "desc": "CDP：创建后该点的命中元素（应为 .pending-add 占位）",
+      "diag": {
+        "point": [
+          500,
+          450
+        ],
+        "found": {
+          "tag": "DIV",
+          "cls": "",
+          "id": "stage-wrap"
+        },
+        "chain": [
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "stage-wrap",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              83,
+              1056,
+              609
+            ]
+          },
+          {
+            "tag": "MAIN",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              224,
+              83,
+              1056,
+              609
+            ]
+          },
+          {
+            "tag": "DIV",
+            "cls": "",
+            "id": "shell",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              83,
+              1280,
+              609
+            ]
+          },
+          {
+            "tag": "BODY",
+            "cls": "editing",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              0,
+              1280,
+              720
+            ]
+          },
+          {
+            "tag": "HTML",
+            "cls": "",
+            "id": "",
+            "pointerEvents": "auto",
+            "rect": [
+              0,
+              0,
+              1280,
+              720
+            ]
+          }
+        ]
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\21-inspect-created.png",
+      "pass": true
+    },
+    {
+      "step": 22,
+      "action": "screenshot",
+      "desc": "创建后截图",
+      "pass": true,
+      "ms": 21,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\22-created.png"
+    },
+    {
+      "step": 23,
+      "action": "click",
+      "desc": "再次进入放置模式",
+      "pass": true,
+      "ms": 38,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\23-click.png"
+    },
+    {
+      "step": 24,
+      "action": "assertClass",
+      "desc": "placing 态生效",
+      "pass": true,
+      "ms": 25,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\24-assertClass.png"
+    },
+    {
+      "step": 25,
+      "action": "mouseClickAtSelector",
+      "desc": "放置模式中真实点击已有节点",
+      "pass": true,
+      "ms": 37,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\25-mouseClickAtSelector.png"
+    },
+    {
+      "step": 26,
+      "action": "assertEval",
+      "desc": "点中对象应退出放置（不再吞点击）",
+      "pass": true,
+      "ms": 24,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\26-assertEval.png"
+    },
+    {
+      "step": 27,
+      "action": "mouseClickAtSelector",
+      "desc": "退出放置后同一节点可正常点选",
+      "pass": true,
+      "ms": 37,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\27-mouseClickAtSelector.png"
+    },
+    {
+      "step": 28,
+      "action": "waitFor",
+      "desc": "节点窗口正常弹出（回归确认）",
+      "pass": true,
+      "ms": 29,
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\28-waitFor.png"
+    },
+    {
+      "step": 28,
+      "action": "evalStore",
+      "desc": "CDP 汇总：占位内容/工具栏/模式类",
+      "value": {
+        "pendingAdd": 1,
+        "pendingText": "＋ 剧本新建存储",
+        "toolbar": true,
+        "bodyClass": "editing"
+      },
+      "screenshot": "D:\\AAA_Project\\Covenant\\docs\\audits\\interaction\\feature2-single-create\\29-eval.png",
+      "pass": true
+    }
+  ]
+}
